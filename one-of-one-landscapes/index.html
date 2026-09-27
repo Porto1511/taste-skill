@@ -25,9 +25,8 @@
 <meta name="twitter:description" content="Gardens made once, never repeated.">
 <meta name="twitter:image" content="https://oneofone-landscapes.netlify.app/og.jpg">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Geist:wght@400;500;600&display=swap">
+<link rel="preload" href="/assets/fonts/fraunces-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/geist-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" as="image" href="/assets/hero-poster.webp" fetchpriority="high">
 
 <script type="application/ld+json">
@@ -44,6 +43,9 @@
 </script>
 
 <style>
+@font-face { font-family: 'Fraunces'; font-style: italic; font-weight: 300 500; font-display: swap; src: url(/assets/fonts/fraunces-italic.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 300 600; font-display: swap; src: url(/assets/fonts/fraunces-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Geist'; font-style: normal; font-weight: 400 600; font-display: swap; src: url(/assets/fonts/geist-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root{
   --ink:#15241c;          /* hedge green, near black */
   --ink-2:#223428;
@@ -65,7 +67,7 @@ html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;background:var(--stone);color:var(--ink);font:400 17px/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:clip}
 img,svg,video{display:block;max-width:100%}
 a{color:inherit}
-h1,h2,h3{font-family:var(--serif);font-weight:350;letter-spacing:-.02em;margin:0;font-variation-settings:"opsz" 120}
+h1,h2,h3{font-family:var(--serif);font-weight:350;letter-spacing:-.012em;margin:0;font-variation-settings:"opsz" 120}
 em{font-style:italic;font-weight:300}
 .wrap{width:100%;max-width:var(--max);margin-inline:auto;padding-inline:var(--gutter)}
 .eyebrow{font:500 12px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--moss);display:inline-flex;align-items:center;gap:.75em}
@@ -112,19 +114,24 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opa
 .hero::before{content:"";position:absolute;inset:0;z-index:-2;
   background:linear-gradient(180deg,rgba(12,20,15,.55) 0%,rgba(12,20,15,0) 28%,rgba(12,20,15,.05) 55%,rgba(12,20,15,.78) 100%),
              linear-gradient(90deg,rgba(12,20,15,.55) 0%,rgba(12,20,15,0) 60%)}
-.hero-fore{position:absolute;left:-2%;right:-2%;bottom:-2px;z-index:-1;color:var(--stone);pointer-events:none}
-.hero-fore svg{width:100%;height:auto}
-.hero-inner{position:relative;min-height:100vh;min-height:100dvh;display:grid;align-content:end;padding-bottom:clamp(88px,14vh,150px);padding-top:120px}
+.hero-inner{position:relative;min-height:100vh;min-height:100dvh;display:grid;align-content:end;padding-bottom:clamp(108px,15vh,160px);padding-top:120px}
 .hero .eyebrow{color:rgba(239,233,220,.85)}
 .hero h1{font-size:clamp(3.1rem,9.2vw,9rem);line-height:.92;margin:22px 0 26px;max-width:12ch}
 .hero h1 em{color:var(--brass-soft)}
 .hero p.lede{font-size:clamp(1.02rem,1.3vw,1.18rem);max-width:46ch;color:rgba(239,233,220,.86);margin:0 0 34px}
 .hero-ctas{display:flex;flex-wrap:wrap;gap:12px}
-.hero-meta{position:absolute;right:var(--gutter);bottom:clamp(88px,14vh,150px);display:grid;gap:10px;justify-items:end;font-size:13px;letter-spacing:.04em;color:rgba(239,233,220,.75)}
-.scroll-cue{width:1px;height:64px;background:rgba(239,233,220,.3);position:relative;overflow:hidden}
+.hero-rail{position:absolute;left:0;right:0;bottom:0;z-index:1;border-top:1px solid rgba(239,233,220,.22);background:linear-gradient(0deg,rgba(12,20,15,.35),rgba(12,20,15,0))}
+.hero-rail .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:rgba(239,233,220,.78)}
+.hero-rail ul{display:flex;gap:0;list-style:none;margin:0;padding:0}
+.hero-rail li + li::before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--brass-soft);margin:0 18px;vertical-align:middle}
+.rail-scroll{display:inline-flex;align-items:center;gap:14px;text-decoration:none}
+.rail-scroll .scroll-cue{width:44px;height:1px}
+.rail-scroll .scroll-cue::after{top:0;left:-40%;width:40%;height:1px;animation-name:cueX}
+@keyframes cueX{to{transform:translateX(350%)}}
+.scroll-cue{background:rgba(239,233,220,.3);position:relative;overflow:hidden}
 .scroll-cue::after{content:"";position:absolute;left:0;top:-40%;width:1px;height:40%;background:var(--stone);animation:cue 2.4s var(--ease) infinite}
 @keyframes cue{to{transform:translateY(350%)}}
-@media (max-width:720px){.hero-meta{display:none}}
+@media (max-width:520px){.rail-scroll{display:none}.hero-rail .wrap{justify-content:center}}
 
 /* ---------- reveal ---------- */
 .rv{opacity:0;transform:translate3d(0,28px,0);transition:opacity 1s var(--ease),transform 1.2s var(--ease);transition-delay:calc(var(--i,0) * 90ms)}
@@ -138,6 +145,7 @@ section{position:relative}
 .body{color:var(--mute);max-width:58ch}
 
 /* about */
+.about{overflow-x:clip}
 .about .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(40px,7vw,120px);align-items:center}
 .about-copy .h2{margin:22px 0 28px}
 .about-copy .body + .body{margin-top:1em}
@@ -222,8 +230,6 @@ section{position:relative}
 .rev figcaption{font-size:14px;color:var(--mute)}
 .rev:first-child figcaption{color:rgba(239,233,220,.62)}
 .rev figcaption b{font-weight:500;color:inherit}
-.rev .stars{display:flex;gap:3px;color:var(--brass);margin-bottom:8px}
-.rev .stars svg{width:14px;height:14px}
 @media (max-width:900px){.rev-grid{grid-template-columns:1fr}}
 
 /* visit */
@@ -271,7 +277,7 @@ section{position:relative}
 .callbar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:60;display:none;gap:8px;transform:translateY(160%);transition:transform .6s var(--ease)}
 .callbar.show{transform:none}
 .callbar a{flex:1;justify-content:center;box-shadow:0 18px 40px -16px rgba(12,20,15,.7)}
-@media (max-width:720px){.callbar{display:flex}}
+@media (max-width:720px){.callbar{display:flex}.foot{padding-bottom:110px}}
 
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -307,17 +313,13 @@ section{position:relative}
 <section class="hero" id="top" aria-label="Introduction">
   <div class="hero-media" data-speed="0.32">
     <video id="heroVideo" autoplay muted loop playsinline preload="auto" poster="/assets/hero-poster.webp" aria-hidden="true" disablepictureinpicture>
+      <source src="/assets/hero-720.webm" type="video/webm" media="(max-width: 760px)">
       <source src="/assets/hero-720.mp4" type="video/mp4" media="(max-width: 760px)">
+      <source src="/assets/hero-1080.webm" type="video/webm">
       <source src="/assets/hero-1080.mp4" type="video/mp4">
     </video>
   </div>
-  <div class="hero-fore" data-speed="-0.14" aria-hidden="true">
-    <svg viewBox="0 0 1440 140" preserveAspectRatio="none" fill="currentColor">
-      <path d="M0 140V96c40-6 70-30 96-62 8 30 22 52 44 66 30-40 50-78 58-98 10 44 30 76 62 92 26-18 44-44 56-70 12 30 34 52 66 64 20-24 32-50 38-80 18 42 44 68 80 80 24-14 42-36 54-62 16 28 40 48 72 56 28-30 44-62 50-96 14 48 40 82 80 98 20-18 34-40 42-66 18 32 42 54 74 64 22-22 36-48 44-78 16 40 42 68 78 80 24-18 42-42 52-70 20 34 48 58 86 68 16-20 28-44 34-72 14 34 36 60 66 74 22-16 38-38 48-62 20 30 46 50 80 58V140z" opacity=".22"/>
-      <path d="M0 140v-22c60 2 110-8 160-26 50 20 110 26 170 18 60-18 120-22 190-10 70 14 140 12 210-6 70-16 150-14 220 4 70 16 150 18 220 4 70-12 150-10 270 14v28z"/>
-    </svg>
-  </div>
-  <div class="wrap hero-inner" data-speed="0.12">
+  <div class="wrap hero-inner" data-speed="0.2">
     <span class="eyebrow rv" style="--i:0">Garden design &amp; landscaping</span>
     <h1 class="rv" style="--i:1">Gardens made <em>once.</em> Never repeated.</h1>
     <p class="lede rv" style="--i:2">One of One Landscapes designs, builds and looks after outdoor spaces shaped around a single plot, a single household, and the way you actually live outside.</p>
@@ -329,9 +331,11 @@ section{position:relative}
       <a class="btn btn-ghost" href="#services">Explore services</a>
     </div>
   </div>
-  <div class="hero-meta" aria-hidden="true">
-    <span>Scroll</span>
-    <span class="scroll-cue"></span>
+  <div class="hero-rail" data-speed="-0.08">
+    <div class="wrap">
+      <ul aria-label="What we do"><li>Design</li><li>Build</li><li>Care</li></ul>
+      <a href="#about" class="rail-scroll">Scroll <span class="scroll-cue" aria-hidden="true"></span></a>
+    </div>
   </div>
 </section>
 
@@ -363,10 +367,10 @@ section{position:relative}
         <text x="258" y="165" font-size="10" fill="currentColor" stroke="none" font-family="Geist, sans-serif" letter-spacing="2">TERRACE</text>
       </svg>
       <div class="layer l-back" data-speed="0.06">
-        <img src="/assets/still-a.webp" alt="Clipped hedges and limestone paving in low golden light" width="1200" height="1500" loading="lazy" decoding="async">
+        <img src="/assets/still-a.webp" alt="Pleached hornbeams uplit against an old brick wall beside a limestone water rill at dusk" width="864" height="1080" loading="lazy" decoding="async">
       </div>
       <div class="layer l-front" data-speed="-0.1">
-        <img src="/assets/still-b.webp" alt="Ornamental grasses catching the evening sun beside still water" width="900" height="900" loading="lazy" decoding="async">
+        <img src="/assets/still-b.webp" alt="Sunken seating around a fire bowl beneath an uplit multi-stem tree, Victorian houses beyond" width="760" height="760" loading="lazy" decoding="async">
       </div>
     </figure>
   </div>
@@ -436,7 +440,7 @@ section{position:relative}
 
 <!-- PARALLAX STRIP -->
 <div class="strip" aria-hidden="true">
-  <div class="layer s-img" data-speed="0.22"><img src="/assets/still-c.webp" alt="" width="1920" height="1080" loading="lazy" decoding="async"></div>
+  <div class="layer s-img" data-speed="0.22"><img src="/assets/still-c.webp" alt="" width="1440" height="810" loading="lazy" decoding="async"></div>
   <div class="layer s-word" data-speed="-0.12">one <i>of</i> one</div>
 </div>
 
@@ -453,7 +457,7 @@ section{position:relative}
     <div class="rev-grid">
       <figure class="rev rv" style="--i:0">
         <blockquote>They listened to how we actually use the garden and designed around it. It feels like it was always meant to be there.</blockquote>
-        <figcaption><span class="stars" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg></span><b>Sample reviewer</b> · Garden design &amp; build</figcaption>
+        <figcaption><b>Sample reviewer</b> · Garden design &amp; build</figcaption>
       </figure>
       <figure class="rev rv" style="--i:1">
         <blockquote>Tidy, on time and always explained what was happening next.</blockquote>
@@ -588,7 +592,7 @@ section{position:relative}
   }).observe($('.hero'));
 
   // parallax: transform-only, one rAF per scroll frame, measured against each layer's section
-  const layers = $$('[data-speed]').map(el => ({ el, speed: parseFloat(el.dataset.speed), host: el.closest('section, .strip') || el.parentElement }));
+  const layers = $$('[data-speed]').map(el => ({ el, speed: parseFloat(el.dataset.speed), host: el.closest('section, .strip') || el.parentElement, fade: el.classList.contains('hero-inner') }));
   let vh = innerHeight, metrics = [];
   const measure = () => {
     vh = innerHeight;
@@ -607,13 +611,14 @@ section{position:relative}
       const centre = (m.top + m.h / 2) - (y + vh / 2);
       const off = layers[i].el.closest('.hero') ? y : -centre;
       layers[i].el.style.transform = `translate3d(0,${(off * layers[i].speed * damp).toFixed(2)}px,0)`;
+      if (layers[i].fade) layers[i].el.style.opacity = Math.max(0, 1 - y / (vh * .55)).toFixed(3);
     }
   };
   const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(render); } };
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', () => { damp = mobileDamp(); measure(); render(); });
   addEventListener('load', () => { measure(); render(); });
-  reduce.addEventListener?.('change', () => { layers.forEach(l => l.el.style.transform = ''); render(); });
+  reduce.addEventListener?.('change', () => { layers.forEach(l => { l.el.style.transform = ''; l.el.style.opacity = ''; }); render(); });
   measure(); render();
 
   // nav state + mobile call bar
