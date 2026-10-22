@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One of One</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one screen. A flat black wordmark spans the width; a fluid wipe reveals rendered balloon letters under it. */
+:root {
+  --paper: #ffffff;
+  --ink: #050505;
+  --ash: #8a8a8a;
+  --f-mark: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --ease: cubic-bezier(.76, 0, .24, 1);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--f-mono); overflow: hidden; -webkit-font-smoothing: antialiased; }
+.mono { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+
+#loader { position: fixed; inset: 0; z-index: 20; background: #000; color: #fff; display: grid; place-items: center; transition: transform 1.1s var(--ease); }
+#loader.out { transform: translateY(-100%); }
+#loader img { width: min(84vw, 1100px); height: auto; display: block; }
+.count { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(28px + env(safe-area-inset-bottom, 0px)); font-weight: 500; font-size: 14px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+
+.hero { position: fixed; inset: 0; touch-action: pan-y; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ui { position: absolute; inset: 0; pointer-events: none; color: #fff; mix-blend-mode: difference;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  display: flex; flex-direction: column; justify-content: space-between; }
+.ui-row { display: flex; justify-content: space-between; gap: 16px; }
+.ui-row span:last-child { text-align: right; }
+.mat { font-variant-numeric: tabular-nums; }
+
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; background: #000; }
+.fallback img { width: min(92vw, 1400px); }
+
+.cursor { position: fixed; left: 0; top: 0; z-index: 10; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff; mix-blend-mode: difference; pointer-events: none; opacity: 0; transition: opacity .3s; }
+@media (pointer: fine) { body.ready .cursor { opacity: 1; } .hero { cursor: none; } }
+@media (prefers-reduced-motion: reduce) { #loader { transition-duration: .01ms; } }
+</style>
+
+<div id="loader" aria-hidden="true"><img id="loaderImg" src="img/cloud.jpg" alt=""><div class="count" id="count">000</div></div>
+
+<main class="hero" id="hero">
+  <canvas id="gl" role="img" aria-label="ONE OF ONE. Move through the letters to reveal them as cloud, glass, pearl, plastic and foil balloon letters."></canvas>
+  <div class="ui">
+    <div class="ui-row mono"><span class="mat" id="mat">( 01 / 05 Cloud )</span><span id="hint">( Move through the letters )</span></div>
+    <div class="ui-row mono"><span>One of One</span><span id="hint2">( Click to splash )</span></div>
+  </div>
+</main>
+<div class="cursor" id="cursor"></div>
+
+<script>
+(() => {
+  const WORD = 'ONE OF ONE';
+  // Rendered layers. rw/rh: each render's letter bounds, in units of the flat word's width.
+  const LAYERS = [
+    { src: 'img/cloud.jpg', name: 'Cloud', rw: 1.0351, rh: 0.1356 },
+    { src: 'img/glass.jpg', name: 'Glass', rw: 1.0320, rh: 0.1234 },
+    { src: 'img/pearl.jpg', name: 'Pearl', rw: 1.0364, rh: 0.1252 },
+    { src: 'img/plastic.jpg', name: 'Plastic', rw: 1.0203, rh: 0.1291 },
+    { src: 'img/foil.jpg', name: 'Foil', rw: 1.0156, rh: 0.1295 },
+  ];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = matchMedia('(pointer: fine)').matches;
+  const $ = (s) => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  if (!fine) { $('#hint').textContent = '( Drag across the letters )'; $('#hint2').textContent = '( Tap to splash )'; }
+
+  const loadImg = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+  const fontsReady = Promise.race([document.fonts.load('100px "Archivo Black"').then(() => document.fonts.ready), new Promise((r) => setTimeout(r, 2500))]);
+  const imagesReady = Promise.all(LAYERS.map((l) => loadImg(l.src)));
+
+  /* ---------------- Fluid reveal ----------------
+     Top layer: the flat word on white. Under it: the rendered letters on black.
+     A Navier-Stokes sim carries dye from the pointer; dense dye wipes the top layer away. */
+  class FluidReveal {
+    constructor(hero, canvas, imgs) {
+      this.hero = hero; this.c = canvas; this.imgs = imgs;
+      const gl = canvas.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false });
+      if (!gl || !gl.getExtension('EXT_color_buffer_float')) throw new Error('WebGL2 float targets unavailable');
+      this.gl = gl;
+      this.cfg = { sim: 128, dye: 512, velDiss: 0.95, dyeDiss: 0.976, iters: 20, force: 2600, period: 3.2 };
+      this.bubbles = []; this.prev = null; this.lastInput = -1e9; this.t = 0; this.matT = 0; this.visible = true; this.running = false; this.owned = [];
+      this.build(); this.resize();
+      if (!this.fboOk) throw new Error('Framebuffer incomplete');
+      addEventListener('resize', () => { clearTimeout(this.rt); this.rt = setTimeout(() => this.resize(), 120); });
+      hero.addEventListener('pointermove', (e) => this.onMove(e), { passive: true });
+      hero.addEventListener('pointerdown', (e) => { const q = this.toUv(e); this.burst(q.x, q.y); });
+      hero.addEventListener('pointerleave', () => { this.prev = null; });
+      document.addEventListener('visibilitychange', () => { this.visible = !document.hidden; this.start(); });
+      this.start();
+    }
+    build() {
+      const gl = this.gl;
+      const VS = `#version 300 es
+in vec2 aPos; uniform vec2 uTexel; out vec2 vUv, vL, vR, vT, vB;
+void main(){ vUv=aPos*.5+.5; vL=vUv-vec2(uTexel.x,0.); vR=vUv+vec2(uTexel.x,0.); vT=vUv+vec2(0.,uTexel.y); vB=vUv-vec2(0.,uTexel.y); gl_Position=vec4(aPos,0.,1.); }`;
+      const H = `#version 300 es
+precision highp float; precision highp sampler2D; in vec2 vUv, vL, vR, vT, vB; out vec4 o;
+`;
+      const src = {
+        splat: `uniform sampler2D uTarget; uniform float uAspect, uRadius; uniform vec3 uColor; uniform vec2 uPoint;
+void main(){ vec2 p=vUv-uPoint; p.x*=uAspect; o=vec4(texture(uTarget,vUv).xyz+exp(-dot(p,p)/uRadius)*uColor,1.); }`,
+        advect: `uniform sampler2D uVelocity, uSource; uniform vec2 uTexel; uniform float uDt, uDiss;
+void main(){ vec2 c=vUv-uDt*texture(uVelocity,vUv).xy*uTexel; o=vec4(uDiss*texture(uSource,c).xyz,1.); }`,
+        div: `uniform sampler2D uVelocity;
+void main(){ float L=texture(uVelocity,vL).x, R=texture(uVelocity,vR).x, T=texture(uVelocity,vT).y, B=texture(uVelocity,vB).y; vec2 C=texture(uVelocity,vUv).xy;
+if(vL.x<0.)L=-C.x; if(vR.x>1.)R=-C.x; if(vT.y>1.)T=-C.y; if(vB.y<0.)B=-C.y; o=vec4(.5*(R-L+T-B),0.,0.,1.); }`,
+        scale: `uniform sampler2D uTex; uniform float uVal; void main(){ o=uVal*texture(uTex,vUv); }`,
+        pressure: `uniform sampler2D uPressure, uDivergence;
+void main(){ float L=texture(uPressure,vL).x, R=texture(uPressure,vR).x, T=texture(uPressure,vT).x, B=texture(uPressure,vB).x;
+o=vec4((L+R+B+T-texture(uDivergence,vUv).x)*.25,0.,0.,1.); }`,
+        grad: `uniform sampler2D uPressure, uVelocity;
+void main(){ float L=texture(uPressure,vL).x, R=texture(uPressure,vR).x, T=texture(uPressure,vT).x, B=texture(uPressure,vB).x;
+o=vec4(texture(uVelocity,vUv).xy-vec2(R-L,T-B),0.,1.); }`,
+        comp: `uniform sampler2D uText, uDye, uImgA, uImgB; uniform vec2 uRes, uCenter; uniform vec2 uSizeA, uSizeB; uniform float uTime, uMix; uniform int uBubN; uniform vec4 uBub[24];
+vec3 layer(sampler2D img, vec2 px, vec2 size){
+  vec2 q=(px-uCenter)/size+.5;
+  if(q.x<0.||q.x>1.||q.y<0.||q.y>1.) return vec3(0.);
+  return texture(img,vec2(q.x,1.-q.y)).rgb; }
+vec3 reveal(vec2 px){
+  vec2 lp=px; vec3 add=vec3(0.); float bubA=0.;
+  for(int i=0;i<24;i++){ if(i>=uBubN) break; vec4 bb=uBub[i]; vec2 d=(px-bb.xy)/bb.z; float l=length(d);
+    if(l<1.){ lp=bb.xy+(px-bb.xy)*.58;
+      float rim=smoothstep(.7,1.,l); vec3 ir=.5+.5*cos(6.283*(l*1.4+vec3(0.,.33,.67)+bb.w));
+      float hi=smoothstep(.3,0.,length(d-vec2(-.36,.38))), hi2=smoothstep(.14,0.,length(d-vec2(.32,-.42)))*.5;
+      add=ir*rim*rim*.95+vec3(hi*1.1+hi2); bubA=smoothstep(1.,.95,l); break; } }
+  lp+=vec2(sin(px.y*.01+uTime*1.3),cos(px.x*.008+uTime))*1.5;
+  vec3 col=layer(uImgA,lp,uSizeA);
+  if(uMix>0.) col=mix(col,layer(uImgB,lp,uSizeB),uMix);
+  return col+add*bubA; }
+void main(){
+  float dye=texture(uDye,vUv).r; float mask=smoothstep(.5,.53,dye*3.9);
+  float t=texture(uText,vUv).r; vec3 base=mix(vec3(1.),vec3(.02),t);
+  if(mask<.001){ o=vec4(base,1.); return; }
+  o=vec4(mix(base,reveal(vUv*uRes),mask),1.); }`,
+      };
+      const sh = (type, s) => { const x = gl.createShader(type); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+      const vs = sh(gl.VERTEX_SHADER, VS);
+      this.p = {};
+      for (const [k, f] of Object.entries(src)) {
+        const pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, H + f)); gl.bindAttribLocation(pr, 0, 'aPos'); gl.linkProgram(pr);
+        if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+        const u = {}; const n = gl.getProgramParameter(pr, gl.ACTIVE_UNIFORMS);
+        for (let i = 0; i < n; i++) { const nm = gl.getActiveUniform(pr, i).name.replace('[0]', ''); u[nm] = gl.getUniformLocation(pr, nm); }
+        this.p[k] = { pr, u };
+      }
+      gl.bindVertexArray(gl.createVertexArray());
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      const tex = (srcEl, mip) => {
+        const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcEl);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+        if (mip) gl.generateMipmap(gl.TEXTURE_2D);
+        return t;
+      };
+      this.layerTex = this.imgs.map((im) => tex(im, true));
+      this.textTex = gl.createTexture();
+      this.tcv = document.createElement('canvas');
+    }
+    fbo(w, h) {
+      const gl = this.gl, tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.HALF_FLOAT, null);
+      const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) this.fboOk = false;
+      gl.viewport(0, 0, w, h); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+      const o = { tex, fb, w, h, texel: [1 / w, 1 / h] }; this.owned.push(o); return o;
+    }
+    dbl(w, h) { const a = this.fbo(w, h), b = this.fbo(w, h); return { read: a, write: b, swap() { [this.read, this.write] = [this.write, this.read]; } }; }
+    res(r) { let a = this.W / this.H; if (a < 1) a = 1 / a; const lo = Math.round(r), hi = Math.round(r * a); return this.W > this.H ? [hi, lo] : [lo, hi]; }
+    use(k, unis) {
+      const gl = this.gl, P = this.p[k]; gl.useProgram(P.pr); let unit = 0;
+      for (const [n, v] of Object.entries(unis)) {
+        const loc = P.u[n]; if (loc == null) continue;
+        if (v && v.tex) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, v.tex); gl.uniform1i(loc, unit++); }
+        else if (v instanceof WebGLTexture) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, v); gl.uniform1i(loc, unit++); }
+        else if (typeof v === 'number') gl.uniform1f(loc, v);
+        else if (v.int != null) gl.uniform1i(loc, v.int);
+        else if (v.length === 2) gl.uniform2fv(loc, v);
+        else if (v.length === 3) gl.uniform3fv(loc, v);
+        else gl.uniform4fv(loc, v);
+      }
+    }
+    draw(target) {
+      const gl = this.gl;
+      if (target) { gl.bindFramebuffer(gl.FRAMEBUFFER, target.fb); gl.viewport(0, 0, target.w, target.h); }
+      else { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, this.c.width, this.c.height); }
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    resize() {
+      const gl = this.gl, r = this.hero.getBoundingClientRect();
+      this.owned.forEach((o) => { gl.deleteFramebuffer(o.fb); gl.deleteTexture(o.tex); }); this.owned = [];
+      this.W = Math.max(1, r.width); this.H = Math.max(1, r.height);
+      this.dpr = Math.min(devicePixelRatio || 1, 1.5, Math.sqrt(3e6 / (this.W * this.H)));
+      this.c.width = Math.round(this.W * this.dpr); this.c.height = Math.round(this.H * this.dpr);
+      this.fboOk = true;
+      const [sw, sh] = this.res(this.cfg.sim), [dw, dh] = this.res(this.cfg.dye);
+      this.vel = this.dbl(sw, sh); this.dye = this.dbl(dw, dh); this.prs = this.dbl(sw, sh); this.dv = this.fbo(sw, sh);
+
+      // flat word: as wide as the screen allows, centred
+      const tc = this.tcv, ctx = tc.getContext('2d'), fam = getComputedStyle(document.body).getPropertyValue('--f-mark');
+      tc.width = this.c.width; tc.height = this.c.height;
+      ctx.font = '100px ' + fam;
+      const m = ctx.measureText(WORD), mw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight, mh = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+      const pad = Math.max(20, this.W * 0.05), s = (this.W - pad * 2) / mw;
+      const wordW = mw * s, wordH = mh * s, x0 = (this.W - wordW) / 2, y0 = (this.H - wordH) / 2;
+      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, this.W, this.H);
+      ctx.fillStyle = '#fff'; ctx.font = 100 * s + 'px ' + fam;
+      ctx.fillText(WORD, x0 + m.actualBoundingBoxLeft * s, y0 + m.actualBoundingBoxAscent * s);
+      this.fsCss = 100 * s; this.wordW = wordW * this.dpr;
+      this.center = [this.W / 2 * this.dpr, this.H / 2 * this.dpr]; // GL coords: y up, symmetric so no flip needed
+      this.box = { x0, x1: x0 + wordW, y0, y1: y0 + wordH };
+
+      gl.bindTexture(gl.TEXTURE_2D, this.textTex);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this.render();
+    }
+    toUv(e) { const r = this.hero.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: 1 - (e.clientY - r.top) / r.height }; }
+    splat(x, y, dx, dy, amt = 1, big = 1) {
+      const asp = this.W / this.H, rad = Math.max(this.fsCss * 0.11, 20) * big / this.H, R = rad * rad / 2.05;
+      this.use('splat', { uTarget: this.vel.read, uAspect: asp, uPoint: [x, y], uColor: [dx * this.cfg.force, dy * this.cfg.force, 0], uRadius: R, uTexel: this.vel.read.texel }); this.draw(this.vel.write); this.vel.swap();
+      this.use('splat', { uTarget: this.dye.read, uAspect: asp, uPoint: [x, y], uColor: [amt, amt, amt], uRadius: R, uTexel: this.dye.read.texel }); this.draw(this.dye.write); this.dye.swap();
+    }
+    stroke(q) {
+      if (!this.prev) { this.prev = q; this.splat(q.x, q.y, 0, 0); return; }
+      const dx = q.x - this.prev.x, dy = q.y - this.prev.y, dpx = Math.hypot(dx * this.W, dy * this.H);
+      const n = clamp(Math.ceil(dpx / Math.max(this.fsCss * 0.05, 6)), 1, 14);
+      for (let i = 1; i <= n; i++) this.splat(this.prev.x + dx * i / n, this.prev.y + dy * i / n, dx / n * 6, dy / n * 6);
+      if (Math.random() < Math.min(0.5, dpx / 120)) this.addBubble(q.x * this.W, (1 - q.y) * this.H);
+      this.prev = q;
+    }
+    onMove(e) { this.lastInput = performance.now(); this.stroke(this.toUv(e)); this.start(); }
+    burst(x, y) {
+      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; this.splat(x, y, Math.cos(a) * 0.012, Math.sin(a) * 0.012, 0.6, 1.4); }
+      this.splat(x, y, 0, 0, 1.4, 2.4);
+      for (let i = 0; i < 6; i++) this.addBubble(x * this.W + (Math.random() - .5) * 60, (1 - y) * this.H + (Math.random() - .5) * 40);
+      this.lastInput = performance.now(); this.start();
+    }
+    intro() { const b = this.box; this.lastInput = -1e9; this.ghostT = 0; this.burst((b.x0 + (b.x1 - b.x0) * 0.22) / this.W, 0.5); }
+    addBubble(x, y) {
+      if (this.bubbles.length >= 24) this.bubbles.shift();
+      const f = Math.max(this.fsCss, 120);
+      this.bubbles.push({ x, y, r: f * (0.03 + Math.random() * 0.08), vy: -(30 + Math.random() * 70), ph: Math.random() * 6, life: 0, max: 2.2 + Math.random() * 2.4, hue: Math.random() });
+    }
+    start() { if (!this.running && this.visible) { this.running = true; this.last = performance.now(); requestAnimationFrame((t) => this.frame(t)); } }
+    frame(now) {
+      const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now; this.t += dt; this.matT += dt;
+      // idle: a ghost stroke wanders through the word in bursts so touch screens and still visitors see it
+      if (!reduced && now - this.lastInput > 2600) {
+        this.ghostT = (this.ghostT || 0) + dt;
+        const g = this.ghostT % 7, b = this.box;
+        if (g < 3.6) {
+          const k = this.ghostT * 0.9;
+          this.stroke({ x: (b.x0 + (b.x1 - b.x0) * (0.5 + 0.47 * Math.sin(k * 0.8))) / this.W, y: 1 - ((b.y0 + b.y1) / 2 + (b.y1 - b.y0) * 0.55 * Math.sin(k * 2.3)) / this.H });
+        } else this.prev = null;
+      }
+      if (!reduced && Math.random() < dt * 1.2) { const b = this.box; this.addBubble(b.x0 + Math.random() * (b.x1 - b.x0), b.y1); }
+      this.bubbles.forEach((p) => { p.life += dt; p.y += p.vy * dt; p.x += Math.sin(p.life * 3 + p.ph) * 18 * dt; if (p.life > p.max - 0.25) p.r *= 0.82; });
+      this.bubbles = this.bubbles.filter((p) => p.life < p.max && p.r > 1);
+      this.step(dt); this.render();
+      if (!this.visible) { this.running = false; return; }
+      requestAnimationFrame((t) => this.frame(t));
+    }
+    step(dt) {
+      const c = this.cfg, v = this.vel, f60 = dt * 60;
+      this.use('div', { uVelocity: v.read, uTexel: v.read.texel }); this.draw(this.dv);
+      this.use('scale', { uTex: this.prs.read, uVal: 0.8, uTexel: v.read.texel }); this.draw(this.prs.write); this.prs.swap();
+      for (let i = 0; i < c.iters; i++) { this.use('pressure', { uPressure: this.prs.read, uDivergence: this.dv, uTexel: v.read.texel }); this.draw(this.prs.write); this.prs.swap(); }
+      this.use('grad', { uPressure: this.prs.read, uVelocity: v.read, uTexel: v.read.texel }); this.draw(v.write); v.swap();
+      this.use('advect', { uVelocity: v.read, uSource: v.read, uTexel: v.read.texel, uDt: dt, uDiss: Math.pow(c.velDiss, f60) }); this.draw(v.write); v.swap();
+      this.use('advect', { uVelocity: v.read, uSource: this.dye.read, uTexel: v.read.texel, uDt: dt, uDiss: Math.pow(c.dyeDiss, f60) }); this.draw(this.dye.write); this.dye.swap();
+    }
+    render() {
+      const per = this.cfg.period, ph = this.matT % per, a = Math.floor(this.matT / per) % LAYERS.length, b = (a + 1) % LAYERS.length;
+      const mix = reduced ? 0 : clamp((ph - (per - 0.6)) / 0.6, 0, 1), label = mix > 0.5 ? b : a;
+      if (label !== this.shown) { this.shown = label; onLayer(label); }
+      const bub = new Float32Array(96);
+      this.bubbles.forEach((p, i) => bub.set([p.x * this.dpr, (this.H - p.y) * this.dpr, p.r * this.dpr, p.hue], i * 4));
+      const size = (l) => [LAYERS[l].rw * this.wordW, LAYERS[l].rh * this.wordW];
+      this.use('comp', {
+        uText: this.textTex, uDye: this.dye.read, uImgA: this.layerTex[a], uImgB: this.layerTex[b],
+        uRes: [this.c.width, this.c.height], uCenter: this.center, uSizeA: size(a), uSizeB: size(b), uTime: this.t,
+        uMix: mix, uBubN: { int: this.bubbles.length }, uBub: bub, uTexel: [0, 0],
+      });
+      this.draw(null);
+    }
+  }
+
+  const matEl = $('#mat');
+  function onLayer(i) { matEl.textContent = `( ${String(i + 1).padStart(2, '0')} / ${String(LAYERS.length).padStart(2, '0')} ${LAYERS[i].name} )`; }
+
+  /* ---------------- Loader: the renders flick through while the counter runs ---------------- */
+  const loader = $('#loader'), count = $('#count'), limg = $('#loaderImg');
+  let k = 0;
+  const swap = setInterval(() => { k = (k + 1) % LAYERS.length; limg.src = LAYERS[k].src; }, reduced ? 900 : 180);
+  const dur = reduced ? 300 : 2400, t0 = performance.now();
+  let loaded = false; Promise.all([fontsReady, imagesReady]).then(() => { loaded = true; }, () => { loaded = true; });
+  (function tick(now) {
+    const p = clamp((now - t0) / dur, 0, loaded ? 1 : 0.92), e = 1 - Math.pow(1 - p, 3);
+    count.textContent = String(Math.round(e * 100)).padStart(3, '0');
+    if (p < 1) requestAnimationFrame(tick); else boot();
+  })(t0);
+
+  let fx;
+  async function boot() {
+    clearInterval(swap);
+    let imgs = null;
+    try { imgs = await imagesReady; } catch { /* handled below */ }
+    try {
+      if (!imgs) throw new Error('images failed to load');
+      fx = new FluidReveal($('#hero'), $('#gl'), imgs);
+    } catch (err) {
+      console.warn('Fluid reveal unavailable:', err.message);
+      $('#gl').remove();
+      const fb = document.createElement('div'); fb.className = 'fallback'; fb.innerHTML = `<img src="${LAYERS[4].src}" alt="ONE OF ONE in pink foil balloon letters">`;
+      $('#hero').prepend(fb);
+      let i = 4; if (!reduced) setInterval(() => { i = (i + 1) % LAYERS.length; fb.firstChild.src = LAYERS[i].src; onLayer(i); }, 2200);
+      onLayer(4); $('#hint').textContent = ''; $('#hint2').textContent = '';
+    }
+    loader.classList.add('out'); document.body.classList.add('ready');
+    setTimeout(() => loader.remove(), 1200);
+    if (fx) setTimeout(() => fx.intro(), reduced ? 0 : 450);
+  }
+
+  /* ---------------- Cursor ---------------- */
+  const cursor = $('#cursor');
+  addEventListener('pointermove', (e) => { cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`; }, { passive: true });
+})();
+</script>
+
+</html>
