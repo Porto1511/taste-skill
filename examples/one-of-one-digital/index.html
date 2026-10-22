@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One of One Digital — One of one</title>
+<meta name="description" content="One of One Digital designs and builds cinematic, interactive websites. Every scene directed, nothing made twice.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --retake-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --retake-slow-ease: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+
+html, body { background: #000; }
+
+body {
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+button { font-family: 'Manrope', system-ui, sans-serif; color: inherit; }
+
+::selection { background: rgba(255, 255, 255, 0.2); }
+:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ── Stage ─────────────────────────────────────────────── */
+.stage {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #000;
+}
+
+.media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+.media.is-visible { visibility: visible; }
+
+/* ── Hero copy ─────────────────────────────────────────── */
+.hero {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hero h1 {
+  position: absolute;
+  top: 35.9%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(901px, calc(100vw - 48px));
+  font-size: clamp(62px, 6.8vw, 100px);
+  font-weight: 500;
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  text-align: center;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 0.14);
+}
+
+.hero h1 span {
+  display: inline-block;
+  transition:
+    opacity 900ms var(--retake-ease),
+    filter 900ms var(--retake-ease),
+    transform 900ms var(--retake-ease);
+}
+.hero h1 span:nth-child(2) { transition-delay: 90ms; }
+.hero h1 span:nth-child(3) { transition-delay: 180ms; }
+
+.stage.title-hidden .hero h1 span {
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(-10px);
+}
+
+.hero p {
+  position: absolute;
+  top: calc(46.78% + 94px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(734px, calc(100vw - 48px));
+  font-size: clamp(14px, 1.25vw, 18px);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  text-align: center;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.16);
+}
+
+/* ── Controller ────────────────────────────────────────── */
+.controller {
+  position: absolute;
+  top: 46.78%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(880px, calc(100vw - 48px));
+  height: 72px;
+  z-index: 20;
+}
+
+.glass { position: absolute; border-radius: 999px; pointer-events: none; }
+.glass::before,
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.glass::before {
+  background:
+    radial-gradient(120% 150% at var(--glass-x, 24%) var(--glass-y, 8%),
+                    rgb(255 255 255 / 0.25), rgb(255 255 255 / 0) 53%),
+    linear-gradient(115deg, rgb(255 255 255 / 0.10), rgb(255 255 255 / 0) 42%);
+}
+.glass::after {
+  padding: 1px;
+  background: conic-gradient(from 225deg, #7fe3ff, rgb(255 255 255 / 0.35), #ffffff,
+                             #ffd7e6, rgb(255 255 255 / 0.35), #7fe3ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+.track {
+  top: 4px;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  background: rgb(24 55 82 / 0.31);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  -webkit-backdrop-filter: blur(9px) saturate(126%) contrast(108%) brightness(103%);
+          backdrop-filter: blur(9px) saturate(126%) contrast(108%) brightness(103%);
+  box-shadow:
+    0 14px 38px rgb(4 24 43 / 0.16),
+    0 2px 7px rgb(4 24 43 / 0.1),
+    inset 1px 1px 0 rgb(255 255 255 / 0.48),
+    inset -1px -1px 0 rgb(21 49 73 / 0.14),
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.16);
+  opacity: 1;
+  transition:
+    left 980ms var(--retake-slow-ease),
+    width 980ms var(--retake-slow-ease),
+    top 980ms var(--retake-slow-ease),
+    height 980ms var(--retake-slow-ease),
+    border-radius 980ms var(--retake-slow-ease),
+    opacity 400ms linear;
+}
+.track::after { opacity: 0.27; }
+
+.capsule,
+.ghost {
+  top: -1px;
+  height: 72px;
+  left: var(--cap-left, -5px);
+  width: var(--cap-width, calc(20% + 5px));
+}
+
+.capsule {
+  background: rgb(246 251 255 / 0.24);
+  border: 1px solid rgb(255 255 255 / 0.28);
+  -webkit-backdrop-filter: blur(13px) saturate(128%) contrast(107%) brightness(105%);
+          backdrop-filter: blur(13px) saturate(128%) contrast(107%) brightness(105%);
+  box-shadow:
+    0 11px 28px rgb(4 24 43 / 0.17),
+    0 2px 6px rgb(4 24 43 / 0.1),
+    inset 1px 1px 0 rgb(255 255 255 / 0.62),
+    inset -1px -1px 0 rgb(20 49 73 / 0.18),
+    inset 0 0 12px rgb(255 255 255 / 0.055);
+  transition:
+    left 620ms var(--retake-ease),
+    width 620ms var(--retake-ease),
+    background-color 620ms var(--retake-ease),
+    opacity 420ms var(--retake-ease);
+}
+.capsule::after { opacity: 0.30; }
+
+/* Invisible twin of the capsule with no transition: measured to find the
+   collapsed capsule's final centre without waiting for its animation. */
+.ghost {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  border-radius: 999px;
+}
+
+.controller.collapsed .capsule,
+.controller.collapsed .ghost {
+  left: calc(50% - 100px);
+  width: 200px;
+}
+.controller.collapsed .capsule {
+  background-color: rgb(246 251 255 / 0.14);
+  transition:
+    left 980ms var(--retake-slow-ease),
+    width 980ms var(--retake-slow-ease),
+    top 980ms var(--retake-slow-ease),
+    height 980ms var(--retake-slow-ease),
+    background-color 980ms var(--retake-slow-ease),
+    opacity 420ms var(--retake-ease);
+}
+.controller.reopening .capsule {
+  transition:
+    left 980ms var(--retake-slow-ease),
+    width 980ms var(--retake-slow-ease),
+    top 980ms var(--retake-slow-ease),
+    height 980ms var(--retake-slow-ease),
+    background-color 980ms var(--retake-slow-ease),
+    opacity 420ms var(--retake-ease);
+}
+
+.controller.collapsed .track {
+  left: calc(50% - 96px);
+  width: 192px;
+}
+/* Applied in the same style recalc as .collapsed; the 650ms delay does the waiting. */
+.controller.rear-fading .track {
+  opacity: 0;
+  transition:
+    left 980ms var(--retake-slow-ease),
+    width 980ms var(--retake-slow-ease),
+    top 980ms var(--retake-slow-ease),
+    height 980ms var(--retake-slow-ease),
+    border-radius 980ms var(--retake-slow-ease),
+    opacity 400ms linear 650ms;
+}
+
+.cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+}
+
+.cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 14px;
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  transform: translate(var(--dx, 0px), var(--dy, 0px));
+  transition:
+    opacity 420ms var(--retake-ease),
+    filter 420ms var(--retake-ease),
+    transform 980ms var(--retake-slow-ease);
+}
+
+.cell-label { transition-property: opacity, filter, transform; }
+.controller.highlighting .cell-label {
+  opacity: 0.5;
+  transition:
+    opacity 300ms var(--retake-ease),
+    filter 420ms var(--retake-ease),
+    transform 980ms var(--retake-slow-ease);
+}
+
+.cell-btn {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 23px;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  -webkit-tap-highlight-color: transparent;
+}
+.cell-btn:disabled { cursor: default; }
+.cell-btn.is-pending { opacity: 0.5; }
+
+.cell .label { display: inline-block; }
+
+.controller.collapsed .cell:not(.is-chosen) {
+  opacity: 0;
+  filter: blur(10px);
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
+/* Options coming back after Reset: 760ms, 60ms behind the bar opening. */
+.controller.reopening .cell:not(.is-chosen) {
+  transition:
+    opacity 760ms var(--retake-ease) 60ms,
+    filter 760ms var(--retake-ease) 60ms,
+    transform 980ms var(--retake-slow-ease);
+}
+
+.cell.is-reset .label {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  animation: label-reveal 520ms var(--retake-ease) both;
+}
+.cell.is-leaving .label {
+  opacity: 0;
+  filter: blur(10px);
+  transition: opacity 280ms var(--retake-ease), filter 280ms var(--retake-ease);
+}
+.cell.is-returning .label {
+  animation: label-reveal 760ms var(--retake-ease) 60ms both;
+}
+
+@keyframes label-reveal {
+  from { opacity: 0; filter: blur(10px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.site-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: calc(58px + env(safe-area-inset-top)) 40px 40px;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.18);
+}
+
+.brand { display: inline-flex; align-items: center; color: #fff; }
+.brand svg { display: block; height: 24px; width: auto; }
+
+.meta {
+  display: flex;
+  align-items: center;
+  margin-left: clamp(48px, 5vw, 70px);
+  gap: clamp(28px, 3vw, 44px);
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 152px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.75);
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+  text-shadow: none;
+  transition:
+    color 300ms var(--retake-ease),
+    background-color 300ms var(--retake-ease),
+    border-color 300ms var(--retake-ease);
+}
+.cta:hover,
+.cta:focus-visible {
+  background: #fff;
+  border-color: #fff;
+  color: #0b1a26;
+}
+
+/* ── Status + notice ───────────────────────────────────── */
+.notice {
+  position: absolute;
+  left: 50%;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 40;
+  display: none;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 8px 8px 18px;
+  border-radius: 999px;
+  background: rgb(24 55 82 / 0.42);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  -webkit-backdrop-filter: blur(9px) saturate(126%);
+          backdrop-filter: blur(9px) saturate(126%);
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+.notice.is-open { display: flex; }
+.notice button {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.75);
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 300ms var(--retake-ease), background-color 300ms var(--retake-ease);
+}
+.notice button:hover,
+.notice button:focus-visible { background: #fff; color: #0b1a26; }
+
+/* ── ≤ 900px ───────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .site-header { padding: calc(24px + env(safe-area-inset-top)) 24px 24px; }
+  .meta { font-size: 14px; gap: 22px; margin-left: 34px; }
+  .cta { width: 116px; height: 36px; font-size: 14px; }
+  .cell, .cell-btn { font-size: clamp(17px, 2.5vw, 24px); }
+}
+
+/* ── ≤ 700px ───────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .site-header { padding-left: 18px; padding-right: 18px; }
+  .brand svg { height: 21px; }
+  .meta { font-size: 12px; }
+  .meta-secondary { display: none; }
+  .cta { width: 92px; height: 34px; font-size: 13px; }
+  .cta::after { content: ""; position: absolute; inset: -6px -10px; }
+
+  .hero h1 {
+    top: 34%;
+    width: calc(100vw - 40px);
+    font-size: clamp(48px, 14vw, 64px);
+    line-height: 0.88;
+    white-space: normal;
+  }
+  .hero p { top: 77%; width: calc(100vw - 44px); font-size: 14px; }
+
+  .controller {
+    top: 53%;
+    width: calc(100vw - 40px);
+    height: 156px;
+    --r1: 48px;
+    --r2: 54px;
+  }
+  .track { top: 0; height: 156px; border-radius: 28px; }
+
+  .cells {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: var(--r1) var(--r2) var(--r2);
+    align-items: stretch;
+  }
+  .cells::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.12))
+        16px var(--r1) / calc(100% - 32px) 1px no-repeat,
+      linear-gradient(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.12))
+        16px calc(var(--r1) + var(--r2)) / calc(100% - 32px) 1px no-repeat,
+      linear-gradient(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.12))
+        50% calc(var(--r1) + 10px) / 1px calc(100% - var(--r1) - 20px) no-repeat;
+    transition: opacity 420ms var(--retake-ease);
+  }
+  .controller.collapsed .cells::before { opacity: 0; }
+  .controller.reopening .cells::before { transition: opacity 760ms var(--retake-ease) 60ms; }
+
+  .cell-label { grid-column: 1 / -1; }
+  .cell, .cell-btn { font-size: 17px; }
+  .cell-btn { border-radius: 22px; }
+  .cell-btn:active { background: rgb(255 255 255 / 0.08); }
+  .cell-btn:focus-visible { outline-offset: -3px; }
+  .controller.highlighting .cell-label { opacity: 1; }
+
+  /* No sliding hover capsule on touch layouts. */
+  .capsule { opacity: 0; pointer-events: none; }
+
+  .controller.collapsed .capsule,
+  .controller.collapsed .ghost {
+    left: 50%;
+    top: 4vh;
+    top: 4dvh;
+    width: 196px;
+    height: 64px;
+    transform: translate(-50%, -50%);
+  }
+  .controller.collapsed .capsule {
+    opacity: 1;
+    background-color: rgb(246 251 255 / 0.18);
+  }
+  .controller.collapsed .track {
+    left: calc(50% - 94px);
+    width: 188px;
+    top: calc(4vh - 30px);
+    top: calc(4dvh - 30px);
+    height: 60px;
+    border-radius: 999px;
+  }
+}
+
+@media (max-width: 700px) and (max-height: 700px) {
+  .controller { top: 50%; }
+  .hero p { top: calc(50% + 168px); width: calc(100vw - 32px); font-size: 13px; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .hero h1 { top: 30%; font-size: clamp(34px, 8vh, 56px); }
+  .controller { top: 50%; }
+  .hero p { top: auto; bottom: 8px; font-size: 13px; }
+}
+
+@media (max-width: 700px) and (max-height: 520px) and (orientation: landscape) {
+  .hero h1 { top: 29%; font-size: clamp(28px, 7vh, 44px); }
+  .controller { top: 46%; height: 118px; --r1: 36px; --r2: 41px; }
+  .track { height: 118px; }
+  .cell, .cell-btn { font-size: 15px; }
+  .hero p { bottom: 6px; font-size: 12px; }
+}
+
+/* ── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .capsule, .track, .cell, .cell .label, .cells::before,
+  .hero h1 span, .cta,
+  .controller.collapsed .capsule, .controller.reopening .capsule,
+  .controller.rear-fading .track,
+  .controller.collapsed .cell:not(.is-chosen),
+  .controller.reopening .cell:not(.is-chosen),
+  .controller.highlighting .cell-label {
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+  }
+  .cell.is-reset .label, .cell.is-returning .label {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+  }
+  .stage.title-hidden .hero h1 span,
+  .controller.collapsed .cell:not(.is-chosen),
+  .cell.is-leaving .label { filter: none; }
+  @keyframes label-reveal { from { opacity: 0; } to { opacity: 1; } }
+}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+
+  <video class="media" id="v-colorway-fwd" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-1.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+  <video class="media" id="v-colorway-rev" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-1-reverse.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+  <video class="media" id="v-scene-fwd" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-2.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+  <video class="media" id="v-scene-rev" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-2-reverse.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+  <video class="media" id="v-light-fwd" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-3.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+  <video class="media" id="v-light-rev" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-3-reverse.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+  <video class="media" id="v-fullLook-fwd" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-4.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+  <video class="media" id="v-fullLook-rev" src="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/video-4-reverse.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+
+  <div class="hero">
+    <h1 id="title"><span>One</span> <span>of</span> <span>one</span></h1>
+    <p>We design and build cinematic, interactive websites, with every scene directed, every transition choreographed and nothing made twice.</p>
+  </div>
+
+  <div class="controller" id="controller" role="group" aria-label="Scene state controller">
+    <div class="track glass" aria-hidden="true"></div>
+    <div class="capsule glass" aria-hidden="true"></div>
+    <div class="ghost" aria-hidden="true"></div>
+    <div class="cells">
+      <div class="cell cell-label">Select state&nbsp;<span aria-hidden="true">→</span></div>
+      <button class="cell cell-btn is-pending" type="button" data-index="1" data-key="scene" disabled><span class="label">Scene</span></button>
+      <button class="cell cell-btn is-pending" type="button" data-index="2" data-key="light" disabled><span class="label">Lighting</span></button>
+      <button class="cell cell-btn is-pending" type="button" data-index="3" data-key="colorway" disabled><span class="label">Clothing</span></button>
+      <button class="cell cell-btn is-pending" type="button" data-index="4" data-key="fullLook" disabled><span class="label">Cast</span></button>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="One of One Digital home">
+      <svg viewBox="0 0 75 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <g transform="translate(4.5 0)">
+          <path fill="#fff" d="M14 2V30H7V10.4L1 13.2V6.2L9.6 2Z"/>
+          <path fill="#fff" d="M22 30L36 2H43L29 30Z"/>
+          <path fill="#fff" d="M66 2V30H59V10.4L53 13.2V6.2L61.6 2Z"/>
+        </g>
+      </svg>
+    </a>
+    <div class="meta">
+      <span>One of One Digital</span>
+      <span class="meta-secondary">Directed. Not templated.</span>
+    </div>
+    <!-- Replace the href with your booking / contact URL. -->
+    <a class="cta" href="https://example.com/" target="_blank" rel="noopener noreferrer">Enquire</a>
+  </header>
+
+  <div class="visually-hidden" id="status" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div class="notice" id="notice" role="alert">
+    <span id="notice-text"></span>
+    <button type="button" id="retry">Retry</button>
+  </div>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var FIRST_FRAME_TIMEOUT = 12000;
+  var DEFAULT_GUARD = 0.08;
+
+  // Per control: forward / reverse element ids, nominal durations, hold guards.
+  var CLIPS = {
+    scene:    { name: 'Scene',    fwd: 'v-scene-fwd',    rev: 'v-scene-rev',    dur: [2.08, 2.08], guard: [DEFAULT_GUARD, 0.18] },
+    light:    { name: 'Lighting', fwd: 'v-light-fwd',    rev: 'v-light-rev',    dur: [2.08, 2.04], guard: [DEFAULT_GUARD, DEFAULT_GUARD] },
+    colorway: { name: 'Clothing', fwd: 'v-colorway-fwd', rev: 'v-colorway-rev', dur: [2.08, 2.08], guard: [DEFAULT_GUARD, DEFAULT_GUARD] },
+    fullLook: { name: 'Cast',     fwd: 'v-fullLook-fwd', rev: 'v-fullLook-rev', dur: [3.00, 2.48], guard: [DEFAULT_GUARD, DEFAULT_GUARD] }
+  };
+  var CAP_POSITIONS = [
+    ['-5px', 'calc(20% + 5px)'],
+    ['20%', '20%'],
+    ['40%', '20%'],
+    ['60%', '20%'],
+    ['80%', 'calc(20% + 5px)']
+  ];
+
+  var stage = document.getElementById('stage');
+  var controller = document.getElementById('controller');
+  var ghost = controller.querySelector('.ghost');
+  var cellsEl = controller.querySelector('.cells');
+  var buttons = Array.prototype.slice.call(controller.querySelectorAll('.cell-btn'));
+  var statusEl = document.getElementById('status');
+  var notice = document.getElementById('notice');
+  var noticeText = document.getElementById('notice-text');
+  var retryBtn = document.getElementById('retry');
+  var videos = Array.prototype.slice.call(document.querySelectorAll('video.media'));
+  var hasRVFC = typeof HTMLVideoElement !== 'undefined' &&
+    'requestVideoFrameCallback' in HTMLVideoElement.prototype;
+
+  // All mutable state lives here; nothing re-renders per frame.
+  var ref = {
+    scene: 'base',          // base | scene | light | colorway | fullLook
+    playback: 'loading',    // loading | ready | starting | playing | error
+    direction: 'forward',
+    locked: false,
+    token: 0,
+    visible: null,          // the <video> currently on screen
+    chosen: null,           // key of the selected / transitioning branch
+    pending: null,          // first-frame wait in progress
+    cleanups: [],           // teardown for the active transition
+    lastRequest: null,      // for Retry
+    restoreFocus: false,
+    ready: {},
+    failedLoads: {},
+    baseShown: false,
+    pointerInside: false,
+    timers: []
+  };
+
+  function byId(id) { return document.getElementById(id); }
+  function btnFor(key) {
+    for (var i = 0; i < buttons.length; i++) if (buttons[i].getAttribute('data-key') === key) return buttons[i];
+    return null;
+  }
+  function labelOf(btn) { return btn.querySelector('.label'); }
+  function announce(msg) {
+    // Clear first so repeated messages are still read.
+    statusEl.textContent = '';
+    setTimeout(function () { statusEl.textContent = msg; }, 30);
+  }
+  function later(fn, ms) {
+    var id = setTimeout(fn, ms);
+    ref.timers.push(id);
+    return id;
+  }
+  function clearTimers() {
+    for (var i = 0; i < ref.timers.length; i++) clearTimeout(ref.timers[i]);
+    ref.timers = [];
+  }
+  function runCleanups() {
+    var list = ref.cleanups;
+    ref.cleanups = [];
+    for (var i = 0; i < list.length; i++) { try { list[i](); } catch (e) {} }
+  }
+  function listen(el, type, fn) {
+    el.addEventListener(type, fn);
+    ref.cleanups.push(function () { el.removeEventListener(type, fn); });
+  }
+  function staleError() { var e = new Error('stale'); e.stale = true; return e; }
+
+  // ── Readiness ──────────────────────────────────────────
+  function pairReady(key) {
+    var c = CLIPS[key];
+    return !!(ref.ready[c.fwd] && ref.ready[c.rev]);
+  }
+  function allReady() {
+    for (var k in CLIPS) if (CLIPS.hasOwnProperty(k) && !pairReady(k)) return false;
+    return true;
+  }
+  function markReady(v) {
+    if (ref.ready[v.id]) return;
+    ref.ready[v.id] = true;
+    delete ref.failedLoads[v.id];
+    if (v.id === CLIPS.colorway.fwd && !ref.baseShown) showBase(v);
+    if (ref.playback === 'loading' && ref.baseShown) ref.playback = 'ready';
+    if (!ref.locked) syncControls();
+    if (allReady()) announce('All states ready. Choose Scene, Lighting, Clothing or Cast.');
+  }
+  function showBase(v) {
+    // Base scene = video-1 parked at frame 0. No still image.
+    ref.baseShown = true;
+    try { v.pause(); } catch (e) {}
+    if (v.currentTime > 0.001) { try { v.currentTime = 0; } catch (e) {} }
+    v.classList.add('is-visible');
+    ref.visible = v;
+    if (ref.playback === 'loading') ref.playback = 'ready';
+  }
+  videos.forEach(function (v) {
+    v.muted = true;
+    v.addEventListener('loadeddata', function () { markReady(v); });
+    v.addEventListener('canplay', function () { if (v.readyState >= 2) markReady(v); });
+    v.addEventListener('error', function () {
+      if (ref.ready[v.id]) return;
+      ref.failedLoads[v.id] = true;
+      showNotice('Some footage could not load.', 'load');
+      announce('Some footage could not load. Use Retry to try again.');
+    });
+    // Cached media may never fire loadeddata again.
+    if (v.readyState >= 2) markReady(v);
+  });
+  announce('Loading footage.');
+
+  // ── Capsule + glass ────────────────────────────────────
+  function setCap(i) {
+    controller.style.setProperty('--cap-left', CAP_POSITIONS[i][0]);
+    controller.style.setProperty('--cap-width', CAP_POSITIONS[i][1]);
+    controller.classList.toggle('highlighting', i > 0);
+  }
+  function focusedButton() {
+    var a = document.activeElement;
+    return buttons.indexOf(a) >= 0 ? a : null;
+  }
+  function isKeyboardFocus(el) {
+    try { return el.matches(':focus-visible'); } catch (e) { return true; }
+  }
+  function interactive() {
+    return !controller.classList.contains('collapsed');
+  }
+  buttons.forEach(function (btn) {
+    var i = +btn.getAttribute('data-index');
+    btn.addEventListener('pointerenter', function () { if (interactive()) setCap(i); });
+    btn.addEventListener('focus', function () { if (interactive() && isKeyboardFocus(btn)) setCap(i); });
+    btn.addEventListener('blur', function () {
+      if (!interactive()) return;
+      later(function () {
+        if (!ref.pointerInside && !focusedButton()) setCap(0);
+      }, 0);
+    });
+    btn.addEventListener('click', function () { onButton(btn); });
+  });
+  controller.addEventListener('pointerenter', function () { ref.pointerInside = true; });
+  controller.addEventListener('pointerleave', function () {
+    ref.pointerInside = false;
+    if (!interactive()) return;
+    var f = focusedButton();
+    if (f && isKeyboardFocus(f)) setCap(+f.getAttribute('data-index'));
+    else setCap(0);
+  });
+  controller.addEventListener('pointermove', function (e) {
+    var r = controller.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var x = ((e.clientX - r.left) / r.width) * 100;
+    var y = ((e.clientY - r.top) / r.height) * 100;
+    controller.style.setProperty('--glass-x', x.toFixed(1) + '%');
+    controller.style.setProperty('--glass-y', y.toFixed(1) + '%');
+  });
+
+  // ── Controller semantics ───────────────────────────────
+  // mode: 'base' | 'forward' | 'selected' | 'reverse'
+  function syncControls(mode) {
+    mode = mode || (ref.scene === 'base' ? 'base' : 'selected');
+    buttons.forEach(function (btn) {
+      var key = btn.getAttribute('data-key');
+      var isChosen = key === ref.chosen;
+      var enabled = false, hidden = false;
+      if (mode === 'base') {
+        enabled = pairReady(key) && ref.baseShown;
+        btn.classList.toggle('is-pending', !pairReady(key));
+      } else if (mode === 'forward') {
+        hidden = !isChosen;
+      } else if (mode === 'selected') {
+        enabled = isChosen;
+        hidden = !isChosen;
+      }
+      btn.disabled = !enabled;
+      if (hidden) {
+        btn.setAttribute('aria-hidden', 'true');
+        btn.setAttribute('tabindex', '-1');
+      } else {
+        btn.removeAttribute('aria-hidden');
+        btn.removeAttribute('tabindex');
+      }
+      if (mode !== 'base') btn.classList.remove('is-pending');
+    });
+  }
+
+  function measureChosen(btn) {
+    // Untransformed centre of the cell vs. the collapsed capsule's final centre.
+    var g = ghost.getBoundingClientRect();
+    var c = cellsEl.getBoundingClientRect();
+    var cx = c.left + btn.offsetLeft + btn.offsetWidth / 2;
+    var cy = c.top + btn.offsetTop + btn.offsetHeight / 2;
+    btn.style.setProperty('--dx', (g.left + g.width / 2 - cx).toFixed(2) + 'px');
+    btn.style.setProperty('--dy', (g.top + g.height / 2 - cy).toFixed(2) + 'px');
+  }
+
+  function collapseUI(btn) {
+    controller.classList.remove('reopening', 'highlighting');
+    // Collapse and rear fade land in the same style recalc (pitfall 3).
+    controller.classList.add('collapsed', 'rear-fading');
+    btn.classList.add('is-chosen');
+    measureChosen(btn);
+  }
+
+  function reopenUI(btn, animateLabel) {
+    controller.classList.add('reopening');
+    controller.classList.remove('collapsed', 'rear-fading');
+    setCap(0);
+    if (btn) {
+      btn.style.removeProperty('--dx');
+      btn.style.removeProperty('--dy');
+      btn.classList.remove('is-chosen', 'is-reset', 'is-leaving');
+      labelOf(btn).textContent = CLIPS[btn.getAttribute('data-key')].name;
+      if (animateLabel) {
+        btn.classList.remove('is-returning');
+        void btn.offsetWidth;
+        btn.classList.add('is-returning');
+      }
+    }
+  }
+
+  function showReset(btn) {
+    btn.classList.remove('is-leaving', 'is-returning');
+    labelOf(btn).textContent = 'Reset';
+    btn.classList.remove('is-reset');
+    void btn.offsetWidth;
+    btn.classList.add('is-reset');
+  }
+
+  // ── Notice ─────────────────────────────────────────────
+  function showNotice(msg, kind) {
+    noticeText.textContent = msg;
+    notice.setAttribute('data-kind', kind);
+    notice.classList.add('is-open');
+  }
+  function hideNotice() { notice.classList.remove('is-open'); }
+  retryBtn.addEventListener('click', function () {
+    var kind = notice.getAttribute('data-kind');
+    hideNotice();
+    if (kind === 'load') {
+      for (var id in ref.failedLoads) if (ref.failedLoads.hasOwnProperty(id)) byId(id).load();
+      ref.failedLoads = {};
+      return;
+    }
+    var req = ref.lastRequest;
+    if (!req) return;
+    if (req.type === 'forward' && ref.scene === 'base') startForward(req.key, false);
+    else if (req.type === 'reverse' && ref.scene === req.key) startReverse(false);
+  });
+
+  // ── Seam-safe player ───────────────────────────────────
+  function seekToStart(v, token) {
+    return new Promise(function (resolve, reject) {
+      if (v.currentTime <= 0.001) { resolve(); return; }
+      var onSeeked = function () {
+        v.removeEventListener('seeked', onSeeked);
+        if (token !== ref.token) reject(staleError()); else resolve();
+      };
+      v.addEventListener('seeked', onSeeked);
+      ref.cleanups.push(function () { v.removeEventListener('seeked', onSeeked); });
+      try { v.currentTime = 0; } catch (e) { reject(e); }
+    });
+  }
+
+  // Resolves only on a decoded frame from THIS play request; timeout rejects.
+  function waitFirstFrame(v, token) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var p = {
+        token: token, video: v, remaining: FIRST_FRAME_TIMEOUT, started: 0, timer: null,
+        fail: function (err) { finish(err); }
+      };
+      ref.pending = p;
+
+      function finish(err) {
+        if (done) return;
+        done = true;
+        clearTimeout(p.timer);
+        if (ref.pending === p) ref.pending = null;
+        if (err) reject(err); else resolve();
+      }
+      p.arm = function () {
+        clearTimeout(p.timer);
+        p.started = Date.now();
+        p.timer = setTimeout(function () {
+          finish(new Error('Timed out waiting for the first frame.'));
+        }, p.remaining);
+      };
+      p.suspend = function () {
+        clearTimeout(p.timer);
+        p.remaining = Math.max(0, p.remaining - (Date.now() - p.started));
+      };
+      if (!document.hidden) p.arm();
+
+      if (hasRVFC) {
+        var handle = null;
+        var onFrame = function (now, meta) {
+          handle = null;
+          if (done) return;
+          if (token !== ref.token) { finish(staleError()); return; }
+          // A stale endpoint frame carries a large mediaTime: keep waiting.
+          if (meta.mediaTime <= 0.5 && v.readyState >= 2 && !v.paused && !document.hidden) {
+            finish();
+          } else {
+            handle = v.requestVideoFrameCallback(onFrame);
+          }
+        };
+        handle = v.requestVideoFrameCallback(onFrame);
+        ref.cleanups.push(function () {
+          if (handle !== null && v.cancelVideoFrameCallback) v.cancelVideoFrameCallback(handle);
+          handle = null;
+        });
+      } else {
+        var raf = 0;
+        var gotPlaying = false;
+        var tick = function (n) {
+          raf = requestAnimationFrame(function () {
+            raf = 0;
+            if (done) return;
+            if (token !== ref.token) { finish(staleError()); return; }
+            if (n > 0) { tick(n - 1); return; }
+            if (v.readyState >= 2 && !v.paused && v.currentTime > 0 && !document.hidden) finish();
+            else tick(0);
+          });
+        };
+        var onPlaying = function () {
+          if (gotPlaying || done) return;
+          gotPlaying = true;
+          tick(1); // double rAF
+        };
+        v.addEventListener('playing', onPlaying);
+        ref.cleanups.push(function () {
+          v.removeEventListener('playing', onPlaying);
+          if (raf) cancelAnimationFrame(raf);
+        });
+      }
+    });
+  }
+
+  function startClip(v, token) {
+    return seekToStart(v, token).then(function () {
+      if (token !== ref.token) throw staleError();
+      // Frame callback registered before play().
+      var framePromise = waitFirstFrame(v, token);
+      var playPromise;
+      try {
+        playPromise = Promise.resolve(v.play());
+      } catch (e) {
+        playPromise = Promise.reject(e);
+      }
+      playPromise.catch(function (err) {
+        if (ref.pending && ref.pending.video === v) ref.pending.fail(err);
+      });
+      return Promise.all([playPromise, framePromise]);
+    });
+  }
+
+  function reveal(v) {
+    // Atomic swap in one task: the new layer appears as the old one hides.
+    var prev = ref.visible;
+    v.classList.add('is-visible');
+    if (prev && prev !== v) {
+      prev.classList.remove('is-visible');
+      try { prev.pause(); } catch (e) {}
+    }
+    ref.visible = v;
+  }
+
+  // Pause the active clip on its terminal hold frame.
+  function holdAtEnd(v, guard, nominal, token, onProgress) {
+    return new Promise(function (resolve, reject) {
+      var done = false, raf = 0;
+      function holdTime() {
+        var d = isFinite(v.duration) && v.duration > 0 ? v.duration : nominal;
+        return d - guard;
+      }
+      function finish(err) {
+        if (done) return;
+        done = true;
+        if (raf) cancelAnimationFrame(raf);
+        v.removeEventListener('timeupdate', check);
+        v.removeEventListener('ended', onEnded);
+        v.removeEventListener('error', onError);
+        if (err) reject(err); else resolve();
+      }
+      function check() {
+        if (done) return;
+        if (token !== ref.token) { finish(staleError()); return; }
+        var t = v.currentTime;
+        if (onProgress) onProgress(t);
+        if (t >= holdTime()) { v.pause(); finish(); }
+      }
+      function loop() {
+        check();
+        if (!done) raf = requestAnimationFrame(loop);
+      }
+      function onEnded() {
+        // Fallback only: the guard should have paused us earlier.
+        if (token !== ref.token) { finish(staleError()); return; }
+        finish();
+      }
+      function onError() { finish(new Error('Playback error.')); }
+      v.addEventListener('timeupdate', check);
+      v.addEventListener('ended', onEnded);
+      v.addEventListener('error', onError);
+      ref.cleanups.push(function () { finish(staleError()); });
+      loop();
+    });
+  }
+
+  // Background tab: freeze the first-frame deadline and the pending clip.
+  document.addEventListener('visibilitychange', function () {
+    var p = ref.pending;
+    if (!p || p.token !== ref.token) return;
+    var v = p.video;
+    if (document.hidden) {
+      p.suspend();
+      try { v.pause(); } catch (e) {}
+      try { v.currentTime = 0; } catch (e) {}
+    } else {
+      p.remaining = FIRST_FRAME_TIMEOUT;
+      p.arm();
+      var pr = v.play();
+      if (pr && pr.catch) pr.catch(function (err) { if (ref.pending === p) p.fail(err); });
+    }
+  });
+
+  // ── Transitions ────────────────────────────────────────
+  function onButton(btn) {
+    if (ref.locked) return;
+    var key = btn.getAttribute('data-key');
+    if (ref.scene === 'base') startForward(key, true, btn);
+    else if (ref.scene === key && ref.playback === 'ready') startReverse(true, btn);
+    // Any other branch while one is selected: ignored. Reset returns to base first.
+  }
+
+  function beginTransition() {
+    // Synchronous lock, before any async work.
+    ref.locked = true;
+    ref.token += 1;
+    runCleanups();
+    clearTimers();
+    hideNotice();
+    return ref.token;
+  }
+
+  function startForward(key, fromClick, originBtn) {
+    if (ref.locked || ref.scene !== 'base' || !pairReady(key) || !ref.baseShown) return;
+    var btn = btnFor(key);
+    var c = CLIPS[key];
+    ref.restoreFocus = fromClick ? document.activeElement === (originBtn || btn) : ref.restoreFocus;
+    var token = beginTransition();
+    ref.chosen = key;
+    ref.direction = 'forward';
+    ref.playback = 'starting';
+    ref.lastRequest = { type: 'forward', key: key };
+    syncControls('forward');
+    collapseUI(btn);
+    announce('Transitioning to ' + c.name + '.');
+
+    var v = byId(c.fwd);
+    var titleAt = Math.min(c.dur[0] * 0.12, 0.9);
+    var titleHidden = false;
+
+    startClip(v, token).then(function () {
+      if (token !== ref.token) throw staleError();
+      reveal(v);
+      ref.playback = 'playing';
+      var nominal = isFinite(v.duration) && v.duration > 0 ? v.duration : c.dur[0];
+      titleAt = Math.min(nominal * 0.12, 0.9);
+      return holdAtEnd(v, c.guard[0], c.dur[0], token, function (t) {
+        if (!titleHidden && t >= titleAt) { titleHidden = true; stage.classList.add('title-hidden'); }
+      });
+    }).then(function () {
+      if (token !== ref.token) return;
+      stage.classList.add('title-hidden');
+      ref.scene = key;
+      ref.playback = 'ready';
+      runCleanups();
+      ref.locked = false;
+      showReset(btn);
+      syncControls('selected');
+      if (ref.restoreFocus) btn.focus({ preventScroll: true });
+      announce(c.name + ' state selected. Press Reset to return.');
+    }).catch(function (err) {
+      if (err && err.stale) return;
+      if (token !== ref.token) return;
+      failTransition(err, 'forward', key);
+    });
+  }
+
+  function startReverse(fromClick, originBtn) {
+    var key = ref.scene;
+    if (ref.locked || key === 'base') return;
+    var btn = btnFor(key);
+    var c = CLIPS[key];
+    ref.restoreFocus = fromClick ? document.activeElement === (originBtn || btn) : ref.restoreFocus;
+    var token = beginTransition();
+    ref.direction = 'reverse';
+    ref.playback = 'starting';
+    ref.lastRequest = { type: 'reverse', key: key };
+    syncControls('reverse');
+    announce('Returning to the base scene.');
+
+    // Reverse clip and bar expansion run in parallel.
+    var v = byId(c.rev);
+    btn.classList.remove('is-reset', 'is-returning');
+    btn.classList.add('is-leaving');
+    controller.classList.add('reopening');
+    controller.classList.remove('collapsed', 'rear-fading');
+    setCap(0);
+    btn.style.removeProperty('--dx');
+    btn.style.removeProperty('--dy');
+    later(function () {
+      if (token !== ref.token) return;
+      labelOf(btn).textContent = c.name;
+      btn.classList.remove('is-leaving', 'is-chosen');
+      void btn.offsetWidth;
+      btn.classList.add('is-returning');
+    }, 280);
+
+    startClip(v, token).then(function () {
+      if (token !== ref.token) throw staleError();
+      reveal(v);
+      ref.playback = 'playing';
+      return holdAtEnd(v, c.guard[1], c.dur[1], token, null);
+    }).then(function () {
+      if (token !== ref.token) return;
+      ref.scene = 'base';
+      ref.chosen = null;
+      ref.playback = 'ready';
+      runCleanups();
+      clearTimers();
+      reopenUI(btn, false);
+      stage.classList.remove('title-hidden');
+      ref.locked = false;
+      syncControls('base');
+      if (ref.restoreFocus && !btn.disabled) btn.focus({ preventScroll: true });
+      announce('Base scene restored.');
+    }).catch(function (err) {
+      if (err && err.stale) return;
+      if (token !== ref.token) return;
+      failTransition(err, 'reverse', key);
+    });
+  }
+
+  function failTransition(err, type, key) {
+    var c = CLIPS[key];
+    var btn = btnFor(key);
+    var pv = ref.pending && ref.pending.video;
+    runCleanups();
+    clearTimers();
+    ref.pending = null;
+    ref.token += 1;  // anything still in flight is now stale
+    // Keep the last valid frame: stop the clip that never made it on screen.
+    videos.forEach(function (v) { if (v !== ref.visible) { try { v.pause(); } catch (e) {} } });
+    if (pv && pv !== ref.visible) { try { pv.pause(); } catch (e) {} }
+    ref.playback = 'error';
+    ref.locked = false;
+
+    if (type === 'forward') {
+      // Scene never committed: back to base controls.
+      ref.chosen = null;
+      reopenUI(btn, true);
+      stage.classList.remove('title-hidden');
+      syncControls('base');
+      if (ref.restoreFocus && !btn.disabled) btn.focus({ preventScroll: true });
+    } else {
+      // Still on the selected branch: restore the Reset capsule.
+      ref.chosen = key;
+      controller.classList.remove('reopening');
+      controller.classList.add('collapsed', 'rear-fading');
+      btn.classList.add('is-chosen');
+      measureChosen(btn);
+      showReset(btn);
+      syncControls('selected');
+      if (ref.restoreFocus) btn.focus({ preventScroll: true });
+    }
+    var msg = (type === 'forward' ? c.name + ' could not play.' : 'Reset could not play.');
+    showNotice(msg, 'transition');
+    announce(msg + ' ' + ((err && err.message) || '') + ' Use Retry to try again.');
+  }
+
+  // Keep the travelled label centred in the capsule through resizes.
+  var resizeRaf = 0;
+  window.addEventListener('resize', function () {
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(function () {
+      resizeRaf = 0;
+      if (!ref.chosen || !controller.classList.contains('collapsed')) return;
+      var btn = btnFor(ref.chosen);
+      btn.style.removeProperty('--dx');
+      btn.style.removeProperty('--dy');
+      measureChosen(btn);
+    });
+  });
+
+  setCap(0);
+  syncControls('base');
+
+  // Exposed for debugging in the console only.
+  window.__oneOfOne = ref;
+})();
+</script>
+</body>
+</html>
