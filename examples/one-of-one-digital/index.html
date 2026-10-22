@@ -747,6 +747,43 @@ button { font-family: 'Manrope', system-ui, sans-serif; color: inherit; }
   });
   announce('Loading footage.');
 
+  // iOS Safari treats preload="auto" as a hint and may never decode a frame
+  // until play() is called. A muted, hidden play + pause forces the first
+  // frame without showing any motion.
+  function primeClips() {
+    videos.forEach(function (v) {
+      if (ref.ready[v.id] || v.readyState >= 2) return;
+      if (v.networkState === 0) v.load();
+      var pr;
+      try { pr = v.play(); } catch (e) { return; }
+      if (!pr || !pr.then) return;
+      pr.then(function () {
+        if (ref.pending && ref.pending.video === v) return;
+        if (v === ref.visible && (ref.locked || ref.scene !== 'base')) return;
+        try { v.pause(); v.currentTime = 0; } catch (e) {}
+      }, function () {});
+    });
+  }
+  var primeTimer = setTimeout(primeClips, 2500);
+  function primeOnGesture() {
+    document.removeEventListener('pointerdown', primeOnGesture, true);
+    document.removeEventListener('keydown', primeOnGesture, true);
+    clearTimeout(primeTimer);
+    primeClips();
+  }
+  document.addEventListener('pointerdown', primeOnGesture, true);
+  document.addEventListener('keydown', primeOnGesture, true);
+
+  // Never leave a silent black page: say so when the footage doesn't arrive.
+  setTimeout(function () {
+    if (ref.baseShown) return;
+    for (var i = 0; i < videos.length; i++) {
+      if (!ref.ready[videos[i].id]) ref.failedLoads[videos[i].id] = true;
+    }
+    showNotice('The footage hasn’t loaded. Open this page in Safari or Chrome if it stays blank.', 'load');
+    announce('The footage has not loaded yet. Use Retry, or open the page in a web browser.');
+  }, 10000);
+
   // ── Capsule + glass ────────────────────────────────────
   function setCap(i) {
     controller.style.setProperty('--cap-left', CAP_POSITIONS[i][0]);
@@ -877,6 +914,7 @@ button { font-family: 'Manrope', system-ui, sans-serif; color: inherit; }
     if (kind === 'load') {
       for (var id in ref.failedLoads) if (ref.failedLoads.hasOwnProperty(id)) byId(id).load();
       ref.failedLoads = {};
+      primeClips();
       return;
     }
     var req = ref.lastRequest;
