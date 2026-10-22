@@ -264,7 +264,7 @@ void main(){
     }
     start() { if (!this.running && this.visible) { this.running = true; this.last = performance.now(); requestAnimationFrame((t) => this.frame(t)); } }
     frame(now) {
-      const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now; this.t += dt; this.matT += dt;
+      const dt = clamp((now - this.last) / 1000, 0, 0.033); this.last = Math.max(now, this.last); this.t += dt; this.matT += dt;
       // idle: a ghost stroke wanders through the word in bursts so touch screens and still visitors see it
       if (!reduced && now - this.lastInput > 2600) {
         this.ghostT = (this.ghostT || 0) + dt;
@@ -279,7 +279,7 @@ void main(){
       this.bubbles = this.bubbles.filter((p) => p.life < p.max && p.r > 1);
       this.step(dt); this.render();
       if (!this.visible) { this.running = false; return; }
-      requestAnimationFrame((t) => this.frame(t));
+      requestAnimationFrame((t) => { try { this.frame(t); } catch (err) { console.error(err); this.running = false; this.start(); } });
     }
     step(dt) {
       const c = this.cfg, v = this.vel, f60 = dt * 60;
@@ -321,11 +321,14 @@ void main(){
     if (p < 1) requestAnimationFrame(tick); else boot();
   })(t0);
 
-  let fx;
+  let fx, booted = false;
+  // failsafe: never leave the visitor on the loader
+  setTimeout(() => boot(), 9000);
   async function boot() {
+    if (booted) return; booted = true;
     clearInterval(swap);
     let imgs = null;
-    try { imgs = await imagesReady; } catch { /* handled below */ }
+    try { imgs = await Promise.race([imagesReady, new Promise((r) => setTimeout(() => r(null), 4000))]); } catch { /* handled below */ }
     try {
       if (!imgs) throw new Error('images failed to load');
       fx = new FluidReveal($('#hero'), $('#gl'), imgs);
