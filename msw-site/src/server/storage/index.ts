@@ -3,6 +3,8 @@ import { config } from "../config";
 import type { FileStore } from "./types";
 import { createLocalStore } from "./local";
 import { createSupabaseStore } from "./supabase";
+import { createDbStore } from "./db-store";
+import { getDriver } from "../db";
 
 export { storagePaths, type FileStore } from "./types";
 
@@ -13,7 +15,9 @@ export function getFileStore(): FileStore {
     g.__mswStore =
       config.mode === "supabase"
         ? createSupabaseStore(config.supabaseUrl!, config.serviceRoleKey!, config.storageBucket)
-        : createLocalStore(config.storageDir);
+        : config.hostedDemo
+          ? createDbStore(getDriver)
+          : createLocalStore(config.storageDir);
   }
   return g.__mswStore;
 }

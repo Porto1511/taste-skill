@@ -1,0 +1,11 @@
+# Hosted demonstration on Netlify (fictional data). The app runs in demo mode
+# against Netlify Database (Postgres), provisioned because @netlify/database is
+# installed; it migrates and seeds itself on first start.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  MSW_MODE = "demo"
+  NEXT_TELEMETRY_DISABLED = "1"

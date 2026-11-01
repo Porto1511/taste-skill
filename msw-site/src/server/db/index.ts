@@ -14,6 +14,10 @@ async function createDriver(): Promise<Driver> {
     log.info("db.connect", { mode: "supabase" });
     return createPgDriver(config.databaseUrl!);
   }
+  if (config.hostedDemo) {
+    const { createHostedDemoDriver } = await import("./hosted-demo");
+    return createHostedDemoDriver();
+  }
   const { createPgliteDriver } = await import("./pglite");
   const { migrateLocal } = await import("./migrate");
   const driver = await createPgliteDriver(config.pgliteDir);

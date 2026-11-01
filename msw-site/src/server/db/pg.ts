@@ -16,10 +16,10 @@ const typeOverrides = {
   },
 };
 
-export function createPgDriver(connectionString: string): Driver {
+export function createPgDriver(connectionString: string, opts: { max?: number } = {}): Driver {
   const pool = new Pool({
     connectionString,
-    max: Number(process.env.DATABASE_POOL_SIZE ?? 10),
+    max: opts.max ?? Number(process.env.DATABASE_POOL_SIZE ?? 10),
     idleTimeoutMillis: 30_000,
     types: typeOverrides as never,
     ssl: connectionString.includes("sslmode=disable") ? undefined : { rejectUnauthorized: false },

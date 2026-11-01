@@ -13,7 +13,23 @@ begin
     create role authenticated nologin noinherit;
   end if;
   if not exists (select 1 from pg_roles where rolname = 'service_role') then
-    create role service_role nologin noinherit bypassrls;
+    create role service_role nologin noinherit;
+  end if;
+  -- The connecting role must be able to SET ROLE authenticated (needed on
+  -- hosted Postgres where the app does not connect as a superuser).
+  -- PostgreSQL 16+ separates membership from the SET option, so check and
+  -- grant SET explicitly; superusers (e.g. PGlite) can always SET ROLE.
+  if not (select rolsuper from pg_roles where rolname = current_user) then
+    if current_setting('server_version_num')::int >= 160000 then
+      if not pg_has_role(current_user, 'authenticated', 'SET') then
+        execute format('grant authenticated to %I with set true, inherit false', current_user);
+      end if;
+      if not pg_has_role(current_user, 'anon', 'SET') then
+        execute format('grant anon to %I with set true, inherit false', current_user);
+      end if;
+    elsif not pg_has_role(current_user, 'authenticated', 'MEMBER') then
+      execute format('grant authenticated, anon to %I', current_user);
+    end if;
   end if;
 end
 $$;
@@ -58,3 +74,10 @@ create table if not exists local_auth.sessions (
   expires_at  timestamptz not null
 );
 create index if not exists sessions_user_idx on local_auth.sessions (user_id);
+
+-- Hosted demo only: private file bytes kept in the database (no persistent disk).
+create table if not exists local_auth.files (
+  path        text primary key,
+  content     bytea not null,
+  created_at  timestamptz not null default now()
+);

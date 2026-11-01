@@ -29,6 +29,10 @@ export const config = (() => {
     );
   }
 
+  // Hosted demo: a shared Postgres (e.g. Netlify Database) instead of embedded PGlite.
+  const demoDatabaseUrl = env("DEMO_DATABASE_URL") ?? env("NETLIFY_DB_URL");
+  const onNetlify = Boolean(env("NETLIFY") || env("NETLIFY_DB_URL") || env("SITE_ID"));
+
   const dataDir = path.resolve(env("MSW_DATA_DIR") ?? path.join(process.cwd(), ".data"));
 
   return {
@@ -38,6 +42,8 @@ export const config = (() => {
     supabaseAnonKey,
     serviceRoleKey,
     databaseUrl,
+    demoDatabaseUrl,
+    hostedDemo: mode === "demo" && (Boolean(demoDatabaseUrl) || onNetlify),
     storageBucket: env("SUPABASE_STORAGE_BUCKET") ?? "msw-private",
     siteUrl: env("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
     dataDir,
