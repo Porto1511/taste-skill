@@ -918,6 +918,42 @@ as $$
      and (last_seen_at is null or last_seen_at < now() - interval '5 minutes')
 $$;
 
+-- The job's MSW contracts manager, for anyone with access to the job.
+-- (Operatives cannot read the staff directory, so this exposes only the
+-- contact details needed on site.)
+create or replace function public.job_office_contact(p_job uuid)
+returns table (full_name text, job_title text, phone text, email text)
+language sql stable security definer set search_path = ''
+as $$
+  select p.full_name, p.job_title, p.phone, p.email
+  from public.jobs j
+  join public.profiles p on p.id = j.contracts_manager_id and p.active
+  where j.id = p_job and app.has_job_access(p_job)
+$$;
+
+-- Office only: who should have a revision, and who has opened it.
+create or replace function public.document_reach(p_revision uuid)
+returns table (user_id uuid, full_name text, company_name text, viewed_at timestamptz)
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if not app.is_staff() then
+    raise exception 'Only MSW office users can see document reach' using errcode = '42501';
+  end if;
+  return query
+    select p.id, p.full_name, c.name,
+           (select max(l.created_at) from public.activity_log l
+             where l.entity_id = p_revision and l.actor_id = p.id
+               and l.action in ('document.viewed', 'document.downloaded'))
+    from public.document_revisions r
+    cross join lateral app.document_audience(r.document_id) as a(uid)
+    join public.profiles p on p.id = a.uid
+    join public.companies c on c.id = p.company_id
+    where r.id = p_revision
+    order by c.name, p.full_name;
+end;
+$$;
+
 revoke execute on all functions in schema app from public;
 grant execute on function
   app.is_api_context(), app.now(),
@@ -935,7 +971,9 @@ revoke execute on function
   public.set_document_areas(uuid, uuid[]),
   public.respond_to_report(uuid, text, public.report_status),
   public.log_document_access(uuid, text),
-  public.touch_last_seen()
+  public.touch_last_seen(),
+  public.job_office_contact(uuid),
+  public.document_reach(uuid)
 from public, anon;
 grant execute on function
   public.grant_job_access(uuid, uuid[], boolean, uuid[], date, date, text, boolean),
@@ -945,5 +983,7 @@ grant execute on function
   public.set_document_areas(uuid, uuid[]),
   public.respond_to_report(uuid, text, public.report_status),
   public.log_document_access(uuid, text),
-  public.touch_last_seen()
+  public.touch_last_seen(),
+  public.job_office_contact(uuid),
+  public.document_reach(uuid)
 to authenticated;

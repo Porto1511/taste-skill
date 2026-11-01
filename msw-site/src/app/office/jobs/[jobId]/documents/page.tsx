@@ -1,0 +1,60 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { FilePdf } from "@phosphor-icons/react/dist/ssr";
+import { requireStaff } from "@/server/auth/viewer";
+import { getOfficeJob, listOfficeDocuments, type OfficeDocument } from "@/server/queries/office";
+import { Card, EmptyState, SectionTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { DocumentUploadForm } from "@/components/office/document-upload-form";
+import { formatDate } from "@/lib/format";
+
+export default async function JobDocumentsPage({ params }: { params: Promise<{ jobId: string }> }) {
+  const viewer = await requireStaff();
+  const { jobId } = await params;
+  const [job, docs] = await Promise.all([getOfficeJob(viewer, jobId), listOfficeDocuments(viewer, jobId)]);
+  if (!job) notFound();
+  const areas = job.areas.map((a) => ({ id: a.id, name: a.name }));
+  return (
+    <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
+      <div className="grid content-start gap-6">
+        {(["drawing", "rams"] as const).map((kind) => {
+          const list = docs.filter((d) => d.kind === kind);
+          return (
+            <section key={kind}>
+              <SectionTitle>{kind === "drawing" ? "Drawings" : "RAMS"} · {list.length}</SectionTitle>
+              {list.length ? (
+                <Card className="divide-y divide-line overflow-hidden">{list.map((d) => <DocRow key={d.id} doc={d} jobId={jobId} />)}</Card>
+              ) : (
+                <EmptyState icon={<FilePdf />} title={`No ${kind === "drawing" ? "drawings" : "RAMS"} yet`}>Upload a PDF using the form.</EmptyState>
+              )}
+            </section>
+          );
+        })}
+      </div>
+      <aside>
+        <SectionTitle>Add a document</SectionTitle>
+        <Card className="p-5"><DocumentUploadForm jobId={jobId} areas={areas} /></Card>
+      </aside>
+    </div>
+  );
+}
+
+function DocRow({ doc, jobId }: { doc: OfficeDocument; jobId: string }) {
+  const current = doc.revisions.find((r) => r.status === "approved");
+  const drafts = doc.revisions.filter((r) => r.status === "draft").length;
+  const superseded = doc.revisions.filter((r) => r.status === "superseded").length;
+  return (
+    <Link href={`/office/jobs/${jobId}/documents/${doc.id}`} className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-paper sm:flex-row sm:items-center">
+      <div className="min-w-0 flex-1">
+        <p className="font-mono text-[13px] font-semibold">{doc.doc_number}</p>
+        <p className="font-medium">{doc.title}</p>
+        <p className="text-[12px] text-muted">{doc.areas.length ? doc.areas.map((a) => a.name).join(" · ") : "Whole job"}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+        {current ? <Badge tone="ok" dot>Rev {current.revision} current · {formatDate(current.approved_at)}</Badge> : <Badge tone="danger" dot>Nothing issued to site</Badge>}
+        {drafts > 0 && <Badge tone="info">{drafts} draft</Badge>}
+        {superseded > 0 && <Badge>{superseded} superseded</Badge>}
+      </div>
+    </Link>
+  );
+}

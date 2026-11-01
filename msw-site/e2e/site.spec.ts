@@ -1,0 +1,83 @@
+import { expect, test } from "@playwright/test";
+import sharp from "sharp";
+import { BM, signIn, signOut } from "./helpers";
+import { demoId } from "../src/server/seed/demo-data";
+
+test.describe("operative mobile experience", () => {
+  test("John sees only his allocated job and only Level 1–2 drawings", async ({ page }) => {
+    await signIn(page, "john.smith@abcdecking.example");
+    await expect(page.getByRole("heading", { name: "My jobs" })).toBeVisible();
+    const cards = page.locator('a[href^="/jobs/"]');
+    await expect(cards).toHaveCount(1);
+    await expect(cards.first()).toContainText("British Museum");
+    await expect(cards.first()).toContainText("Level 1 · Level 2");
+
+    await cards.first().click();
+    await expect(page.getByText("Your allocated area")).toBeVisible();
+    await expect(page.getByRole("link", { name: /MSW-2611-DK-101/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /MSW-2611-DK-102/ })).toBeVisible();
+    await expect(page.getByText("MSW-2611-DK-103")).toHaveCount(0);
+    await expect(page.getByText("MSW-2611-SN-201")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Call site/ })).toHaveAttribute("href", "tel:+447700900201");
+
+    // Filter chips narrow the drawing list to one floor.
+    await page.getByRole("group", { name: /Filter drawings/ }).getByRole("button", { name: "Level 2" }).click();
+    await expect(page.getByRole("link", { name: /MSW-2611-DK-101/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /MSW-2611-DK-102/ })).toBeVisible();
+  });
+
+  test("the PDF viewer renders the current approved revision", async ({ page }) => {
+    await signIn(page, "john.smith@abcdecking.example");
+    await page.goto(`/jobs/${BM}/documents/${demoId("doc:bm-dk1")}`);
+    await expect(page.getByText("Rev C02")).toBeVisible();
+    const canvas = page.locator('[data-page="1"] canvas').first();
+    await expect(canvas).toBeVisible();
+    await expect.poll(async () => canvas.evaluate((c: HTMLCanvasElement) => c.width), { timeout: 20_000 }).toBeGreaterThan(500);
+    await page.getByRole("button", { name: "Zoom in" }).click();
+    await expect(page.getByText(/^\d+%$/)).not.toHaveText("100%");
+  });
+
+  test("John reports an issue with a photo; the office is notified", async ({ page }) => {
+    await signIn(page, "john.smith@abcdecking.example");
+    await page.goto(`/jobs/${BM}/report?kind=issue`);
+    await page.getByRole("button", { name: "Materials problem" }).click();
+    await page.getByLabel("Where?").selectOption({ label: "Level 1" });
+    await page.getByLabel("Short title").fill("E2E: dented sheets in bundle 12");
+    await page.getByLabel("Details").fill("Six sheets dented on delivery.");
+    const photo = await sharp({ create: { width: 800, height: 600, channels: 3, background: "#999" } }).jpeg().toBuffer();
+    await page.locator('input[type="file"][multiple]').setInputFiles({ name: "site.jpg", mimeType: "image/jpeg", buffer: photo });
+    await expect(page.getByPlaceholder("Caption for photo 1 (optional)")).toBeVisible();
+    await page.getByRole("button", { name: "Send to MSW office" }).click();
+    await expect(page.getByText("Sent to the MSW office")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "E2E: dented sheets in bundle 12" })).toBeVisible();
+    await expect(page.locator('img[src^="/api/files/photos/"]')).toHaveCount(1);
+  });
+
+  test("safety categories prompt an immediate phone call", async ({ page }) => {
+    await signIn(page, "liam.turner@northernedge.example");
+    await page.goto(`/jobs/${BM}/report?kind=issue`);
+    await page.getByRole("button", { name: "Safety concern" }).click();
+    await expect(page.getByText("Is anyone at risk right now?")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Call Martin Doyle/ })).toHaveAttribute("href", "tel:+447700900201");
+  });
+
+  test("Paul (same company, not allocated) cannot reach the job, its drawings or its files", async ({ page, request }) => {
+    await signIn(page, "paul.brown@abcdecking.example");
+    await expect(page.locator('a[href^="/jobs/"]')).toHaveCount(1);
+    await expect(page.getByText("British Museum")).toHaveCount(0);
+
+    const job = await page.goto(`/jobs/${BM}`);
+    expect(job?.status()).toBe(404);
+    const viewer = await page.goto(`/jobs/${BM}/documents/${demoId("doc:bm-dk1")}`);
+    expect(viewer?.status()).toBe(404);
+    const file = await page.request.get(`/api/files/revisions/${demoId("rev:bm-dk1:C02")}?download=1`);
+    expect(file.status()).toBe(404);
+    const office = await page.goto("/office");
+    expect(office?.status()).toBe(404);
+
+    // Logged-out requests get nothing either.
+    await signOut(page);
+    const anon = await request.get(`/api/files/revisions/${demoId("rev:bm-dk1:C02")}`);
+    expect(anon.status()).toBe(404);
+  });
+});

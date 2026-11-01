@@ -4,10 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "node scripts/copy-pdf-worker.mjs",
+    "predev": "node scripts/copy-pdf-worker.mjs && tsx scripts/setup-demo.ts",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-pdf-worker.mjs",
     "build": "next build",
+    "prestart": "tsx scripts/setup-demo.ts",
     "start": "next start",
-    "lint": "eslint"
+    "demo:setup": "tsx scripts/setup-demo.ts",
+    "demo:reset": "tsx scripts/setup-demo.ts --reset",
+    "seed:supabase": "tsx scripts/seed-supabase.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.14",
@@ -40,5 +51,8 @@
     "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }
