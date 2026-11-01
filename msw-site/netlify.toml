@@ -9,3 +9,6 @@
   NODE_VERSION = "22"
   MSW_MODE = "demo"
   NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
