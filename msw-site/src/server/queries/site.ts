@@ -39,8 +39,8 @@ export async function listMyJobs(viewer: Viewer): Promise<MyJob[]> {
                 where rp.job_id = j.id and rp.author_id = auth.uid() and rp.status in ('open', 'in_progress')) as open_reports
        from jobs j
        left join job_assignments a on a.job_id = j.id and a.user_id = auth.uid() and a.revoked_at is null
-       order by case j.status when 'live' then 0 when 'planned' then 1 when 'on_hold' then 2 else 3 end,
-                j.start_date nulls last, j.name`,
+       where j.status = 'live'
+       order by j.start_date nulls last, j.name`,
     );
     return rows;
   });

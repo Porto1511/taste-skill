@@ -75,3 +75,20 @@ export async function servePhoto(viewerId: string, photoId: string, thumb: boole
     headers: { ...baseHeaders, "Content-Type": "image/jpeg", "Content-Length": String(body.length) },
   });
 }
+
+/** Handover photos and signatures: visible to whoever can see the handover (RLS). */
+export async function serveHandoverFile(viewerId: string, id: string, kind: "photo" | "signature", thumb = false): Promise<Response> {
+  if (!UUID.test(id)) return notFound();
+  const path = await withUser(viewerId, async (tx) =>
+    kind === "photo"
+      ? (await tx.query<{ p: string }>("select storage_path as p from handover_photos where id = $1", [id])).rows[0]?.p
+      : (await tx.query<{ p: string }>("select signature_path as p from handovers where id = $1", [id])).rows[0]?.p,
+  );
+  if (!path) return notFound();
+  const data = await getFileStore().get(path);
+  if (!data) return notFound();
+  const body = kind === "photo" && thumb ? await makeThumbnail(data) : data;
+  return new Response(new Uint8Array(body), {
+    headers: { ...baseHeaders, "Content-Type": kind === "photo" ? "image/jpeg" : "image/png", "Content-Length": String(body.length) },
+  });
+}

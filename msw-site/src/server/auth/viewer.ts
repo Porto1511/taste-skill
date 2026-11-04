@@ -17,6 +17,8 @@ export interface Viewer {
   isMswEmployee: boolean;
   isStaff: boolean;
   isAdmin: boolean;
+  /** MSW's own operatives keep a daily timesheet. */
+  keepsTimesheet: boolean;
   unreadNotifications: number;
 }
 
@@ -49,6 +51,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       isMswEmployee: r.is_msw,
       isStaff: r.role === "admin" || r.role === "office",
       isAdmin: r.role === "admin",
+      keepsTimesheet: r.is_msw && r.role === "operative",
       unreadNotifications: r.unread,
     };
   });

@@ -25,7 +25,7 @@ beforeAll(async () => {
 function viewer(key: string, role: Viewer["role"] = "operative", companyId = "00000000-0000-0000-0000-000000000000"): Viewer {
   return {
     id: ids.user(key), fullName: key, email: `${key}@x.example`, role, jobTitle: null, companyId, companyName: "",
-    isMswEmployee: false, isStaff: role === "admin" || role === "office", isAdmin: role === "admin", unreadNotifications: 0,
+    isMswEmployee: false, isStaff: role === "admin" || role === "office", isAdmin: role === "admin", keepsTimesheet: false, unreadNotifications: 0,
   };
 }
 

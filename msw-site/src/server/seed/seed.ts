@@ -249,6 +249,8 @@ export async function seedDemo(
     }
   }
 
+  await seedExtras(driver, store);
+
   // Older notifications are marked read so the demo inbox looks lived-in.
   await sys((tx) => tx.query("update public.notifications set read_at = created_at + interval '2 hours' where created_at < now() - interval '2 days'"));
 
@@ -259,4 +261,102 @@ export async function seedDemo(
             (select count(*)::int from public.reports) as reports`,
   );
   return counts.rows[0];
+}
+
+// ---------------------------------------------------------------------------
+// Timesheets and handovers (also applied to an existing demo database that
+// predates these features — idempotent).
+// ---------------------------------------------------------------------------
+function londonDate(msAgo: number) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date(Date.now() - msAgo));
+}
+
+async function makeSignaturePng(): Promise<Buffer> {
+  const sharp = (await import("sharp")).default;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="160">
+    <path d="M20 110 C 40 40, 70 40, 75 100 S 110 150, 125 80 C 135 40, 150 60, 150 95 C 152 125, 175 120, 185 85
+             C 195 55, 205 70, 210 100 C 215 125, 235 115, 245 90 L 260 60 C 270 100, 280 120, 300 95 C 315 75, 330 70, 345 95
+             C 360 120, 385 110, 400 80 M 300 130 C 360 125, 430 120, 500 112"
+          fill="none" stroke="#101828" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return sharp(Buffer.from(svg)).png().toBuffer();
+}
+
+export async function seedExtras(driver: Driver, store: FileStore) {
+  const existing = await driver.query<{ h: number; t: number }>(
+    "select (select count(*)::int from public.handovers) as h, (select count(*)::int from public.timesheets) as t",
+  );
+  if (existing.rows[0].h > 0 || existing.rows[0].t > 0) return;
+
+  // Timesheets: the last six working days for MSW's own operatives.
+  const plan: { user: string; job: string | null; location?: string; reg: string; mode: "driver" | "passenger" }[] = [
+    { user: "gareth", job: "bm", reg: "MS21 NET", mode: "driver" },
+    { user: "luke", job: "riverside", reg: "MS70 DEK", mode: "driver" },
+    { user: "chris", job: null, location: "Yard — preparing stud welding kit for Wharf Street", reg: "MS21 NET", mode: "passenger" },
+  ];
+  const today = londonDate(0);
+  const monday = (() => { const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
+  const workdays: string[] = [];
+  for (let back = 1; workdays.length < 6 && back < 14; back++) {
+    const d = londonDate(back * DAY);
+    const dow = new Date(`${d}T12:00:00Z`).getUTCDay();
+    if (dow !== 0 && dow !== 6) workdays.push(d);
+  }
+  let i = 0;
+  for (const p of plan) {
+    for (const d of workdays) {
+      i++;
+      const thisWeek = d >= monday;
+      const query = p.user === "luke" && d === workdays[0];
+      const status = query ? "query" : thisWeek ? "submitted" : "approved";
+      const outStart = ["05:45", "06:00", "06:10", "05:50"][i % 4];
+      const out = { "05:45": "07:15", "06:00": "07:20", "06:10": "07:25", "05:50": "07:10" }[outStart]!;
+      const finish = ["16:30", "17:00", "16:45", "17:15"][i % 4];
+      const backEnd = { "16:30": "18:05", "17:00": "18:40", "16:45": "18:20", "17:15": "18:55" }[finish]!;
+      await runAsSystem(driver, (tx) =>
+        tx.query(
+          `insert into public.timesheets (user_id, work_date, job_id, location_note, vehicle_reg, travel_mode, travel_out_start, travel_out_end,
+             site_start, site_finish, break_minutes, travel_back_start, travel_back_end, mileage, status, office_note, reviewed_by, reviewed_at)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,'07:30',$9,30,$9,$10,$11,$12,$13,$14,$15)`,
+          [userId(p.user), d, p.job ? jobId(p.job) : null, p.location ?? null, p.reg, p.mode, outStart, out, finish, backEnd,
+            p.job === "bm" ? 64 : 48, status,
+            query ? "Finish time looks early for a pour day — can you check?" : null,
+            status === "submitted" ? null : userId("claire"), status === "submitted" ? null : new Date().toISOString()],
+        ),
+      );
+    }
+  }
+
+  // Handover: Gang A's Level 2 deck, signed by Kingsgate's site manager.
+  const handoverId = demoId("handover:bm-l2");
+  const sigPath = storagePaths.signature(jobId("bm"), handoverId);
+  await store.put(sigPath, await makeSignaturePng(), "image/png");
+  const when = 3 * DAY - 5 * 60 * MIN;
+  await runAsSystem(driver, (tx) =>
+    tx.query(
+      `insert into public.handovers (id, job_id, area_id, title, scope, checklist, signer_name, signer_company, signer_position, signer_email,
+         declaration, signature_path, captured_by, captured_by_name, captured_by_company, signed_at, created_at)
+       values ($1,$2,$3,$4,$5,$6::jsonb,'Martin Doyle','Kingsgate Construction Ltd','Site Manager',null,$7,$8,$9,'-','-',$10,$10)`,
+      [handoverId, jobId("bm"), areaId("bm", "l2"), "Level 2 metal deck and edge trims",
+        "Level 2 deck complete grids A–H / 1–6 including edge trims to the north and east elevations. Riser opening at D3 protected with Kingsgate's boarding.",
+        JSON.stringify([
+          { label: "Metal deck laid and fixed to current drawings", checked: true },
+          { label: "Edge trims installed and restrained", checked: true },
+          { label: "Shear studs complete where specified", checked: true },
+          { label: "Openings and voids protected or handed over as agreed", checked: true },
+          { label: "Area clear of MSW materials, offcuts and waste", checked: true },
+        ]),
+        "I confirm that the works described above have been inspected and are accepted as complete, and that the area is handed over from MSW UK Ltd in the condition shown.",
+        sigPath, userId("john"), at(when)],
+    ), { actorId: userId("john"), at: at(when) },
+  );
+  for (const [n, scene] of (["deck", "studs"] as const).entries()) {
+    const photoId = demoId(`handover:bm-l2:photo:${n}`);
+    const img = await makeSamplePhoto(scene, n ? "Level 2 studs complete grid A–C" : "Level 2 deck complete — looking north", 10 + n);
+    const path = storagePaths.photo(jobId("bm"), photoId);
+    await store.put(path, img, "image/jpeg");
+    await runAsSystem(driver, (tx) =>
+      tx.query("insert into public.handover_photos (id, handover_id, storage_path, caption, file_size, width, height, created_at) values ($1,$2,$3,$4,$5,1600,1200,$6)",
+        [photoId, handoverId, path, null, img.length, at(when)]),
+    );
+  }
 }

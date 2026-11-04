@@ -5,7 +5,7 @@ import { X, CaretLeft, CaretRight } from "@phosphor-icons/react";
 
 export interface GridPhoto { id: string; caption: string | null; meta?: string }
 
-export function PhotoGrid({ photos, columns = 3 }: { photos: GridPhoto[]; columns?: 2 | 3 | 4 }) {
+export function PhotoGrid({ photos, columns = 3, base = "/api/files/photos" }: { photos: GridPhoto[]; columns?: 2 | 3 | 4; base?: string }) {
   const [open, setOpen] = useState<number | null>(null);
   useEffect(() => {
     if (open === null) return;
@@ -36,7 +36,7 @@ export function PhotoGrid({ photos, columns = 3 }: { photos: GridPhoto[]; column
             aria-label={`Open photo${p.caption ? `: ${p.caption}` : ""}`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- authorised, uncacheable API image */}
-            <img src={`/api/files/photos/${p.id}?thumb=1`} alt={p.caption ?? "Site photo"} loading="lazy" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+            <img src={`${base}/${p.id}?thumb=1`} alt={p.caption ?? "Site photo"} loading="lazy" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
           </button>
         ))}
       </div>
@@ -50,7 +50,7 @@ export function PhotoGrid({ photos, columns = 3 }: { photos: GridPhoto[]; column
           </div>
           <div className="relative flex min-h-0 flex-1 items-center justify-center px-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/api/files/photos/${current.id}`} alt={current.caption ?? "Site photo"} className="max-h-full max-w-full object-contain" />
+            <img src={`${base}/${current.id}`} alt={current.caption ?? "Site photo"} className="max-h-full max-w-full object-contain" />
             {open! > 0 && (
               <button type="button" onClick={() => setOpen(open! - 1)} className="absolute left-2 grid size-12 place-items-center rounded-full bg-black/50 hover:bg-black/70" aria-label="Previous photo">
                 <CaretLeft className="size-6" weight="bold" />

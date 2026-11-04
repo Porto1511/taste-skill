@@ -81,3 +81,11 @@ export const labels = {
   priority: { normal: "Normal", high: "High", urgent: "Urgent" } as Record<string, string>,
   areaKind: { floor: "Floor", phase: "Phase", zone: "Zone", area: "Area" } as Record<string, string>,
 };
+
+/** 450 -> "7h 30m", 0 -> "–" */
+export function fmtMinutes(m: number | null | undefined) {
+  if (!m) return "–";
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return h ? (r ? `${h}h ${r}m` : `${h}h`) : `${r}m`;
+}

@@ -12,9 +12,9 @@ export default async function NotificationsPage() {
   const items = await listNotifications(viewer);
   return (
     <div>
-      <PageHeader title="Notifications" back={{ href: "/jobs", label: "My jobs" }} />
+      <PageHeader title="Alerts" />
       <NotificationList items={items} now={requestNow()} />
-      <p className="mt-4 text-[13px] text-muted">Notifications appear in the app. Email and phone push alerts are not part of this release.</p>
+      
     </div>
   );
 }

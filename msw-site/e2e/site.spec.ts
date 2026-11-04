@@ -6,14 +6,15 @@ import { demoId } from "../src/server/seed/demo-data";
 test.describe("operative mobile experience", () => {
   test("John sees only his allocated job and only Level 1–2 drawings", async ({ page }) => {
     await signIn(page, "john.smith@abcdecking.example");
-    await expect(page.getByRole("heading", { name: "My jobs" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your jobs" })).toBeVisible();
     const cards = page.locator('a[href^="/jobs/"]');
     await expect(cards).toHaveCount(1);
     await expect(cards.first()).toContainText("British Museum");
-    await expect(cards.first()).toContainText("Level 1 · Level 2");
+    await expect(cards.first()).toContainText("Level 1");
+    await expect(cards.first()).toContainText("Level 2");
 
     await cards.first().click();
-    await expect(page.getByText("Your allocated area")).toBeVisible();
+    await expect(page.getByText("Your area")).toBeVisible();
     await expect(page.getByRole("link", { name: /MSW-2611-DK-101/ })).toBeVisible();
     await expect(page.getByRole("link", { name: /MSW-2611-DK-102/ })).toBeVisible();
     await expect(page.getByText("MSW-2611-DK-103")).toHaveCount(0);
@@ -79,5 +80,48 @@ test.describe("operative mobile experience", () => {
     await signOut(page);
     const anon = await request.get(`/api/files/revisions/${demoId("rev:bm-dk1:C02")}`);
     expect(anon.status()).toBe(404);
+  });
+
+  test("John gets a handover signed by the contractor on his phone; the office gets a certificate", async ({ page }) => {
+    await signIn(page, "john.smith@abcdecking.example");
+    await page.goto(`/jobs/${BM}`);
+    await page.getByRole("link", { name: /Handover/ }).first().click();
+    await page.getByLabel("Area", { exact: true }).selectOption({ label: "Level 1" });
+    await page.getByLabel("What's being handed over").fill("E2E: Level 1 bays A1–D3");
+    await page.getByRole("button", { name: "Metal deck laid and fixed to current drawings", exact: true }).click();
+    await page.getByRole("button", { name: /Next: contractor signs/ }).click();
+    await expect(page.getByText("Hand the phone to the site manager")).toBeVisible();
+    await expect(page.getByLabel("Your name")).toHaveValue("Martin Doyle");
+    const pad = page.getByLabel(/Signature box/);
+    await pad.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    const box = (await pad.boundingBox())!;
+    await page.mouse.move(box.x + 30, box.y + 120);
+    await page.mouse.down();
+    for (const [dx, dy] of [[60, 40], [110, 100], [160, 50], [220, 110], [280, 60]]) await page.mouse.move(box.x + dx, box.y + dy, { steps: 6 });
+    await page.mouse.up();
+    await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: "Sign & submit" }).click();
+    await expect(page.getByText("Handover signed and sent to the MSW office")).toBeVisible();
+    await expect(page.getByAltText(/Signature of Martin Doyle/)).toBeVisible();
+    const href = await page.getByRole("link", { name: /Handover certificate/ }).getAttribute("href");
+    const pdf = await page.request.get(href!);
+    expect(pdf.status()).toBe(200);
+    expect(pdf.headers()["content-type"]).toBe("application/pdf");
+  });
+
+  test("an MSW operative logs today's timesheet; subcontractors have no timesheet", async ({ page }) => {
+    await signIn(page, "gareth.evans@msw.example");
+    await page.getByRole("link", { name: "Timesheet" }).click();
+    await page.locator('a[href^="/timesheet/"]').filter({ hasText: "Nothing logged" }).last().click();
+    await page.getByLabel("Vehicle reg").fill("MS21 NET");
+    const times = page.locator('input[type="time"]');
+    for (const [i, t] of ["06:00", "07:10", "07:30", "16:30", "16:30", "17:40"].entries()) await times.nth(i).fill(t);
+    await expect(page.getByText("2h 20m").first()).toBeVisible();
+    await page.getByRole("button", { name: "Submit day" }).click();
+    await expect(page.getByText("Day saved and sent to the office.")).toBeVisible();
+    await signOut(page);
+    await signIn(page, "john.smith@abcdecking.example");
+    await expect(page.getByRole("link", { name: "Timesheet" })).toHaveCount(0);
+    expect((await page.goto("/timesheet"))?.status()).toBe(404);
   });
 });

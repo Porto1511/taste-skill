@@ -5,7 +5,7 @@ export interface FileStore {
   remove(paths: string[]): Promise<void>;
 }
 
-const SAFE_PATH = /^jobs\/[0-9a-f-]{36}\/(revisions|photos)\/[0-9a-f-]{36}\.(pdf|jpg)$/;
+const SAFE_PATH = /^jobs\/[0-9a-f-]{36}\/(revisions\/[0-9a-f-]{36}\.pdf|photos\/[0-9a-f-]{36}\.jpg|signatures\/[0-9a-f-]{36}\.png)$/;
 
 /** Storage paths are always generated server-side; reject anything else. */
 export function assertSafePath(path: string) {
@@ -17,4 +17,5 @@ export function assertSafePath(path: string) {
 export const storagePaths = {
   revision: (jobId: string, revisionId: string) => `jobs/${jobId}/revisions/${revisionId}.pdf`,
   photo: (jobId: string, photoId: string) => `jobs/${jobId}/photos/${photoId}.jpg`,
+  signature: (jobId: string, handoverId: string) => `jobs/${jobId}/signatures/${handoverId}.png`,
 };

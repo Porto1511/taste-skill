@@ -79,8 +79,10 @@ Other accounts follow the pattern `first.last@<company>.example`. **Kieran Walsh
 - Site reports inbox with filters; conversation thread; status workflow (open → in progress → resolved / closed); priority; share photos with the team for one area.
 - Append-only activity history (job, document, access, report and people changes, plus document opens).
 
-**Operative app** (mobile-first, large touch targets)
-- **My Jobs**: only explicitly allocated jobs, each showing the allocated area, attendance dates and "updated this week" badges.
+**Operative app** (built as a phone app: bottom tab bar — Jobs · Timesheet · Alerts · Me)
+- **Your jobs**: only **live** jobs the person is individually allocated to (planned, on-hold and completed jobs never appear outside the office — enforced in the database), with their area and attendance dates.
+- **Handover sign-off**: the operative records the area, scope, checklist and photos; the main contractor's site manager signs on the phone. Drawings current at that moment are recorded by the server; the office is notified and gets a PDF certificate. Signed handovers cannot be edited or deleted.
+- **Daily timesheet** (MSW's own operatives only): job, vehicle, driving/passenger, travel out, on site with breaks, travel home, miles. Hours are calculated by the database (including journeys past midnight); the office approves or queries each day, sees a weekly grid with long driving days flagged, and exports CSV. Hours only — no rates or pay.
 - **Job**: one-tap **Call site**, **Directions**, **Report an issue**, **Progress update**; induction link; site instructions; current approved drawings with area filter chips; RAMS with the hard-copy-briefing notice; my reports and MSW replies; site photos; site and MSW contacts; an urgent-safety reminder.
 - **PDF viewer**: pinch or scroll zoom up to 16×, pan, double-tap zoom, fit and download. Each page gets a base render within mobile canvas limits, plus a full-resolution **detail tile** of the visible area once a gesture settles, so small annotations stay sharp.
 - **Reporting**: issue categories (delay, access, missing edge protection, materials, drawing query, safety, other), priority, area, description. Camera capture or gallery (up to 8 photos), resized in the browser for weak signal. Progress bar on upload; the draft is kept if sending fails. Progress updates and photo uploads.

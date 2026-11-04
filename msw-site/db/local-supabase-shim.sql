@@ -51,7 +51,7 @@ as $$
   select nullif(
     coalesce(
       current_setting('request.jwt.claim.sub', true),
-      (current_setting('request.jwt.claims', true)::jsonb ->> 'sub')
+      (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
     ), ''
   )::uuid
 $$;
