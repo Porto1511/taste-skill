@@ -10,15 +10,15 @@
 -- site_start / site_finish / break_minutes are kept only for older entries.
 -- =============================================================================
 
+alter table public.timesheets drop constraint if exists timesheets_pairs;
+alter table public.timesheets drop constraint if exists timesheets_something;
+alter table public.timesheets drop constraint if exists timesheets_work_done_check;
+
 -- Older entries: "left site" is the old site finish; "arrived" the old start.
 update public.timesheets set travel_back_start = site_finish
   where travel_back_start is null and site_finish is not null;
 update public.timesheets set travel_out_end = site_start
   where travel_out_end is null and site_start is not null;
-
-alter table public.timesheets drop constraint if exists timesheets_pairs;
-alter table public.timesheets drop constraint if exists timesheets_something;
-alter table public.timesheets drop constraint if exists timesheets_work_done_check;
 
 -- New rules apply to new and edited entries (NOT VALID: older rows kept as recorded).
 alter table public.timesheets
