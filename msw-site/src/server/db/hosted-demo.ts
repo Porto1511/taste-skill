@@ -33,8 +33,9 @@ export async function createHostedDemoDriver(): Promise<Driver> {
       log.info("demo.seeded", { ...counts, ms: Date.now() - started });
     } else {
       // Bring an existing demo database up to date with newer demo content.
-      const [{ seedExtras }, { createDbStore }] = await Promise.all([import("../seed/seed"), import("../storage/db-store")]);
+      const [{ seedExtras, patchDemoTimesheets }, { createDbStore }] = await Promise.all([import("../seed/seed"), import("../storage/db-store")]);
       await seedExtras(driver, createDbStore(driver));
+      await patchDemoTimesheets(driver);
     }
     log.info("db.connect", { mode: "hosted-demo", migrationsApplied: ran.length, ms: Date.now() - started });
   });

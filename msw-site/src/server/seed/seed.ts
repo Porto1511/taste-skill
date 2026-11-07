@@ -326,6 +326,8 @@ export async function seedExtras(driver: Driver, store: FileStore) {
     }
   }
 
+  await patchDemoTimesheets(driver);
+
   // Handover: Gang A's Level 2 deck, signed by Kingsgate's site manager.
   const handoverId = demoId("handover:bm-l2");
   const sigPath = storagePaths.signature(jobId("bm"), handoverId);
@@ -359,4 +361,42 @@ export async function seedExtras(driver: Driver, store: FileStore) {
         [photoId, handoverId, path, null, img.length, at(when)]),
     );
   }
+}
+
+/**
+ * Demo content for multi-job days and "work done" (fictional data only).
+ * Idempotent; also brings an older hosted demo database up to date.
+ */
+export async function patchDemoTimesheets(driver: Driver) {
+  await runAsSystem(driver, async (tx) => {
+    await tx.query(
+      `update public.timesheets set
+         work_done = case user_id when $1 then '{netting}'::text[] when $2 then '{deck,studs}'::text[] else '{other}'::text[] end,
+         work_description = case user_id
+           when $1 then 'Net inspection Levels 1–4, re-tied N4 at grid H'
+           when $2 then 'Core A deck laid and pinned, studs to bays 1–4'
+           else 'Prepared and PAT-checked stud welding kit for Wharf Street' end
+       where work_done = '{}'`,
+      [userId("gareth"), userId("luke")],
+    );
+    // Gareth's most recent day: BM in the morning, then the yard for the afternoon.
+    const { rows } = await tx.query<{ id: string; work_date: string }>(
+      `select id, work_date from public.timesheets where user_id = $1 and job_id = $2 order by work_date desc limit 1`,
+      [userId("gareth"), jobId("bm")],
+    );
+    const day = rows[0];
+    if (!day) return;
+    const { rows: count } = await tx.query<{ n: number }>(
+      "select count(*)::int as n from public.timesheets where user_id = $1 and work_date = $2", [userId("gareth"), day.work_date]);
+    if (count[0].n > 1) return;
+    await tx.query(
+      `update public.timesheets set site_start = '07:30', site_finish = '12:30', break_minutes = 0,
+         travel_back_start = null, travel_back_end = null where id = $1`, [day.id]);
+    await tx.query(
+      `insert into public.timesheets (user_id, work_date, job_id, location_note, vehicle_reg, travel_mode, travel_out_start, travel_out_end,
+         site_start, site_finish, break_minutes, travel_back_start, travel_back_end, work_done, work_description, status)
+       select user_id, work_date, null, 'Yard — Northampton', vehicle_reg, 'driver', '12:30', '14:10', '14:10', '16:30', 15, '16:30', '16:50',
+              '{netting}', 'Unloaded and repacked nets from British Museum Level 2', status
+       from public.timesheets where id = $1`, [day.id]);
+  });
 }

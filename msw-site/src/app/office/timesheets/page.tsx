@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/button";
 import { TimesheetReview } from "@/components/office/timesheet-review";
 import { fmtMinutes, formatShortDate } from "@/lib/format";
+import { summariseDay } from "@/lib/timesheet";
 import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = { title: "Timesheets" };
@@ -19,9 +20,10 @@ export default async function OfficeTimesheetsPage({ searchParams }: { searchPar
   const people = await officeTimesheetWeek(viewer, monday);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const pending = people.flatMap((p) => p.days.filter((d) => d.status === "submitted").map((d) => d.id));
+  const pendingDays = new Set(people.flatMap((p) => p.days.filter((d) => d.status === "submitted").map((d) => `${p.user_id}${d.work_date}`))).size;
   return (
     <div>
-      <PageHeader title="Timesheets" description="Daily hours from MSW's own operatives: time on site, driving and travel. Hours only — no rates or pay."
+      <PageHeader title="Timesheets" description="Daily entries from MSW's own operatives: each job they went to, travel and driving, time on site and the work done. Hours only — no rates or pay."
         actions={<ButtonLink href={`/api/timesheets/export?week=${monday}`} external><DownloadSimple className="size-5" /> Export CSV</ButtonLink>} />
       <div className="mb-4 flex items-center gap-2">
         <Link href={`/office/timesheets?week=${addDays(monday, -7)}`} className="grid size-10 place-items-center rounded-xl border border-line bg-card" aria-label="Previous week"><CaretLeft className="size-5" /></Link>
@@ -45,14 +47,16 @@ export default async function OfficeTimesheetsPage({ searchParams }: { searchPar
                 <tr key={p.user_id}>
                   <td className="px-4 py-2.5"><span className="font-semibold">{p.full_name}</span><span className="block text-[12px] text-muted">{p.job_title}</span></td>
                   {days.map((d) => {
-                    const r = p.days.find((x) => x.work_date === d);
+                    const entries = p.days.filter((x) => x.work_date === d);
+                    const r = entries.length ? summariseDay(entries) : null;
                     return (
                       <td key={d} className="px-1.5 py-1.5 text-center">
                         {r ? (
-                          <Link href={`/office/timesheets/${r.id}`} className={cn("block rounded-lg px-1.5 py-1.5 ring-1",
+                          <Link href={`/office/timesheets/${entries[0].id}`} className={cn("block rounded-lg px-1.5 py-1.5 ring-1",
                             r.status === "approved" ? "bg-ok-soft ring-ok/20" : r.status === "query" ? "bg-danger-soft ring-danger/30" : "bg-card ring-line hover:ring-ink/30")}>
-                            <span className="tabular block font-semibold">{fmtMinutes(r.site_minutes)}</span>
-                            <span className={cn("tabular block text-[11px]", r.driving_minutes > 600 ? "font-bold text-danger" : "text-muted")}>{r.driving_minutes ? `${fmtMinutes(r.driving_minutes)} drv` : r.job_number ?? "—"}</span>
+                            <span className="tabular block font-semibold">{fmtMinutes(r.site)}</span>
+                            <span className="tabular block text-[11px] text-muted">{r.driving ? `${fmtMinutes(r.driving)} drv` : ""}</span>
+                            <span className="block truncate font-mono text-[10px] text-subtle">{r.jobs.join(" + ")}</span>
                           </Link>
                         ) : <span className="text-subtle">·</span>}
                       </td>
@@ -69,12 +73,11 @@ export default async function OfficeTimesheetsPage({ searchParams }: { searchPar
         <span><span className="mr-1 inline-block size-2.5 rounded-sm bg-ok-soft ring-1 ring-ok/30" />Approved</span>
         <span><span className="mr-1 inline-block size-2.5 rounded-sm bg-card ring-1 ring-line" />Waiting for approval</span>
         <span><span className="mr-1 inline-block size-2.5 rounded-sm bg-danger-soft ring-1 ring-danger/30" />Queried</span>
-        <span className="font-semibold text-danger">Red driving = over 10h in a day</span>
       </div>
       {pending.length > 0 && (
         <Card className="mt-6 max-w-xl p-4">
-          <p className="mb-2 font-semibold">{pending.length} day{pending.length === 1 ? "" : "s"} waiting for approval this week</p>
-          <TimesheetReview ids={pending} label={`Approve all ${pending.length}`} />
+          <p className="mb-2 font-semibold">{pendingDays} day{pendingDays === 1 ? "" : "s"} waiting for approval this week</p>
+          <TimesheetReview ids={pending} label={`Approve all ${pendingDays}`} />
         </Card>
       )}
     </div>

@@ -79,6 +79,29 @@ describe("timesheets", () => {
     expect(row.travel_minutes).toBe(135);
   });
 
+  it("a day can have several jobs, each with the work done", async () => {
+    await asUser(db, "luke").query(
+      `insert into timesheets (user_id, work_date, job_id, travel_mode, vehicle_reg, travel_out_start, travel_out_end, site_start, site_finish, work_done, work_description)
+       values (auth.uid(), '2026-09-03', $1, 'driver', 'X1', '06:00', '07:00', '07:00', '12:00', '{deck,studs}', 'Bays 1-4')`, [ids.job("riverside")]);
+    await asUser(db, "luke").query(
+      `insert into timesheets (user_id, work_date, location_note, travel_mode, vehicle_reg, travel_out_start, travel_out_end, site_start, site_finish, travel_back_start, travel_back_end, work_done)
+       values (auth.uid(), '2026-09-03', 'Yard', 'driver', 'X1', '12:00', '12:45', '12:45', '15:00', '15:00', '15:30', '{other}')`);
+    const day = await asUser(db, "luke").query<{ site_minutes: number; driving_minutes: number; work_done: string[] }>(
+      "select site_minutes, driving_minutes, work_done from timesheets where work_date = '2026-09-03' order by travel_out_start");
+    expect(day.map((d) => d.work_done)).toEqual([["deck", "studs"], ["other"]]);
+    expect(day.reduce((t, d) => t + d.site_minutes, 0)).toBe(300 + 135);
+    expect(day.reduce((t, d) => t + d.driving_minutes, 0)).toBe(60 + 75);
+    await expect(asUser(db, "luke").query(
+      "insert into timesheets (user_id, work_date, site_start, site_finish, travel_mode, work_done) values (auth.uid(), '2026-09-04', '07:00', '08:00', 'none', '{payroll}')",
+    )).rejects.toMatchObject({ code: "23514" });
+  });
+
+  it("approving a two-job day sends the operative one notification", async () => {
+    await asUser(db, "claire").query("update timesheets set status = 'approved' where user_id = $1 and work_date = '2026-09-03'", [ids.user("luke")]);
+    const n = await asUser(db, "luke").query("select id from notifications where href = '/timesheet/2026-09-03'");
+    expect(n).toHaveLength(1);
+  });
+
   it("subcontractor operatives and managers cannot keep MSW timesheets", async () => {
     await expect(insert("john", "2026-09-01")).rejects.toMatchObject({ code: "42501" });
     await expect(insert("dave", "2026-09-01")).rejects.toMatchObject({ code: "42501" });

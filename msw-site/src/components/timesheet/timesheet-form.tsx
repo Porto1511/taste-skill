@@ -8,6 +8,7 @@ import type { TimesheetRow } from "@/server/queries/timesheets";
 import { Alert, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/form-client";
 import { fmtMinutes } from "@/lib/format";
+import { WORK_TYPES } from "@/lib/timesheet";
 import { cn } from "@/lib/cn";
 
 const toMin = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null);
@@ -37,15 +38,18 @@ function TimePair({ title, a, b, la, lb, values, set, error }: {
   );
 }
 
-export function TimesheetForm({ date, sheet, jobs, last, readOnly }: {
+export function TimesheetForm({ date, sheet, jobs, last, readOnly, previous }: {
   date: string; sheet: TimesheetRow | null; jobs: { id: string; job_number: string; name: string }[];
   last: { vehicle_reg: string | null; travel_mode: string } | null; readOnly: boolean;
+  /** The day's earlier entry, when adding another job: travel starts where it finished. */
+  previous?: TimesheetRow | null;
 }) {
   const [state, action] = useActionState(saveTimesheetAction, idle);
   const [mode, setMode] = useState<string>(sheet?.travel_mode ?? last?.travel_mode ?? "driver");
-  const [jobId, setJobId] = useState(sheet ? sheet.job_id ?? "other" : jobs.length === 1 ? jobs[0].id : "");
+  const [jobId, setJobId] = useState(sheet ? sheet.job_id ?? "other" : jobs.length === 1 && !previous ? jobs[0].id : "");
+  const [work, setWork] = useState<string[]>(sheet?.work_done ?? []);
   const [v, setV] = useState<Record<string, string>>({
-    travelOutStart: sheet?.travel_out_start ?? "", travelOutEnd: sheet?.travel_out_end ?? "",
+    travelOutStart: sheet?.travel_out_start ?? previous?.site_finish ?? "", travelOutEnd: sheet?.travel_out_end ?? "",
     siteStart: sheet?.site_start ?? "", siteFinish: sheet?.site_finish ?? "",
     travelBackStart: sheet?.travel_back_start ?? "", travelBackEnd: sheet?.travel_back_end ?? "",
   });
@@ -62,6 +66,8 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly }: {
     <form action={action} className="grid gap-4">
       <input type="hidden" name="workDate" value={date} />
       <input type="hidden" name="travelMode" value={mode} />
+      {sheet && <input type="hidden" name="entryId" value={sheet.id} />}
+      {work.map((w) => <input key={w} type="hidden" name="workDone" value={w} />)}
       <fieldset disabled={readOnly} className="grid gap-4 disabled:opacity-80">
         <Field label="Job" htmlFor="jobId">
           <Select id="jobId" name="jobId" value={jobId} onChange={(e) => setJobId(e.target.value)} required>
@@ -70,6 +76,7 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly }: {
             <option value="other">Other (yard, training, travel only…)</option>
           </Select>
         </Field>
+        {fe.jobId && <p className="-mt-2 text-[13px] font-medium text-danger">{fe.jobId}</p>}
         {jobId === "other" && (
           <Field label="Where / what" htmlFor="locationNote"><Input id="locationNote" name="locationNote" defaultValue={sheet?.location_note ?? ""} placeholder="e.g. Yard — loading netting" maxLength={200} /></Field>
         )}
@@ -92,21 +99,38 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly }: {
           </Field>
         )}
 
-        {mode !== "none" && <TimePair title="Travel to site" a="travelOutStart" b="travelOutEnd" la="Set off" lb="Arrived" values={v} set={set} error={fe.travelOutStart} />}
+        {mode !== "none" && <TimePair title={previous ? "Travel to this job" : "Travel to site"} a="travelOutStart" b="travelOutEnd" la="Set off" lb="Arrived" values={v} set={set} error={fe.travelOutStart} />}
         <TimePair title="On site" a="siteStart" b="siteFinish" la="Start" lb="Finish" values={v} set={set} error={fe.siteStart} />
         <Field label="Breaks" htmlFor="breakMinutes">
           <Select id="breakMinutes" name="breakMinutes" value={breakMins} onChange={(e) => setBreak(e.target.value)}>
             {[0, 15, 20, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m ? `${m} minutes` : "No break"}</option>)}
           </Select>
         </Field>
-        {mode !== "none" && <TimePair title="Travel home" a="travelBackStart" b="travelBackEnd" la="Left site" lb="Got home" values={v} set={set} error={fe.travelBackStart} />}
+        <fieldset>
+          <legend className="mb-2 text-sm font-semibold">What did you do?</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {WORK_TYPES.map((w) => {
+              const on = work.includes(w.id);
+              return (
+                <button key={w.id} type="button" aria-pressed={on}
+                  onClick={() => setWork((all) => (on ? all.filter((x) => x !== w.id) : [...all, w.id]))}
+                  className={cn("h-11 rounded-full border px-4 text-[14px] font-semibold", on ? "border-ink bg-ink text-white" : "border-line-strong bg-card")}>
+                  {w.label}
+                </button>
+              );
+            })}
+          </div>
+          {fe.workDone && <p className="mt-1.5 text-[13px] font-medium text-danger">{fe.workDone}</p>}
+          <Textarea name="workDescription" defaultValue={sheet?.work_description ?? ""} rows={2} maxLength={1000}
+            className="mt-2 min-h-0" placeholder="e.g. Laid and pinned bays A1–D3, Level 1" aria-label="Details of work done" />
+        </fieldset>
+        {mode !== "none" && <TimePair title="Travel home (if you went home from here)" a="travelBackStart" b="travelBackEnd" la="Left site" lb="Got home" values={v} set={set} error={fe.travelBackStart} />}
 
         <div className="grid grid-cols-3 gap-2 rounded-2xl bg-ink p-3 text-center text-white">
           {[["On site", totals.site], ["Driving", totals.driving], ["Travel", totals.travel]].map(([l, m]) => (
             <div key={l as string}><p className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/50">{l}</p><p className="tabular text-[20px] font-semibold">{fmtMinutes(m as number)}</p></div>
           ))}
         </div>
-        {totals.driving > 600 && <Alert tone="warn">That&apos;s over 10 hours driving. Check the times, and speak to the office if that&apos;s right.</Alert>}
 
         <Field label="Miles" htmlFor="mileage" optional><Input id="mileage" name="mileage" type="number" inputMode="numeric" min={0} max={2000} defaultValue={sheet?.mileage ?? ""} /></Field>
         <Field label="Notes" htmlFor="notes" optional><Textarea id="notes" name="notes" defaultValue={sheet?.notes ?? ""} rows={2} className="min-h-0" maxLength={1000} /></Field>
@@ -115,7 +139,7 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly }: {
       {state.error && <Alert>{state.error}</Alert>}
       {!readOnly && (
         <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] -mx-4 bg-paper/95 px-4 py-2 backdrop-blur">
-          <SubmitButton size="xl" className="w-full" pendingText="Saving…">{sheet ? "Update & resubmit" : "Submit day"}</SubmitButton>
+          <SubmitButton size="xl" className="w-full" pendingText="Saving…">{sheet ? "Save changes" : "Save this job"}</SubmitButton>
         </div>
       )}
     </form>

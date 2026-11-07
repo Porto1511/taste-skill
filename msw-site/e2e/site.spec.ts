@@ -117,8 +117,20 @@ test.describe("operative mobile experience", () => {
     const times = page.locator('input[type="time"]');
     for (const [i, t] of ["06:00", "07:10", "07:30", "16:30", "16:30", "17:40"].entries()) await times.nth(i).fill(t);
     await expect(page.getByText("2h 20m").first()).toBeVisible();
-    await page.getByRole("button", { name: "Submit day" }).click();
-    await expect(page.getByText("Day saved and sent to the office.")).toBeVisible();
+    await page.getByRole("button", { name: "Netting", exact: true }).click();
+    await page.getByLabel("Details of work done").fill("E2E: nets Level 3");
+    await page.getByRole("button", { name: "Save this job" }).click();
+    await expect(page.getByText("Saved and sent to the office")).toBeVisible();
+    // Second job the same day
+    await page.getByRole("link", { name: "Add another job" }).click();
+    await page.locator("#jobId").selectOption("other");
+    await page.getByLabel("Where / what").fill("Yard");
+    const t2 = page.locator('input[type="time"]');
+    for (const [i, t] of ["16:30", "17:00", "17:00", "18:00"].entries()) await t2.nth(i).fill(t);
+    await page.getByRole("button", { name: "Other", exact: true }).click();
+    await page.getByRole("button", { name: "Save this job" }).click();
+    await expect(page.locator("ol > li")).toHaveCount(2);
+    await expect(page.getByText("E2E: nets Level 3")).toBeVisible();
     await signOut(page);
     await signIn(page, "john.smith@abcdecking.example");
     await expect(page.getByRole("link", { name: "Timesheet" })).toHaveCount(0);
