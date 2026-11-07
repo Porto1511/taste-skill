@@ -14,9 +14,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
             <span className="rounded-md bg-white px-2 py-1.5"><MswLogo className="h-5" /></span>
             <span className="text-[16px] font-semibold tracking-tight text-white/85">Site</span>
           </Link>
-          {viewer.isStaff && (
-            <Link href="/office" className="rounded-full border border-white/20 px-3 py-1.5 text-[13px] font-semibold text-white/85 hover:bg-white/10">Office</Link>
-          )}
         </div>
       </header>
       <DemoStrip />

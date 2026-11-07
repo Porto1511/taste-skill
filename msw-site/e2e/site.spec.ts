@@ -12,6 +12,11 @@ test.describe("operative mobile experience", () => {
     await expect(cards.first()).toContainText("British Museum");
     await expect(cards.first()).toContainText("Level 1");
     await expect(cards.first()).toContainText("Level 2");
+    await expect(page.getByRole("link", { name: "Office", exact: true })).toHaveCount(0);
+    await page.goto("/account");
+    await expect(page.getByRole("link", { name: /office dashboard/ })).toHaveCount(0);
+    expect((await page.request.get("/office")).status()).toBe(404);
+    await page.goto("/jobs");
 
     await cards.first().click();
     await expect(page.getByText("Your area")).toBeVisible();

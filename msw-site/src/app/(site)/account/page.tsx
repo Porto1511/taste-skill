@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireViewer } from "@/server/auth/viewer";
 import { config } from "@/server/config";
 import { PageHeader } from "@/components/layout/page-header";
@@ -27,6 +28,10 @@ export default async function AccountPage() {
         <SectionTitle>Change password</SectionTitle>
         <Card className="p-4"><PasswordForm needsCurrent={config.mode === "demo"} /></Card>
       </section>
+      {viewer.isStaff && (
+        // Office staff using the site screens get back here; operatives never see this.
+        <Link href="/office" className="flex h-14 items-center justify-center rounded-xl border border-line-strong bg-card text-[16px] font-semibold">Back to the office dashboard</Link>
+      )}
       <form action={signOutAction}>
         <button type="submit" className="flex h-14 w-full items-center justify-center rounded-xl border border-danger/30 bg-card text-[16px] font-semibold text-danger">Sign out</button>
       </form>

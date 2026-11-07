@@ -74,4 +74,17 @@ test.describe("office workflows", () => {
     await expect(page.getByText("Riverside Quarter Block B")).toBeVisible();
     await expect(page.getByText("British Museum")).toHaveCount(0);
   });
+
+  test("site view is tucked in the account menu, not on the job page; the way back is on the site Account page", async ({ page }) => {
+    await signIn(page, "claire.morgan@msw.example");
+    await page.goto(`/office/jobs/${BM}`);
+    await expect(page.getByRole("link", { name: "Site view" })).toHaveCount(0);
+    await page.getByLabel("Account menu").last().click();
+    await page.getByRole("link", { name: "Site view" }).last().click();
+    await expect(page).toHaveURL(/\/jobs$/);
+    await expect(page.getByRole("link", { name: "Office", exact: true })).toHaveCount(0);
+    await page.goto("/account");
+    await page.getByRole("link", { name: "Back to the office dashboard" }).click();
+    await expect(page).toHaveURL(/\/office$/);
+  });
 });

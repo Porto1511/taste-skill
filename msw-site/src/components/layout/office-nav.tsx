@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SquaresFour, Buildings, WarningCircle, UsersThree, ClockCounterClockwise, Bell, HardHat, Signature, ClockClockwise, Timer, Truck } from "@phosphor-icons/react";
+import { SquaresFour, Buildings, WarningCircle, UsersThree, ClockCounterClockwise, Bell, Signature, ClockClockwise, Timer, Truck } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 
 export function OfficeNav({ openReports, urgent, unread }: { openReports: number; urgent: number; unread: number }) {
@@ -43,10 +43,6 @@ export function OfficeNav({ openReports, urgent, unread }: { openReports: number
           </Link>
         );
       })}
-      <Link href="/jobs" className="flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-white/65 hover:bg-white/5 hover:text-white lg:mt-4 lg:border-t lg:border-white/10 lg:pt-4">
-        <HardHat className="size-5" />
-        <span className="whitespace-nowrap">Site view</span>
-      </Link>
     </nav>
   );
 }

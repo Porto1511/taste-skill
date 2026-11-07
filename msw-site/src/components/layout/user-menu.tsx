@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignOut, UserCircle, Buildings, HardHat } from "@phosphor-icons/react/dist/ssr";
+import { SignOut, UserCircle, HardHat } from "@phosphor-icons/react/dist/ssr";
 import { signOutAction } from "@/app/login/actions";
 import type { Viewer } from "@/server/auth/viewer";
 import { initials, labels } from "@/lib/format";
@@ -30,10 +30,8 @@ export function UserMenu({ viewer, tone = "dark", align = "right", showSwitch = 
         </div>
         <div className="my-1 h-px bg-line" />
         {showSwitch && viewer.isStaff && (
-          <>
-            <Link href="/office" className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] hover:bg-paper"><Buildings className="size-5" /> Office dashboard</Link>
-            <Link href="/jobs" className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] hover:bg-paper"><HardHat className="size-5" /> Site view</Link>
-          </>
+          // Office staff only: open the phone screens, e.g. to get a handover signed on site.
+          <Link href="/jobs" className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] hover:bg-paper"><HardHat className="size-5" /> Site view</Link>
         )}
         <Link href="/account" className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[15px] hover:bg-paper"><UserCircle className="size-5" /> Account &amp; password</Link>
         <form action={signOutAction}>
