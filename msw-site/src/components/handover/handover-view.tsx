@@ -2,6 +2,8 @@ import { CheckCircle, Circle, FilePdf } from "@phosphor-icons/react/dist/ssr";
 import type { HandoverDetail } from "@/server/queries/handovers";
 import { PhotoGrid } from "@/components/site/photo-grid";
 import { formatDateTime } from "@/lib/format";
+import { HANDOVER_TRADES } from "@/lib/handover";
+import { TradeChips } from "./handover-status";
 
 export function HandoverView({ h }: { h: HandoverDetail }) {
   return (
@@ -9,23 +11,31 @@ export function HandoverView({ h }: { h: HandoverDetail }) {
       <div className="rounded-2xl border border-line bg-card p-4 shadow-[var(--shadow-card)]">
         <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-ok">Handover signed</p>
         <h1 className="mt-1 text-[22px] font-semibold leading-tight tracking-tight">{h.title}</h1>
-        <p className="mt-0.5 text-[13px] text-muted"><span className="font-mono">{h.job_number}</span> · {h.job_name}{h.area_name ? ` · ${h.area_name}` : ""}</p>
+        <TradeChips scopes={h.scopes} className="mt-2" />
+        <p className="mt-1.5 text-[13px] text-muted"><span className="font-mono">{h.job_number}</span> · {h.job_name}{h.area_name ? ` · ${h.area_name}` : ""}</p>
         {h.scope && <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed">{h.scope}</p>}
         <a href={`/api/handovers/${h.id}/certificate`} target="_blank" className="mt-4 flex h-12 items-center justify-center gap-2 rounded-xl bg-ink text-[15px] font-semibold text-white">
           <FilePdf className="size-5" weight="fill" /> Handover certificate (PDF)
         </a>
       </div>
 
-      {h.checklist.length > 0 && (
-        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card">
-          {h.checklist.map((c) => (
-            <li key={c.label} className="flex items-center gap-3 px-4 py-3 text-[14px]">
-              {c.checked ? <CheckCircle className="size-5 shrink-0 text-ok" weight="fill" /> : <Circle className="size-5 shrink-0 text-subtle" />}
-              <span className={c.checked ? "" : "text-muted"}>{c.label}{!c.checked && " — not confirmed"}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {[...HANDOVER_TRADES.map((t) => ({ id: t.id as string | undefined, title: t.long })), { id: undefined, title: "Checklist" }].map((sec) => {
+        const items = h.checklist.filter((c) => (sec.id ? c.section === sec.id : !c.section));
+        if (!items.length) return null;
+        return (
+          <div key={sec.title}>
+            <p className="mb-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-muted">{sec.title}</p>
+            <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card">
+              {items.map((c, i) => (
+                <li key={c.label + i} className="flex items-center gap-3 px-4 py-3 text-[14px]">
+                  {c.checked ? <CheckCircle className="size-5 shrink-0 text-ok" weight="fill" /> : <Circle className="size-5 shrink-0 text-subtle" />}
+                  <span className={c.checked ? "" : "text-muted"}>{c.label}{!c.checked && " — not confirmed"}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
 
       <div className="rounded-2xl border border-line bg-card p-4">
         <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">Signed by</p>

@@ -86,9 +86,11 @@ test.describe("operative mobile experience", () => {
     await signIn(page, "john.smith@abcdecking.example");
     await page.goto(`/jobs/${BM}`);
     await page.getByRole("link", { name: /Handover/ }).first().click();
+    await page.getByRole("button", { name: "Nets", exact: true }).click();
     await page.getByLabel("Area", { exact: true }).selectOption({ label: "Level 1" });
-    await page.getByLabel("What's being handed over").fill("E2E: Level 1 bays A1–D3");
-    await page.getByRole("button", { name: "Metal deck laid and fixed to current drawings", exact: true }).click();
+    await expect(page.getByLabel("What's being handed over")).toHaveAttribute("placeholder", "Level 1 — nets handover");
+    await page.getByRole("button", { name: "Nets tied off and inspected", exact: true }).click();
+    await expect(page.getByText("Openings and voids")).toHaveCount(0);
     await page.getByRole("button", { name: /Next: contractor signs/ }).click();
     await expect(page.getByText("Hand the phone to the site manager")).toBeVisible();
     await expect(page.getByLabel("Your name")).toHaveValue("Martin Doyle");
@@ -107,6 +109,8 @@ test.describe("operative mobile experience", () => {
     const pdf = await page.request.get(href!);
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
+    await page.goto(`/jobs/${BM}#reports`);
+    await expect(page.getByLabel("Nets handed over").first()).toBeVisible();
   });
 
   test("an MSW operative logs today's timesheet; subcontractors have no timesheet", async ({ page }) => {

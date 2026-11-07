@@ -11,6 +11,7 @@ export async function POST(request: Request) {
   let checklist: unknown = [];
   try { checklist = JSON.parse(String(form.get("checklist") ?? "[]")); } catch { /* validated below */ }
   const parsed = handoverInput.safeParse({
+    scopes: form.getAll("scopes").map(String),
     jobId: form.get("jobId"), areaId: form.get("areaId") || undefined, title: form.get("title"), scope: form.get("scope") || undefined,
     checklist, signerName: form.get("signerName"), signerCompany: form.get("signerCompany"),
     signerPosition: form.get("signerPosition") || undefined, signerEmail: form.get("signerEmail") || undefined,

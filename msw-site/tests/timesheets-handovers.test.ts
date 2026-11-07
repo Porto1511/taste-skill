@@ -155,9 +155,9 @@ describe("handover sign-off", () => {
       .composite([{ input: Buffer.from('<svg width="300" height="100"><path d="M10 80 C 60 10, 120 90, 290 30" stroke="black" stroke-width="5" fill="none"/></svg>'), top: 0, left: 0 }])
       .png().toBuffer();
   const blank = () => sharp({ create: { width: 300, height: 100, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
-  const input = (area: string) => ({
-    jobId: ids.job("bm"), areaId: ids.area("bm", area), title: "Level 1 deck complete", scope: null,
-    checklist: [{ label: "Deck fixed", checked: true }], signerName: "Martin Doyle", signerCompany: "Kingsgate Construction Ltd",
+  const input = (area: string, scopes: string[] = ["deck"]) => ({
+    jobId: ids.job("bm"), areaId: ids.area("bm", area), title: "Level 1 deck complete", scope: null, scopes,
+    checklist: [{ label: "Deck fixed", checked: true, section: "deck" }], signerName: "Martin Doyle", signerCompany: "Kingsgate Construction Ltd",
     signerPosition: "Site Manager", signerEmail: null,
   });
 
@@ -172,6 +172,14 @@ describe("handover sign-off", () => {
     expect(office.map((n) => n.title)).toContain("Handover signed on MSW-2611: Level 1 deck complete");
   });
 
+  it("trades can be handed over separately (nets first) and a handover must name at least one trade", async () => {
+    const nets = await createHandover(viewer("mark"), { ...input("l1", ["netting"]), title: "Level 1 nets" }, { name: "s.png", bytes: await signature() }, []);
+    const [row] = await system(db)<{ scopes: string[] }>("select scopes from handovers where id = $1", [nets.id]);
+    expect(row.scopes).toEqual(["netting"]);
+    await expect(system(db)("update handovers set scopes = '{}' where id = $1", [nets.id])).rejects.toMatchObject({ code: "23514" });
+    await expect(system(db)("update handovers set scopes = '{concrete}' where id = $1", [nets.id])).rejects.toMatchObject({ code: "23514" });
+  });
+
   it("rejects an empty signature and handovers outside the user's allocation", async () => {
     await expect(createHandover(viewer("mark"), input("l1"), { name: "s.png", bytes: await blank() }, [])).rejects.toThrow(/empty/);
     await expect(createHandover(viewer("john"), input("l3"), { name: "s.png", bytes: await signature() }, [])).rejects.toMatchObject({ code: "42501" });
@@ -180,15 +188,16 @@ describe("handover sign-off", () => {
 
   it("is visible by area and cannot be edited or deleted", async () => {
     const titles = async (k: string) => (await asUser(db, k).query<{ title: string }>("select title from handovers order by title")).map((r) => r.title);
-    expect(await titles("john")).toContain("Level 2 metal deck and edge trims");
-    expect(await titles("liam")).not.toContain("Level 2 metal deck and edge trims"); // Levels 3–4 only
+    expect(await titles("john")).toContain("Level 2 — deck & studs handover");
+    expect(await titles("liam")).not.toContain("Level 2 — deck & studs handover"); // Levels 3–4 only
+    expect(await titles("liam")).toContain("Level 3 — nets handover");
     expect(await titles("paul")).toEqual([]);
     await expect(asUser(db, "claire").query("update handovers set signer_name = 'Someone else'")).rejects.toMatchObject({ code: "42501" });
     await expect(asUser(db, "claire").query("delete from handovers")).rejects.toMatchObject({ code: "42501" });
   });
 
   it("produces a PDF certificate including the signature", async () => {
-    const [{ id }] = await system(db)<{ id: string }>("select id from handovers where title = 'Level 2 metal deck and edge trims'");
+    const [{ id }] = await system(db)<{ id: string }>("select id from handovers where title = 'Level 2 — deck & studs handover'");
     const h = (await getHandover({ ...viewer("claire"), isStaff: true }, id))!;
     const pdf = await buildHandoverCertificate(h, (await store.get(h.signature_path))!, await Promise.all(h.photos.map(async (p) => (await store.get(p.storage_path))!)));
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");

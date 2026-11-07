@@ -9,6 +9,7 @@ import { log } from "../log";
 import type { Viewer } from "../auth/viewer";
 import { processPhoto } from "./validate";
 import type { IncomingFile } from "./uploads";
+import { HANDOVER_TRADES } from "@/lib/handover";
 
 export const DECLARATION =
   "I confirm that the works described above have been inspected and are accepted as complete, and that the area is handed over from MSW UK Ltd in the condition shown.";
@@ -16,9 +17,10 @@ export const DECLARATION =
 export const handoverInput = z.object({
   jobId: z.string().uuid(),
   areaId: z.string().optional().transform((v) => (v ? v : null)).pipe(z.string().uuid().nullable()),
+  scopes: z.array(z.enum(HANDOVER_TRADES.map((t) => t.id) as unknown as [string, ...string[]])).min(1, "Choose what you are handing over: nets, deck or studs"),
   title: z.string().trim().min(3, "Say what is being handed over").max(160),
   scope: z.string().trim().max(4000).optional().transform((v) => v || null),
-  checklist: z.array(z.object({ label: z.string().trim().min(1).max(200), checked: z.boolean() })).max(30),
+  checklist: z.array(z.object({ label: z.string().trim().min(1).max(200), checked: z.boolean(), section: z.string().max(20).optional() })).max(40),
   signerName: z.string().trim().min(2, "Enter the name of the person signing").max(120),
   signerCompany: z.string().trim().min(2, "Enter their company").max(160),
   signerPosition: z.string().trim().max(120).optional().transform((v) => v || null),
@@ -60,10 +62,10 @@ export async function createHandover(
       const sigPath = storagePaths.signature(input.jobId, id);
       await tx.query(
         `insert into handovers (id, job_id, area_id, title, scope, checklist, signer_name, signer_company, signer_position, signer_email,
-           declaration, signature_path, captured_by, captured_by_name, captured_by_company)
-         values ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, auth.uid(), '-', '-')`,
+           declaration, signature_path, captured_by, captured_by_name, captured_by_company, scopes)
+         values ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, auth.uid(), '-', '-', $13::text[])`,
         [id, input.jobId, input.areaId, input.title, input.scope, JSON.stringify(input.checklist), input.signerName, input.signerCompany,
-          input.signerPosition, input.signerEmail, DECLARATION, sigPath],
+          input.signerPosition, input.signerEmail, DECLARATION, sigPath, input.scopes],
       );
       await store.put(sigPath, sig, "image/png");
       written.push(sigPath);

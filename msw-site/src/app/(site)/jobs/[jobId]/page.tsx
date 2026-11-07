@@ -13,6 +13,7 @@ import { DocumentList } from "@/components/site/document-list";
 import { PhotoGrid } from "@/components/site/photo-grid";
 import { ReportRow } from "@/components/site/report-row";
 import { JobTabs } from "@/components/site/job-tabs";
+import { HandoverStatus, TradeChips } from "@/components/handover/handover-status";
 import { dateRange, formatDate, mapsHref, relativeTime, telHref } from "@/lib/format";
 import { requestNow } from "@/lib/now";
 import { cn } from "@/lib/cn";
@@ -186,6 +187,7 @@ export default async function SiteJobPage({ params }: Props) {
                   </Section>
                 )}
                 <Section title="Handovers signed" action={<Link href={`/jobs/${job.id}/handover`} className="text-[13px] font-semibold text-signal-ink">+ New</Link>}>
+                  {handovers.length > 0 && <div className="mb-2"><HandoverStatus areas={areas} handovers={handovers} /></div>}
                   {handovers.length ? (
                     <div className={listCls}>
                       {handovers.map((h) => (
@@ -193,6 +195,7 @@ export default async function SiteJobPage({ params }: Props) {
                           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-ok-soft text-ok"><Signature className="size-5" weight="bold" /></span>
                           <span className="min-w-0 flex-1">
                             <span className="block font-semibold leading-snug">{h.title}</span>
+                            <TradeChips scopes={h.scopes} className="mt-1" />
                             <span className="block text-[12.5px] text-muted">{h.signer_name} · {formatDate(h.signed_at)}</span>
                           </span>
                           <CaretRight className="size-4 text-subtle" weight="bold" />

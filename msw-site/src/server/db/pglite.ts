@@ -15,7 +15,8 @@ function wrap(q: { query: PGlite["query"] }): Queryable {
   return {
     async query<T>(text: string, params?: unknown[]): Promise<QueryResult<T>> {
       const res = await q.query<T>(text, params as unknown[] | undefined);
-      return { rows: res.rows, rowCount: res.affectedRows ?? res.rows.length };
+      // Match node-postgres: SELECT reports the rows returned, writes the rows affected.
+      return { rows: res.rows, rowCount: Math.max(res.affectedRows ?? 0, res.rows.length) };
     },
   };
 }

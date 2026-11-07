@@ -366,3 +366,11 @@ describe("audit trail integrity", () => {
     ).rejects.toMatchObject({ code: "42501" });
   });
 });
+
+describe("database driver", () => {
+  it("reports rowCount for SELECT like node-postgres does", async () => {
+    const res = await db.query("select * from jobs");
+    expect(res.rowCount).toBe(res.rows.length);
+    expect(res.rowCount).toBeGreaterThan(0);
+  });
+});

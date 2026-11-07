@@ -1,6 +1,7 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import type { HandoverDetail } from "../queries/handovers";
+import { HANDOVER_TRADES, scopeSummary, tradeLong } from "@/lib/handover";
 
 const ink = rgb(0.09, 0.08, 0.06);
 const muted = rgb(0.42, 0.4, 0.36);
@@ -54,11 +55,15 @@ export async function buildHandoverCertificate(h: HandoverDetail, signature: Buf
   text(`${h.area_name ?? "Whole job"}  ·  ${h.site_address}`, 10);
   rule();
 
+  label("Handed over"); text(`${scopeSummary(h.scopes)} — ${h.scopes.map(tradeLong).join(", ")}`, 10, bold);
   label("Main contractor"); text(h.main_contractor ?? h.signer_company);
   if (h.scope) { label("Scope of works handed over"); text(h.scope); }
-  if (h.checklist.length) {
-    label("Checklist");
-    for (const c of h.checklist) {
+  const sections = [...HANDOVER_TRADES.map((t) => ({ id: t.id as string | undefined, title: `${t.long} checklist` })), { id: undefined, title: "Checklist" }];
+  for (const sec of sections) {
+    const items = h.checklist.filter((c) => (sec.id ? c.section === sec.id : !c.section));
+    if (!items.length) continue;
+    label(sec.title);
+    for (const c of items) {
       ensure(16);
       page.drawRectangle({ x: M, y: y - 2, width: 9, height: 9, borderColor: ink, borderWidth: 0.8, color: c.checked ? green : undefined });
       page.drawText(clean(`${c.checked ? "" : "(not confirmed) "}${c.label}`), { x: M + 16, y, size: 10, font: regular, color: c.checked ? ink : muted });

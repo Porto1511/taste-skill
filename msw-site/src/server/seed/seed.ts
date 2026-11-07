@@ -336,17 +336,9 @@ export async function seedExtras(driver: Driver, store: FileStore) {
   await runAsSystem(driver, (tx) =>
     tx.query(
       `insert into public.handovers (id, job_id, area_id, title, scope, checklist, signer_name, signer_company, signer_position, signer_email,
-         declaration, signature_path, captured_by, captured_by_name, captured_by_company, signed_at, created_at)
-       values ($1,$2,$3,$4,$5,$6::jsonb,'Martin Doyle','Kingsgate Construction Ltd','Site Manager',null,$7,$8,$9,'-','-',$10,$10)`,
-      [handoverId, jobId("bm"), areaId("bm", "l2"), "Level 2 metal deck and edge trims",
-        "Level 2 deck complete grids A–H / 1–6 including edge trims to the north and east elevations. Riser opening at D3 protected with Kingsgate's boarding.",
-        JSON.stringify([
-          { label: "Metal deck laid and fixed to current drawings", checked: true },
-          { label: "Edge trims installed and restrained", checked: true },
-          { label: "Shear studs complete where specified", checked: true },
-          { label: "Openings and voids protected or handed over as agreed", checked: true },
-          { label: "Area clear of MSW materials, offcuts and waste", checked: true },
-        ]),
+         declaration, signature_path, captured_by, captured_by_name, captured_by_company, signed_at, created_at, scopes)
+       values ($1,$2,$3,$4,$5,$6::jsonb,'Martin Doyle','Kingsgate Construction Ltd','Site Manager',null,$7,$8,$9,'-','-',$10,$10,'{deck,studs}')`,
+      [handoverId, jobId("bm"), areaId("bm", "l2"), L2_TITLE, L2_SCOPE, JSON.stringify(L2_CHECKLIST),
         "I confirm that the works described above have been inspected and are accepted as complete, and that the area is handed over from MSW UK Ltd in the condition shown.",
         sigPath, userId("john"), at(when)],
     ), { actorId: userId("john"), at: at(when) },
@@ -361,6 +353,59 @@ export async function seedExtras(driver: Driver, store: FileStore) {
         [photoId, handoverId, path, null, img.length, at(when)]),
     );
   }
+  await patchDemoHandovers(driver, store);
+}
+
+const L2_TITLE = "Level 2 — deck & studs handover";
+const L2_SCOPE = "Level 2 deck complete grids A–H / 1–6 including edge trims to the north and east elevations. Studs complete throughout.";
+const L2_CHECKLIST = [
+  { label: "Metal deck laid and fixed to current drawings", checked: true, section: "deck" },
+  { label: "Edge trims installed and restrained", checked: true, section: "deck" },
+  { label: "Area clear of MSW materials, offcuts and waste", checked: true, section: "deck" },
+  { label: "Shear studs complete to the current stud layout", checked: true, section: "studs" },
+  { label: "Area clear of MSW materials, offcuts and waste", checked: true, section: "studs" },
+];
+
+/**
+ * Demo handovers by trade (fictional data). Idempotent; also updates an
+ * older hosted demo database: tidies the Level 2 handover and adds a
+ * nets-only handover on Level 3.
+ */
+export async function patchDemoHandovers(driver: Driver, store: FileStore) {
+  await runAsSystem(driver, (tx) =>
+    tx.query("update public.handovers set title = $2, scope = $3, checklist = $4::jsonb, scopes = '{deck,studs}' where id = $1",
+      [demoId("handover:bm-l2"), L2_TITLE, L2_SCOPE, JSON.stringify(L2_CHECKLIST)]),
+  );
+  const netsId = demoId("handover:bm-l3-nets");
+  const exists = await driver.query("select 1 from public.handovers where id = $1", [netsId]);
+  if (exists.rowCount) return;
+  const sigPath = storagePaths.signature(jobId("bm"), netsId);
+  await store.put(sigPath, await makeSignaturePng(), "image/png");
+  const when = 6 * DAY - 3 * 60 * MIN;
+  await runAsSystem(driver, (tx) =>
+    tx.query(
+      `insert into public.handovers (id, job_id, area_id, title, scope, checklist, signer_name, signer_company, signer_position,
+         declaration, signature_path, captured_by, captured_by_name, captured_by_company, signed_at, created_at, scopes)
+       values ($1,$2,$3,'Level 3 — nets handover',$4,$5::jsonb,'Martin Doyle','Kingsgate Construction Ltd','Site Manager',$6,$7,$8,'-','-',$9,$9,'{netting}')`,
+      [netsId, jobId("bm"), areaId("bm", "l3"),
+        "Nets N1–N7 rigged under Level 3, grids A–H. Handed over so decking can start.",
+        JSON.stringify([
+          { label: "Nets installed to the current netting layout", checked: true, section: "netting" },
+          { label: "Nets tied off and inspected", checked: true, section: "netting" },
+          { label: "Area clear of MSW materials, offcuts and waste", checked: true, section: "netting" },
+        ]),
+        "I confirm that the works described above have been inspected and are accepted as complete, and that the area is handed over from MSW UK Ltd in the condition shown.",
+        sigPath, userId("liam"), at(when)],
+    ), { actorId: userId("liam"), at: at(when) },
+  );
+  const photoId = demoId("handover:bm-l3-nets:photo:0");
+  const img = await makeSamplePhoto("netting", "Level 3 nets N1–N7 rigged", 21);
+  const path = storagePaths.photo(jobId("bm"), photoId);
+  await store.put(path, img, "image/jpeg");
+  await runAsSystem(driver, (tx) =>
+    tx.query("insert into public.handover_photos (id, handover_id, storage_path, caption, file_size, width, height, created_at) values ($1,$2,$3,$4,$5,1600,1200,$6)",
+      [photoId, netsId, path, "Level 3 nets N1–N7 rigged", img.length, at(when)]),
+  );
 }
 
 /**
