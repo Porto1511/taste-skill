@@ -20,12 +20,11 @@ export function summariseDay(entries: DayEntry[]) {
 }
 
 export const WORK_TYPES: { id: string; label: string }[] = [
+  { id: "netting", label: "Netting" },
   { id: "deck", label: "Deck" },
   { id: "studs", label: "Studs" },
-  { id: "netting", label: "Netting" },
-  { id: "edge_trims", label: "Edge trims" },
-  { id: "edge_protection", label: "Edge protection" },
-  { id: "concrete", label: "Concrete" },
+  { id: "delivery", label: "Delivery" },
   { id: "other", label: "Other" },
 ];
-export const workLabel = (id: string) => WORK_TYPES.find((w) => w.id === id)?.label ?? id;
+const LEGACY: Record<string, string> = { edge_trims: "Edge trims", edge_protection: "Edge protection", concrete: "Concrete" };
+export const workLabel = (id: string) => WORK_TYPES.find((w) => w.id === id)?.label ?? LEGACY[id] ?? id;

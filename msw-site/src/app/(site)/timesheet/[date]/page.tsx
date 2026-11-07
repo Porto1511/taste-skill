@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Plus, PencilSimple, Car, Users, PersonSimpleWalk } from "@phosphor-icons/react/dist/ssr";
+import { Plus, PencilSimple, Car, Users } from "@phosphor-icons/react/dist/ssr";
 import { requireViewer } from "@/server/auth/viewer";
 import { londonToday, myTimesheetDay, weekStart } from "@/server/queries/timesheets";
 import { deleteTimesheetEntryAction } from "@/server/actions/timesheets";
@@ -64,7 +64,7 @@ export default async function TimesheetDayPage({ params, searchParams }: {
 
       <ol className="grid gap-2">
         {entries.map((e, i) => {
-          const Mode = e.travel_mode === "driver" ? Car : e.travel_mode === "passenger" ? Users : PersonSimpleWalk;
+          const Mode = e.travel_mode === "passenger" ? Users : Car;
           return (
             <li key={e.id}>
               <Link href={`/timesheet/${date}?edit=${e.id}`} className="block rounded-2xl border border-line bg-card p-4 shadow-[var(--shadow-card)] active:scale-[0.99]">
@@ -77,9 +77,11 @@ export default async function TimesheetDayPage({ params, searchParams }: {
                     )}
                     {e.work_description && <p className="mt-1.5 text-[14px] text-muted">{e.work_description}</p>}
                     <div className="mt-2 grid gap-0.5 text-[13px] tabular text-muted">
-                      {e.travel_out_start && <span className="inline-flex items-center gap-1.5"><Mode className="size-4" />{e.travel_out_start}–{e.travel_out_end} travel{e.vehicle_reg ? ` · ${e.vehicle_reg}` : ""}</span>}
-                      {e.site_start && <span>On site {e.site_start}–{e.site_finish}{e.break_minutes ? ` (break ${e.break_minutes}m)` : ""}</span>}
-                      {e.travel_back_start && <span className="inline-flex items-center gap-1.5"><Mode className="size-4" />{e.travel_back_start}–{e.travel_back_end} home</span>}
+                      <span className="inline-flex items-center gap-1.5"><Mode className="size-4" />
+                        {e.travel_mode === "passenger" ? `Passenger${e.driven_by ? ` with ${e.driven_by}` : ""}` : `Drove${e.vehicle_reg ? ` ${e.vehicle_reg}` : ""}`}
+                      </span>
+                      {e.travel_out_start && <span>Set off {e.travel_out_start} · arrived {e.travel_out_end}</span>}
+                      {e.travel_back_start && <span>Left site {e.travel_back_start}{e.travel_back_end ? ` · got back ${e.travel_back_end}` : " · on to next job"}</span>}
                     </div>
                   </div>
                   <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold uppercase",

@@ -4,7 +4,7 @@ import type { Viewer } from "../auth/viewer";
 
 export interface TimesheetRow {
   id: string; user_id: string; work_date: string; job_id: string | null; job_number: string | null; job_name: string | null;
-  location_note: string | null; vehicle_reg: string | null; travel_mode: "driver" | "passenger" | "none";
+  location_note: string | null; vehicle_reg: string | null; travel_mode: "driver" | "passenger" | "none"; driven_by: string | null;
   travel_out_start: string | null; travel_out_end: string | null; site_start: string | null; site_finish: string | null;
   break_minutes: number; travel_back_start: string | null; travel_back_end: string | null; mileage: number | null;
   notes: string | null; status: "submitted" | "approved" | "query"; office_note: string | null;
@@ -13,13 +13,13 @@ export interface TimesheetRow {
   updated_at: string;
 }
 
-const cols = `t.id, t.user_id, t.work_date, t.job_id, j.job_number, j.name as job_name, t.location_note, t.vehicle_reg, t.travel_mode,
+const cols = `t.id, t.user_id, t.work_date, t.job_id, j.job_number, j.name as job_name, t.location_note, t.vehicle_reg, t.travel_mode, t.driven_by,
   to_char(t.travel_out_start, 'HH24:MI') as travel_out_start, to_char(t.travel_out_end, 'HH24:MI') as travel_out_end,
   to_char(t.site_start, 'HH24:MI') as site_start, to_char(t.site_finish, 'HH24:MI') as site_finish, t.break_minutes,
   to_char(t.travel_back_start, 'HH24:MI') as travel_back_start, to_char(t.travel_back_end, 'HH24:MI') as travel_back_end,
   t.mileage, t.notes, t.status, t.office_note, t.work_done, t.work_description, t.travel_minutes, t.driving_minutes, t.site_minutes, t.reviewed_at,
   rb.full_name as reviewed_by_name, t.updated_at`;
-const entryOrder = "coalesce(t.travel_out_start, t.site_start, t.travel_back_start), t.created_at";
+const entryOrder = "coalesce(t.travel_out_start, t.travel_out_end), t.created_at";
 const from = `from timesheets t left join jobs j on j.id = t.job_id left join profiles rb on rb.id = t.reviewed_by`;
 
 /** Monday of the week containing `date` (YYYY-MM-DD). */

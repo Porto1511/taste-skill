@@ -53,46 +53,60 @@ describe("site users only see LIVE jobs", () => {
 });
 
 describe("timesheets", () => {
+  // set off -> arrived on site -> left site -> got back
   const insert = (key: string, date: string, extra = "") =>
     asUser(db, key).query<{ user_id: string; status: string; site_minutes: number; driving_minutes: number; travel_minutes: number }>(
-      `insert into timesheets (user_id, work_date, job_id, vehicle_reg, travel_mode, travel_out_start, travel_out_end, site_start, site_finish,
-         break_minutes, travel_back_start, travel_back_end ${extra ? ", status" : ""})
-       values ($1, $2, $3, 'AB12 CDE', 'driver', '06:00', '07:15', '07:30', '16:30', 30, '16:30', '17:45' ${extra ? `, '${extra}'` : ""})
+      `insert into timesheets (user_id, work_date, job_id, vehicle_reg, travel_mode, travel_out_start, travel_out_end,
+         travel_back_start, travel_back_end, work_done ${extra ? ", status" : ""})
+       values ($1, $2, $3, 'AB12 CDE', 'driver', '06:00', '07:15', '16:30', '17:45', '{netting}' ${extra ? `, '${extra}'` : ""})
        returning user_id, status, site_minutes, driving_minutes, travel_minutes`,
       [ids.user("claire"), date, ids.job("bm")],
     );
 
-  it("an MSW operative records a day; hours are calculated by the database; author and status are forced", async () => {
+  it("an MSW operative records a job; hours are worked out from the four times; author and status are forced", async () => {
     const [row] = await insert("gareth", "2026-09-01", "approved");
     expect(row.user_id).toBe(ids.user("gareth")); // not Claire, whatever was sent
     expect(row.status).toBe("submitted");
-    expect(row.site_minutes).toBe(510); // 9h minus 30 min break
+    expect(row.site_minutes).toBe(555); // arrived 07:15 -> left site 16:30
     expect(row.driving_minutes).toBe(150);
     expect(row.travel_minutes).toBe(150);
   });
 
   it("handles a journey home past midnight", async () => {
     const [row] = await asUser(db, "luke").query<{ travel_minutes: number }>(
-      `insert into timesheets (user_id, work_date, travel_mode, vehicle_reg, site_start, site_finish, travel_back_start, travel_back_end)
-       values (auth.uid(), '2026-09-02', 'driver', 'X1', '14:00', '22:30', '22:30', '00:45') returning travel_minutes`,
+      `insert into timesheets (user_id, work_date, travel_mode, vehicle_reg, location_note, travel_out_start, travel_out_end, travel_back_start, travel_back_end, work_done)
+       values (auth.uid(), '2026-09-02', 'driver', 'X1', 'Delivery', '13:00', '14:00', '22:30', '00:45', '{delivery}') returning travel_minutes`,
     );
-    expect(row.travel_minutes).toBe(135);
+    expect(row.travel_minutes).toBe(60 + 135);
   });
 
-  it("a day can have several jobs, each with the work done", async () => {
+  it("a passenger's travel is not driving time; there is no 'no travel' option", async () => {
+    const [row] = await asUser(db, "chris").query<{ driving_minutes: number; travel_minutes: number }>(
+      `insert into timesheets (user_id, work_date, travel_mode, driven_by, location_note, travel_out_start, travel_out_end, travel_back_start, travel_back_end, work_done)
+       values (auth.uid(), '2026-09-02', 'passenger', 'Gareth Evans', 'Yard', '06:00', '07:00', '15:00', '16:00', '{other}') returning driving_minutes, travel_minutes`,
+    );
+    expect(row).toEqual({ driving_minutes: 0, travel_minutes: 120 });
+    await expect(asUser(db, "chris").query(
+      `insert into timesheets (user_id, work_date, travel_mode, location_note, travel_out_start, travel_out_end, travel_back_start)
+       values (auth.uid(), '2026-09-05', 'none', 'Yard', '06:00', '07:00', '15:00')`,
+    )).rejects.toMatchObject({ code: "23514" });
+  });
+
+  it("a day can have several jobs, each with the work done; only netting/deck/studs/delivery/other", async () => {
     await asUser(db, "luke").query(
-      `insert into timesheets (user_id, work_date, job_id, travel_mode, vehicle_reg, travel_out_start, travel_out_end, site_start, site_finish, work_done, work_description)
-       values (auth.uid(), '2026-09-03', $1, 'driver', 'X1', '06:00', '07:00', '07:00', '12:00', '{deck,studs}', 'Bays 1-4')`, [ids.job("riverside")]);
+      `insert into timesheets (user_id, work_date, job_id, travel_mode, vehicle_reg, travel_out_start, travel_out_end, travel_back_start, work_done, work_description)
+       values (auth.uid(), '2026-09-03', $1, 'driver', 'X1', '06:00', '07:00', '12:00', '{deck,studs}', 'Bays 1-4')`, [ids.job("riverside")]);
     await asUser(db, "luke").query(
-      `insert into timesheets (user_id, work_date, location_note, travel_mode, vehicle_reg, travel_out_start, travel_out_end, site_start, site_finish, travel_back_start, travel_back_end, work_done)
-       values (auth.uid(), '2026-09-03', 'Yard', 'driver', 'X1', '12:00', '12:45', '12:45', '15:00', '15:00', '15:30', '{other}')`);
+      `insert into timesheets (user_id, work_date, location_note, travel_mode, vehicle_reg, travel_out_start, travel_out_end, travel_back_start, travel_back_end, work_done)
+       values (auth.uid(), '2026-09-03', 'Delivery to yard', 'driver', 'X1', '12:00', '12:45', '15:00', '15:30', '{delivery}')`);
     const day = await asUser(db, "luke").query<{ site_minutes: number; driving_minutes: number; work_done: string[] }>(
       "select site_minutes, driving_minutes, work_done from timesheets where work_date = '2026-09-03' order by travel_out_start");
-    expect(day.map((d) => d.work_done)).toEqual([["deck", "studs"], ["other"]]);
+    expect(day.map((d) => d.work_done)).toEqual([["deck", "studs"], ["delivery"]]);
     expect(day.reduce((t, d) => t + d.site_minutes, 0)).toBe(300 + 135);
     expect(day.reduce((t, d) => t + d.driving_minutes, 0)).toBe(60 + 75);
     await expect(asUser(db, "luke").query(
-      "insert into timesheets (user_id, work_date, site_start, site_finish, travel_mode, work_done) values (auth.uid(), '2026-09-04', '07:00', '08:00', 'none', '{payroll}')",
+      `insert into timesheets (user_id, work_date, travel_mode, vehicle_reg, location_note, travel_out_start, travel_out_end, travel_back_start, work_done)
+       values (auth.uid(), '2026-09-04', 'driver', 'X1', 'x', '06:00', '07:00', '08:00', '{concrete}')`,
     )).rejects.toMatchObject({ code: "23514" });
   });
 
@@ -115,20 +129,19 @@ describe("timesheets", () => {
     expect(all.length).toBe(3);
   });
 
-  it("operatives cannot approve their own day; the office cannot alter the recorded hours", async () => {
-    await asUser(db, "gareth").query("update timesheets set status = 'approved', site_finish = '18:00' where work_date = '2026-09-01'");
+  it("operatives cannot approve their own day; the office cannot alter the recorded times", async () => {
+    await asUser(db, "gareth").query("update timesheets set status = 'approved', travel_back_start = '18:00' where work_date = '2026-09-01'");
     let [t] = await system(db)<{ status: string; site_minutes: number }>(
       "select status, site_minutes from timesheets where user_id = $1 and work_date = '2026-09-01'", [ids.user("gareth")]);
-    expect(t).toEqual({ status: "submitted", site_minutes: 600 });
+    expect(t).toEqual({ status: "submitted", site_minutes: 645 });
 
     await asUser(db, "sam").query(
-      "update timesheets set status = 'approved', office_note = 'OK', site_finish = '23:00' where user_id = $1 and work_date = '2026-09-01'",
+      "update timesheets set status = 'approved', office_note = 'OK', travel_back_start = '23:00' where user_id = $1 and work_date = '2026-09-01'",
       [ids.user("gareth")]);
     [t] = await system(db)<{ status: string; site_minutes: number }>(
       "select status, site_minutes from timesheets where user_id = $1 and work_date = '2026-09-01'", [ids.user("gareth")]);
-    expect(t).toEqual({ status: "approved", site_minutes: 600 });
+    expect(t).toEqual({ status: "approved", site_minutes: 645 });
 
-    // Approved days are locked for the operative.
     const changed = await asUser(db, "gareth").query("update timesheets set notes = 'x' where work_date = '2026-09-01' returning id");
     expect(changed).toHaveLength(0);
     const notes = await asUser(db, "gareth").query<{ title: string }>("select title from notifications where kind = 'timesheet.approved'");

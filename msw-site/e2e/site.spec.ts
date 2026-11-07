@@ -113,24 +113,30 @@ test.describe("operative mobile experience", () => {
     await signIn(page, "gareth.evans@msw.example");
     await page.getByRole("link", { name: "Timesheet" }).click();
     await page.locator('a[href^="/timesheet/"]').filter({ hasText: "Nothing logged" }).last().click();
-    await page.getByLabel("Vehicle reg").fill("MS21 NET");
-    const times = page.locator('input[type="time"]');
-    for (const [i, t] of ["06:00", "07:10", "07:30", "16:30", "16:30", "17:40"].entries()) await times.nth(i).fill(t);
-    await expect(page.getByText("2h 20m").first()).toBeVisible();
     await page.getByRole("button", { name: "Netting", exact: true }).click();
     await page.getByLabel("Details of work done").fill("E2E: nets Level 3");
+    await expect(page.getByRole("button", { name: /No travel/ })).toHaveCount(0);
+    await page.getByLabel("Vehicle reg").fill("MS21 NET");
+    await page.getByLabel("Set off").fill("06:00");
+    await page.getByLabel("Arrived on site").fill("07:10");
+    await page.getByLabel("Left site").fill("12:00");
+    await expect(page.getByText("4h 50m")).toBeVisible(); // on site, worked out
     await page.getByRole("button", { name: "Save this job" }).click();
     await expect(page.getByText("Saved and sent to the office")).toBeVisible();
-    // Second job the same day
+    // Second job the same day, as a passenger
     await page.getByRole("link", { name: "Add another job" }).click();
+    await expect(page.getByLabel("Set off")).toHaveValue("12:00");
     await page.locator("#jobId").selectOption("other");
-    await page.getByLabel("Where / what").fill("Yard");
-    const t2 = page.locator('input[type="time"]');
-    for (const [i, t] of ["16:30", "17:00", "17:00", "18:00"].entries()) await t2.nth(i).fill(t);
-    await page.getByRole("button", { name: "Other", exact: true }).click();
+    await page.getByLabel("Where").fill("Delivery to yard");
+    await page.getByRole("button", { name: "Delivery", exact: true }).click();
+    await page.getByRole("button", { name: /Passenger/ }).click();
+    await page.getByLabel("Who was driving?").fill("Luke Bennett");
+    await page.getByLabel("Arrived on site").fill("12:40");
+    await page.getByLabel("Left site").fill("15:00");
+    await page.getByLabel("Got back").fill("15:30");
     await page.getByRole("button", { name: "Save this job" }).click();
     await expect(page.locator("ol > li")).toHaveCount(2);
-    await expect(page.getByText("E2E: nets Level 3")).toBeVisible();
+    await expect(page.getByText("Passenger with Luke Bennett")).toBeVisible();
     await signOut(page);
     await signIn(page, "john.smith@abcdecking.example");
     await expect(page.getByRole("link", { name: "Timesheet" })).toHaveCount(0);

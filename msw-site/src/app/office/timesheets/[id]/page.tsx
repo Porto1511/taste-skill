@@ -8,6 +8,12 @@ import { TimesheetReview } from "@/components/office/timesheet-review";
 import { fmtMinutes, formatDateTime } from "@/lib/format";
 import { summariseDay, workLabel } from "@/lib/timesheet";
 
+function app(a: string, b: string) {
+  const m = (x: string) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3, 5));
+  const d = m(b) - m(a);
+  return d >= 0 ? d : d + 1440;
+}
+
 export default async function OfficeTimesheetDayPage({ params }: { params: Promise<{ id: string }> }) {
   const viewer = await requireStaff();
   const { id } = await params;
@@ -30,10 +36,10 @@ export default async function OfficeTimesheetDayPage({ params }: { params: Promi
         {entries.map((t, i) => {
           const rows: [string, string][] = [
             ["Work done", [t.work_done.map(workLabel).join(", "), t.work_description].filter(Boolean).join(" — ") || "—"],
-            ["Travel", t.travel_mode === "driver" ? `Driving ${t.vehicle_reg ?? ""}` : t.travel_mode === "passenger" ? `Passenger ${t.vehicle_reg ?? ""}` : "No travel"],
-            ["Travel to site", t.travel_out_start ? `${t.travel_out_start} – ${t.travel_out_end}` : "—"],
-            ["On site", t.site_start ? `${t.site_start} – ${t.site_finish} (break ${t.break_minutes} min)` : "—"],
-            ["Travel home", t.travel_back_start ? `${t.travel_back_start} – ${t.travel_back_end}` : "—"],
+            ["Travel", t.travel_mode === "passenger" ? `Passenger${t.driven_by ? ` — driven by ${t.driven_by}` : ""}${t.vehicle_reg ? ` (${t.vehicle_reg})` : ""}` : `Driving ${t.vehicle_reg ?? ""}`],
+            ["Set off / arrived", t.travel_out_start ? `${t.travel_out_start} → ${t.travel_out_end} (${fmtMinutes(app(t.travel_out_start, t.travel_out_end ?? t.travel_out_start))})` : "—"],
+            ["On site", t.travel_out_end && t.travel_back_start ? `${t.travel_out_end} → ${t.travel_back_start} (${fmtMinutes(t.site_minutes)})` : "—"],
+            ["Left site / back", t.travel_back_start ? (t.travel_back_end ? `${t.travel_back_start} → ${t.travel_back_end} (${fmtMinutes(app(t.travel_back_start, t.travel_back_end))})` : `${t.travel_back_start} → on to next job`) : "—"],
             ...(t.mileage ? [["Miles", String(t.mileage)] as [string, string]] : []),
             ...(t.notes ? [["Notes", t.notes] as [string, string]] : []),
           ];

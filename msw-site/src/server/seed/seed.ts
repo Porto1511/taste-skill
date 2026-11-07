@@ -379,6 +379,8 @@ export async function patchDemoTimesheets(driver: Driver) {
        where work_done = '{}'`,
       [userId("gareth"), userId("luke")],
     );
+    await tx.query("update public.timesheets set driven_by = 'Gareth Evans' where user_id = $1 and travel_mode = 'passenger' and driven_by is null",
+      [userId("chris")]);
     // Gareth's most recent day: BM in the morning, then the yard for the afternoon.
     const { rows } = await tx.query<{ id: string; work_date: string }>(
       `select id, work_date from public.timesheets where user_id = $1 and job_id = $2 order by work_date desc limit 1`,
@@ -390,12 +392,12 @@ export async function patchDemoTimesheets(driver: Driver) {
       "select count(*)::int as n from public.timesheets where user_id = $1 and work_date = $2", [userId("gareth"), day.work_date]);
     if (count[0].n > 1) return;
     await tx.query(
-      `update public.timesheets set site_start = '07:30', site_finish = '12:30', break_minutes = 0,
-         travel_back_start = null, travel_back_end = null where id = $1`, [day.id]);
+      `update public.timesheets set site_start = null, site_finish = null, break_minutes = 0,
+         travel_back_start = '12:30', travel_back_end = null where id = $1`, [day.id]);
     await tx.query(
       `insert into public.timesheets (user_id, work_date, job_id, location_note, vehicle_reg, travel_mode, travel_out_start, travel_out_end,
          site_start, site_finish, break_minutes, travel_back_start, travel_back_end, work_done, work_description, status)
-       select user_id, work_date, null, 'Yard — Northampton', vehicle_reg, 'driver', '12:30', '14:10', '14:10', '16:30', 15, '16:30', '16:50',
+       select user_id, work_date, null, 'Yard — Northampton', vehicle_reg, 'driver', '12:30', '14:10', null, null, 0, '16:30', '16:50',
               '{netting}', 'Unloaded and repacked nets from British Museum Level 2', status
        from public.timesheets where id = $1`, [day.id]);
   });

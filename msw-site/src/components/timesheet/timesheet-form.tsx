@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { Car, Users, PersonSimpleWalk } from "@phosphor-icons/react";
+import { Car, Users } from "@phosphor-icons/react";
 import { saveTimesheetAction } from "@/server/actions/timesheets";
 import { idle } from "@/lib/action-state";
 import type { TimesheetRow } from "@/server/queries/timesheets";
@@ -18,103 +18,74 @@ const span = (a: string, b: string) => {
   return y >= x ? y - x : y - x + 1440;
 };
 
-function TimePair({ title, a, b, la, lb, values, set, error }: {
-  title: string; a: string; b: string; la: string; lb: string; values: Record<string, string>; set: (k: string, v: string) => void; error?: string;
+function TimeField({ name, label, hint, value, onChange, error }: {
+  name: string; label: string; hint?: string; value: string; onChange: (v: string) => void; error?: string;
 }) {
   return (
-    <fieldset className="rounded-2xl border border-line bg-card p-3">
-      <legend className="px-1 text-[13px] font-bold">{title}</legend>
-      <div className="grid grid-cols-2 gap-2">
-        {[[a, la], [b, lb]].map(([k, l]) => (
-          <label key={k} className="grid gap-1 text-[12px] font-semibold text-muted">
-            {l}
-            <input type="time" name={k} value={values[k]} onChange={(e) => set(k, e.target.value)}
-              className="h-14 rounded-xl border border-line-strong bg-white px-3 text-[20px] font-semibold text-ink tabular focus:border-ink focus:outline-none" />
-          </label>
-        ))}
-      </div>
-      {error && <p className="mt-1.5 text-[13px] font-medium text-danger">{error}</p>}
-    </fieldset>
+    <label className="grid gap-1">
+      <span className="text-[13px] font-semibold">{label}</span>
+      <input type="time" name={name} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={Boolean(error)}
+        className="h-14 rounded-xl border border-line-strong bg-white px-3 text-[20px] font-semibold text-ink tabular focus:border-ink focus:outline-none aria-invalid:border-danger" />
+      {error ? <span className="text-[12px] font-medium text-danger">{error}</span> : hint ? <span className="text-[12px] text-muted">{hint}</span> : null}
+    </label>
   );
 }
 
 export function TimesheetForm({ date, sheet, jobs, last, readOnly, previous }: {
   date: string; sheet: TimesheetRow | null; jobs: { id: string; job_number: string; name: string }[];
   last: { vehicle_reg: string | null; travel_mode: string } | null; readOnly: boolean;
-  /** The day's earlier entry, when adding another job: travel starts where it finished. */
+  /** The day's previous job, when adding another: you set off when you left that site. */
   previous?: TimesheetRow | null;
 }) {
   const [state, action] = useActionState(saveTimesheetAction, idle);
-  const [mode, setMode] = useState<string>(sheet?.travel_mode ?? last?.travel_mode ?? "driver");
+  const initialMode = sheet?.travel_mode === "passenger" || (!sheet && last?.travel_mode === "passenger") ? "passenger" : "driver";
+  const [mode, setMode] = useState<"driver" | "passenger">(initialMode);
   const [jobId, setJobId] = useState(sheet ? sheet.job_id ?? "other" : jobs.length === 1 && !previous ? jobs[0].id : "");
   const [work, setWork] = useState<string[]>(sheet?.work_done ?? []);
-  const [v, setV] = useState<Record<string, string>>({
-    travelOutStart: sheet?.travel_out_start ?? previous?.site_finish ?? "", travelOutEnd: sheet?.travel_out_end ?? "",
-    siteStart: sheet?.site_start ?? "", siteFinish: sheet?.site_finish ?? "",
-    travelBackStart: sheet?.travel_back_start ?? "", travelBackEnd: sheet?.travel_back_end ?? "",
+  const [t, setT] = useState({
+    setOff: sheet?.travel_out_start ?? previous?.travel_back_start ?? "",
+    arrived: sheet?.travel_out_end ?? "",
+    leftSite: sheet?.travel_back_start ?? "",
+    gotBack: sheet?.travel_back_end ?? "",
   });
-  const [breakMins, setBreak] = useState(String(sheet?.break_minutes ?? 30));
-  const set = (k: string, val: string) => setV((s) => ({ ...s, [k]: val }));
+  const set = (k: keyof typeof t) => (v: string) => setT((s) => ({ ...s, [k]: v }));
   const totals = useMemo(() => {
-    const travel = mode === "none" ? 0 : span(v.travelOutStart, v.travelOutEnd) + span(v.travelBackStart, v.travelBackEnd);
-    const site = Math.max(span(v.siteStart, v.siteFinish) - Number(breakMins || 0), 0);
-    return { travel, driving: mode === "driver" ? travel : 0, site };
-  }, [v, mode, breakMins]);
+    const travel = span(t.setOff, t.arrived) + span(t.leftSite, t.gotBack);
+    return { there: span(t.setOff, t.arrived), site: span(t.arrived, t.leftSite), back: span(t.leftSite, t.gotBack), travel };
+  }, [t]);
   const fe = state.fieldErrors ?? {};
 
   return (
-    <form action={action} className="grid gap-4">
+    <form action={action} className="grid gap-5">
       <input type="hidden" name="workDate" value={date} />
       <input type="hidden" name="travelMode" value={mode} />
       {sheet && <input type="hidden" name="entryId" value={sheet.id} />}
       {work.map((w) => <input key={w} type="hidden" name="workDone" value={w} />)}
-      <fieldset disabled={readOnly} className="grid gap-4 disabled:opacity-80">
-        <Field label="Job" htmlFor="jobId">
-          <Select id="jobId" name="jobId" value={jobId} onChange={(e) => setJobId(e.target.value)} required>
+      <fieldset disabled={readOnly} className="grid gap-5 disabled:opacity-80">
+        {/* 1. Job */}
+        <Field label="Job" htmlFor="jobId" error={fe.jobId}>
+          <Select id="jobId" name="jobId" value={jobId} onChange={(e) => setJobId(e.target.value)}>
             <option value="" disabled>Choose…</option>
             {jobs.map((j) => <option key={j.id} value={j.id}>{j.job_number} · {j.name}</option>)}
-            <option value="other">Other (yard, training, travel only…)</option>
+            <option value="other">Other (yard, delivery…)</option>
           </Select>
         </Field>
-        {fe.jobId && <p className="-mt-2 text-[13px] font-medium text-danger">{fe.jobId}</p>}
         {jobId === "other" && (
-          <Field label="Where / what" htmlFor="locationNote"><Input id="locationNote" name="locationNote" defaultValue={sheet?.location_note ?? ""} placeholder="e.g. Yard — loading netting" maxLength={200} /></Field>
-        )}
-
-        <fieldset>
-          <legend className="mb-2 text-sm font-semibold">Travel</legend>
-          <div className="grid grid-cols-3 gap-1.5">
-            {([["driver", "Driving", Car], ["passenger", "Passenger", Users], ["none", "No travel", PersonSimpleWalk]] as const).map(([id, label, Icon]) => (
-              <button key={id} type="button" aria-pressed={mode === id} onClick={() => setMode(id)}
-                className={cn("flex h-14 flex-col items-center justify-center gap-0.5 rounded-xl border text-[13px] font-semibold",
-                  mode === id ? "border-ink bg-ink text-white" : "border-line-strong bg-card")}>
-                <Icon className="size-5" weight={mode === id ? "fill" : "regular"} />{label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        {mode !== "none" && (
-          <Field label="Vehicle reg" htmlFor="vehicleReg" error={fe.vehicleReg} optional={mode === "passenger"}>
-            <Input id="vehicleReg" name="vehicleReg" defaultValue={sheet?.vehicle_reg ?? last?.vehicle_reg ?? ""} className="font-mono uppercase" placeholder="AB12 CDE" maxLength={12} autoCapitalize="characters" />
+          <Field label="Where" htmlFor="locationNote" error={fe.locationNote}>
+            <Input id="locationNote" name="locationNote" defaultValue={sheet?.location_note ?? ""} placeholder="e.g. Yard, or delivery to Leeds" maxLength={200} />
           </Field>
         )}
 
-        {mode !== "none" && <TimePair title={previous ? "Travel to this job" : "Travel to site"} a="travelOutStart" b="travelOutEnd" la="Set off" lb="Arrived" values={v} set={set} error={fe.travelOutStart} />}
-        <TimePair title="On site" a="siteStart" b="siteFinish" la="Start" lb="Finish" values={v} set={set} error={fe.siteStart} />
-        <Field label="Breaks" htmlFor="breakMinutes">
-          <Select id="breakMinutes" name="breakMinutes" value={breakMins} onChange={(e) => setBreak(e.target.value)}>
-            {[0, 15, 20, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m ? `${m} minutes` : "No break"}</option>)}
-          </Select>
-        </Field>
+        {/* 2. What was done */}
         <fieldset>
           <legend className="mb-2 text-sm font-semibold">What did you do?</legend>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             {WORK_TYPES.map((w) => {
               const on = work.includes(w.id);
               return (
                 <button key={w.id} type="button" aria-pressed={on}
                   onClick={() => setWork((all) => (on ? all.filter((x) => x !== w.id) : [...all, w.id]))}
-                  className={cn("h-11 rounded-full border px-4 text-[14px] font-semibold", on ? "border-ink bg-ink text-white" : "border-line-strong bg-card")}>
+                  className={cn("h-12 rounded-xl border text-[15px] font-semibold", on ? "border-ink bg-ink text-white" : "border-line-strong bg-card")}>
                   {w.label}
                 </button>
               );
@@ -124,16 +95,62 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly, previous }: {
           <Textarea name="workDescription" defaultValue={sheet?.work_description ?? ""} rows={2} maxLength={1000}
             className="mt-2 min-h-0" placeholder="e.g. Laid and pinned bays A1–D3, Level 1" aria-label="Details of work done" />
         </fieldset>
-        {mode !== "none" && <TimePair title="Travel home (if you went home from here)" a="travelBackStart" b="travelBackEnd" la="Left site" lb="Got home" values={v} set={set} error={fe.travelBackStart} />}
+
+        {/* 3. Travel */}
+        <fieldset className="grid gap-3">
+          <legend className="mb-2 text-sm font-semibold">Travel</legend>
+          <div className="grid grid-cols-2 gap-1.5">
+            {([["driver", "I drove", Car], ["passenger", "Passenger", Users]] as const).map(([id, label, Icon]) => (
+              <button key={id} type="button" aria-pressed={mode === id} onClick={() => setMode(id)}
+                className={cn("flex h-12 items-center justify-center gap-2 rounded-xl border text-[15px] font-semibold",
+                  mode === id ? "border-ink bg-ink text-white" : "border-line-strong bg-card")}>
+                <Icon className="size-5" weight={mode === id ? "fill" : "regular"} />{label}
+              </button>
+            ))}
+          </div>
+          {mode === "driver" ? (
+            <Field label="Vehicle reg" htmlFor="vehicleReg" error={fe.vehicleReg}>
+              <Input id="vehicleReg" name="vehicleReg" defaultValue={sheet?.vehicle_reg ?? last?.vehicle_reg ?? ""} className="font-mono uppercase" placeholder="AB12 CDE" maxLength={12} autoCapitalize="characters" />
+            </Field>
+          ) : (
+            <div className="grid grid-cols-[1fr_8rem] gap-2">
+              <Field label="Who was driving?" htmlFor="drivenBy" error={fe.drivenBy}>
+                <Input id="drivenBy" name="drivenBy" defaultValue={sheet?.driven_by ?? ""} placeholder="Name" maxLength={120} />
+              </Field>
+              <Field label="Reg" htmlFor="vehicleReg" optional>
+                <Input id="vehicleReg" name="vehicleReg" defaultValue={sheet?.vehicle_reg ?? ""} className="font-mono uppercase" maxLength={12} autoCapitalize="characters" />
+              </Field>
+            </div>
+          )}
+          <p className="text-[12.5px] text-muted">{mode === "driver" ? "Your travel counts as driving hours." : "Your travel counts as travel time, not driving hours."}</p>
+        </fieldset>
+
+        {/* 4. Times */}
+        <fieldset className="grid gap-3 rounded-2xl border border-line bg-card p-3">
+          <legend className="px-1 text-sm font-semibold">Times</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <TimeField name="setOff" label="Set off" value={t.setOff} onChange={set("setOff")} error={fe.setOff}
+              hint={previous && !sheet ? "From your last job" : undefined} />
+            <TimeField name="arrived" label="Arrived on site" value={t.arrived} onChange={set("arrived")} error={fe.arrived} />
+            <TimeField name="leftSite" label="Left site" value={t.leftSite} onChange={set("leftSite")} error={fe.leftSite} />
+            <TimeField name="gotBack" label="Got back" value={t.gotBack} onChange={set("gotBack")}
+              hint="Leave blank if you went on to another job" />
+          </div>
+        </fieldset>
 
         <div className="grid grid-cols-3 gap-2 rounded-2xl bg-ink p-3 text-center text-white">
-          {[["On site", totals.site], ["Driving", totals.driving], ["Travel", totals.travel]].map(([l, m]) => (
-            <div key={l as string}><p className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/50">{l}</p><p className="tabular text-[20px] font-semibold">{fmtMinutes(m as number)}</p></div>
+          {[["Travel there", totals.there], ["On site", totals.site], ["Travel back", totals.back]].map(([l, m]) => (
+            <div key={l as string}><p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-white/50">{l}</p><p className="tabular text-[19px] font-semibold">{fmtMinutes(m as number)}</p></div>
           ))}
         </div>
 
-        <Field label="Miles" htmlFor="mileage" optional><Input id="mileage" name="mileage" type="number" inputMode="numeric" min={0} max={2000} defaultValue={sheet?.mileage ?? ""} /></Field>
-        <Field label="Notes" htmlFor="notes" optional><Textarea id="notes" name="notes" defaultValue={sheet?.notes ?? ""} rows={2} className="min-h-0" maxLength={1000} /></Field>
+        <details className="group">
+          <summary className="cursor-pointer text-[14px] font-semibold text-muted">Miles and notes (optional)</summary>
+          <div className="mt-3 grid gap-4">
+            <Field label="Miles" htmlFor="mileage" optional><Input id="mileage" name="mileage" type="number" inputMode="numeric" min={0} max={2000} defaultValue={sheet?.mileage ?? ""} /></Field>
+            <Field label="Notes" htmlFor="notes" optional><Textarea id="notes" name="notes" defaultValue={sheet?.notes ?? ""} rows={2} className="min-h-0" maxLength={1000} /></Field>
+          </div>
+        </details>
       </fieldset>
 
       {state.error && <Alert>{state.error}</Alert>}
