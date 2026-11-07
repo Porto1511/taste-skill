@@ -27,7 +27,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
   const [workers, setWorkers] = useState<Worker[]>([{
     name: me.name, trade: me.trade,
     hours: Object.fromEntries(DAYS.map((d) => [d.id, myHours[d.id] ? String(myHours[d.id]) : ""])) as Record<DayId, string>,
-  }, ...Array.from({ length: START_ROWS - 1 }, () => ({ name: "", trade: me.trade, hours: emptyHours() }))]);
+  }, ...Array.from({ length: START_ROWS - 1 }, () => ({ name: "", trade: "", hours: emptyHours() }))]);
   const [description, setDescription] = useState("");
   const [materials, setMaterials] = useState("");
   const [complete, setComplete] = useState<"yes" | "no" | "">("");
@@ -142,7 +142,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
                 <p className="text-right text-[13px] text-muted">Total <span className="tabular font-bold text-ink">{total(w)}h</span></p>
               </fieldset>
             ))}
-            <button type="button" onClick={() => setWorkers((all) => [...all, { name: "", trade: all[0]?.trade ?? "", hours: emptyHours() }])}
+            <button type="button" onClick={() => setWorkers((all) => [...all, { name: "", trade: "", hours: emptyHours() }])}
               className="flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/30 bg-card text-[15px] font-semibold">
               <Plus className="size-5" weight="bold" /> Add another person
             </button>
