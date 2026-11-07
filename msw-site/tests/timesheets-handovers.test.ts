@@ -8,9 +8,9 @@ import type { Driver } from "@/server/db/types";
 import { setDriverForTesting } from "@/server/db";
 import { setFileStoreForTesting } from "@/server/storage";
 import { serveRevision } from "@/server/files/serve";
-import { createHandover } from "@/server/files/handovers";
-import { buildHandoverCertificate } from "@/server/files/certificate";
-import { getHandover } from "@/server/queries/handovers";
+import { createDaywork, createDelivery, createHandover } from "@/server/files/handovers";
+import { buildDayworkSheet, buildDeliveryNote, buildHandoverCertificate } from "@/server/files/certificate";
+import { getDaywork, getDelivery, getHandover } from "@/server/queries/handovers";
 import type { Viewer } from "@/server/auth/viewer";
 import { asUser, createSeededDb, ids, system, type createMemoryStore } from "./support/db";
 
@@ -156,13 +156,15 @@ describe("handover sign-off", () => {
       .png().toBuffer();
   const blank = () => sharp({ create: { width: 300, height: 100, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
   const input = (area: string, scopes: string[] = ["deck"]) => ({
-    jobId: ids.job("bm"), areaId: ids.area("bm", area), title: "Level 1 deck complete", scope: null, scopes,
-    checklist: [{ label: "Deck fixed", checked: true, section: "deck" }], signerName: "Martin Doyle", signerCompany: "Kingsgate Construction Ltd",
-    signerPosition: "Site Manager", signerEmail: null,
+    jobId: ids.job("bm"), areaId: ids.area("bm", area), title: "Level 1 deck complete", scopes,
+    details: { deck: { area: "Level 1, grids A–D" }, netting: { gridlines: "Level 1, grids A–D" } } as Record<string, Record<string, string>>,
+    daysWorked: ["mon", "tue"], weekCommencing: "2026-11-02",
+    signerName: "Martin Doyle", signerCompany: "Kingsgate Construction Ltd", signerPosition: "Site Manager", signerEmail: null,
   });
+  const sigs = async (client?: Buffer) => ({ client: { name: "c.png", bytes: client ?? await signature() }, msw: { name: "m.png", bytes: await signature() } });
 
   it("an allocated operative captures a signed handover; drawings at handover are recorded server-side", async () => {
-    const res = await createHandover(viewer("mark"), input("l1"), { name: "sig.png", bytes: await signature() }, []);
+    const res = await createHandover(viewer("mark"), input("l1"), await sigs(), []);
     const [h] = await system(db)<{ captured_by_name: string; drawing_refs: { doc_number: string }[] }>(
       "select captured_by_name, drawing_refs from handovers where id = $1", [res.id]);
     expect(h.captured_by_name).toBe("Mark Jones");
@@ -173,7 +175,7 @@ describe("handover sign-off", () => {
   });
 
   it("trades can be handed over separately (nets first) and a handover must name at least one trade", async () => {
-    const nets = await createHandover(viewer("mark"), { ...input("l1", ["netting"]), title: "Level 1 nets" }, { name: "s.png", bytes: await signature() }, []);
+    const nets = await createHandover(viewer("mark"), { ...input("l1", ["netting"]), title: "Level 1 nets" }, await sigs(), []);
     const [row] = await system(db)<{ scopes: string[] }>("select scopes from handovers where id = $1", [nets.id]);
     expect(row.scopes).toEqual(["netting"]);
     await expect(system(db)("update handovers set scopes = '{}' where id = $1", [nets.id])).rejects.toMatchObject({ code: "23514" });
@@ -181,9 +183,9 @@ describe("handover sign-off", () => {
   });
 
   it("rejects an empty signature and handovers outside the user's allocation", async () => {
-    await expect(createHandover(viewer("mark"), input("l1"), { name: "s.png", bytes: await blank() }, [])).rejects.toThrow(/empty/);
-    await expect(createHandover(viewer("john"), input("l3"), { name: "s.png", bytes: await signature() }, [])).rejects.toMatchObject({ code: "42501" });
-    await expect(createHandover(viewer("paul"), input("l1"), { name: "s.png", bytes: await signature() }, [])).rejects.toMatchObject({ code: "42501" });
+    await expect(createHandover(viewer("mark"), input("l1"), await sigs(await blank()), [])).rejects.toThrow(/empty/);
+    await expect(createHandover(viewer("john"), input("l3"), await sigs(), [])).rejects.toMatchObject({ code: "42501" });
+    await expect(createHandover(viewer("paul"), input("l1"), await sigs(), [])).rejects.toMatchObject({ code: "42501" });
   });
 
   it("is visible by area and cannot be edited or deleted", async () => {
@@ -199,8 +201,86 @@ describe("handover sign-off", () => {
   it("produces a PDF certificate including the signature", async () => {
     const [{ id }] = await system(db)<{ id: string }>("select id from handovers where title = 'Level 2 — deck & studs handover'");
     const h = (await getHandover({ ...viewer("claire"), isStaff: true }, id))!;
-    const pdf = await buildHandoverCertificate(h, (await store.get(h.signature_path))!, await Promise.all(h.photos.map(async (p) => (await store.get(p.storage_path))!)));
+    expect(h.details.studs.totalStuds).toBe("1240");
+    expect(h.msw_signature_path).toBeTruthy();
+    const pdf = await buildHandoverCertificate(h, { client: (await store.get(h.signature_path))!, msw: (await store.get(h.msw_signature_path!))! }, await Promise.all(h.photos.map(async (p) => (await store.get(p.storage_path))!)));
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
     expect(pdf.length).toBeGreaterThan(20_000);
+  });
+});
+
+describe("certificate fields", () => {
+  it("only keeps the fields for the trades being handed over, and requires the paper-form fields", async () => {
+    const { handoverInput } = await import("@/server/files/handovers");
+    const base = { jobId: ids.job("bm"), areaId: "", title: "Level 1", daysWorked: ["mon"], weekCommencing: "2026-11-02", signerName: "Martin Doyle", signerCompany: "Kingsgate", signerPosition: "", signerEmail: "" };
+    expect(handoverInput.safeParse({ ...base, scopes: ["deck"], details: {} }).success).toBe(false);
+    expect(handoverInput.safeParse({ ...base, scopes: ["studs"], details: { studs: { floorLevel: "L1", totalStuds: "lots" } } }).success).toBe(false);
+    expect(handoverInput.safeParse({ ...base, scopes: ["deck"], details: { deck: { area: "L1 A–D" } }, daysWorked: [] }).success).toBe(false);
+    expect(handoverInput.safeParse({ ...base, scopes: ["deck"], details: { deck: { area: "L1 A–D" } } }).success).toBe(true);
+  });
+});
+
+describe("daywork sheets and delivery notes", () => {
+  const signature = () =>
+    sharp({ create: { width: 300, height: 100, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+      .composite([{ input: Buffer.from('<svg width="300" height="100"><path d="M10 80 C 60 10, 120 90, 290 30" stroke="black" stroke-width="5" fill="none"/></svg>'), top: 0, left: 0 }])
+      .png().toBuffer();
+  const hours = (tue: number) => ({ mon: 0, tue, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 });
+  const daywork = (job = ids.job("bm")) => ({
+    jobId: job, weekCommencing: "2026-11-02", workers: [{ name: "Mark Jones", trade: "Decker", hours: hours(2) }],
+    description: "Standing time waiting for crane", materials: null, workComplete: true,
+    clientName: "Martin Doyle", clientCompany: "Kingsgate Construction Ltd", clientPosition: null, clientEmail: null,
+  });
+  const delivery = (job = ids.job("bm")) => ({
+    jobId: job, items: [{ description: "Deck sheets MD60", quantity: "40" }], deliveredBy: "Mark Jones", vehicleReg: "MS21 NET", notes: null,
+    receiverName: "Martin Doyle", receiverCompany: "Kingsgate Construction Ltd", receiverPosition: null, receiverEmail: null,
+  });
+  const two = async () => ({ name: "a.png", bytes: await signature() });
+
+  it("anyone on the job can raise them; nobody off the job can", async () => {
+    const dw = await createDaywork(viewer("mark"), daywork(), { client: await two(), msw: await two() });
+    const dl = await createDelivery(viewer("mark"), delivery(), { receiver: await two(), driver: await two() });
+    const [row] = await system(db)<{ captured_by_name: string }>("select captured_by_name from dayworks where id = $1", [dw.id]);
+    expect(row.captured_by_name).toBe("Mark Jones");
+    expect(dl.id).toBeTruthy();
+    await expect(createDaywork(viewer("paul"), daywork(), { client: await two(), msw: await two() })).rejects.toMatchObject({ code: "42501" });
+    await expect(createDelivery(viewer("paul"), delivery(), { receiver: await two(), driver: await two() })).rejects.toMatchObject({ code: "42501" });
+    const office = await asUser(db, "claire").query<{ kind: string }>("select kind from notifications where kind in ('daywork.signed','delivery.signed')");
+    expect(new Set(office.map((n) => n.kind))).toEqual(new Set(["daywork.signed", "delivery.signed"]));
+  });
+
+  it("are seen by the office, the person who raised them and nobody else's gang", async () => {
+    const seen = async (k: string, table: string) => (await asUser(db, k).query<{ id: string }>(`select id from ${table}`)).length;
+    for (const table of ["dayworks", "deliveries"]) {
+      expect(await seen("claire", table)).toBeGreaterThanOrEqual(2);
+      expect(await seen("paul", table)).toBe(0);
+      // ABC's manager has the report grant: sees ABC's (Mark's) sheet, never Northern Edge's or MSW's.
+      const names = (await asUser(db, "dave").query<{ captured_by_name: string }>(`select captured_by_name from ${table}`)).map((r) => r.captured_by_name);
+      expect(names).toEqual(["Mark Jones"]);
+    }
+    expect(await seen("sarah", "dayworks")).toBe(0); // Northern Edge manager without the report grant on this job
+    expect(await seen("liam", "dayworks")).toBe(1); // their own standing-time sheet
+    expect(await seen("ryan", "dayworks")).toBe(0); // same gang, not the person who raised it
+    expect(await seen("gareth", "deliveries")).toBe(1);
+  });
+
+  it("cannot be edited or deleted once signed", async () => {
+    for (const table of ["dayworks", "deliveries"]) {
+      await expect(asUser(db, "claire").query(`update ${table} set created_at = now()`)).rejects.toMatchObject({ code: "42501" });
+      await expect(asUser(db, "claire").query(`delete from ${table}`)).rejects.toMatchObject({ code: "42501" });
+    }
+  });
+
+  it("produces the daywork sheet and delivery note PDFs", async () => {
+    const staff = { ...viewer("claire"), isStaff: true };
+    const [{ id: dwId }] = await system(db)<{ id: string }>("select id from dayworks where description like 'Standing time — crane%'");
+    const d = (await getDaywork(staff, dwId))!;
+    const sheet = await buildDayworkSheet(d, { client: (await store.get(d.client_signature_path))!, msw: (await store.get(d.msw_signature_path))! });
+    expect(sheet.subarray(0, 5).toString()).toBe("%PDF-");
+    const [{ id: dlId }] = await system(db)<{ id: string }>("select id from deliveries where delivered_by = 'Gareth Evans'");
+    const v = (await getDelivery(staff, dlId))!;
+    expect(v.items).toHaveLength(3);
+    const note = await buildDeliveryNote(v, { receiver: (await store.get(v.receiver_signature_path))!, driver: (await store.get(v.driver_signature_path))! });
+    expect(note.subarray(0, 5).toString()).toBe("%PDF-");
   });
 });

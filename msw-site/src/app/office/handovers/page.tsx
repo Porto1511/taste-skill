@@ -12,7 +12,7 @@ export default async function OfficeHandoversPage() {
   const items = await listHandovers(viewer);
   return (
     <div>
-      <PageHeader title="Handovers" description="Completed works signed off by the main contractor on site, with photos, checklist and certificate." />
+      <PageHeader title="Handovers" description="Netting, decking and stud welding completion certificates signed by the client on site." />
       <Card className="overflow-hidden"><HandoverTable items={items} /></Card>
     </div>
   );

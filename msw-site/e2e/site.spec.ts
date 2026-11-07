@@ -82,35 +82,53 @@ test.describe("operative mobile experience", () => {
     expect(anon.status()).toBe(404);
   });
 
-  test("John gets a handover signed by the contractor on his phone; the office gets a certificate", async ({ page }) => {
+  test("John hands over Level 1 nets: certificate fields, MSW signs, client signs, both copies", async ({ page }) => {
     await signIn(page, "john.smith@abcdecking.example");
     await page.goto(`/jobs/${BM}`);
     await page.getByRole("link", { name: /Handover/ }).first().click();
-    await page.getByRole("button", { name: "Nets", exact: true }).click();
     await page.getByLabel("Area", { exact: true }).selectOption({ label: "Level 1" });
-    await expect(page.getByLabel("What's being handed over")).toHaveAttribute("placeholder", "Level 1 — nets handover");
-    await page.getByRole("button", { name: "Nets tied off and inspected", exact: true }).click();
+    await page.getByRole("button", { name: "Nets", exact: true }).click();
+    await expect(page.getByLabel("Gridlines / Level")).toHaveValue("Level 1");
+    await page.getByLabel("Serial numbers of nets used").fill("N1 4471, N2 4472");
     await expect(page.getByText("Openings and voids")).toHaveCount(0);
-    await page.getByRole("button", { name: /Next: contractor signs/ }).click();
-    await expect(page.getByText("Hand the phone to the site manager")).toBeVisible();
-    await expect(page.getByLabel("Your name")).toHaveValue("Martin Doyle");
-    const pad = page.getByLabel(/Signature box/);
-    await pad.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const box = (await pad.boundingBox())!;
-    await page.mouse.move(box.x + 30, box.y + 120);
-    await page.mouse.down();
-    for (const [dx, dy] of [[60, 40], [110, 100], [160, 50], [220, 110], [280, 60]]) await page.mouse.move(box.x + dx, box.y + dy, { steps: 6 });
-    await page.mouse.up();
+    await page.getByRole("button", { name: /Next: MSW signs/ }).click();
+    await draw(page, 0);
+    await page.getByRole("button", { name: /Next: client signs/ }).click();
+    await expect(page.getByText("Hand the phone to the client")).toBeVisible();
+    await expect(page.getByLabel("Print name")).toHaveValue("Martin Doyle");
+    await draw(page, 0);
     await page.getByRole("checkbox").check();
     await page.getByRole("button", { name: "Sign & submit" }).click();
-    await expect(page.getByText("Handover signed and sent to the MSW office")).toBeVisible();
+    await expect(page.getByText(/Signed — the MSW copy is saved/)).toBeVisible();
     await expect(page.getByAltText(/Signature of Martin Doyle/)).toBeVisible();
-    const href = await page.getByRole("link", { name: /Handover certificate/ }).getAttribute("href");
+    await expect(page.getByRole("button", { name: "Send copy to client" })).toBeVisible();
+    const href = await page.getByRole("link", { name: /Open PDF/ }).getAttribute("href");
     const pdf = await page.request.get(href!);
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
     await page.goto(`/jobs/${BM}#reports`);
     await expect(page.getByLabel("Nets handed over").first()).toBeVisible();
+  });
+
+  test("Gareth records a delivery and the receiver signs for it", async ({ page }) => {
+    await signIn(page, "gareth.evans@msw.example");
+    await page.goto(`/jobs/${BM}#reports`);
+    await page.getByRole("link", { name: "Delivery note" }).click();
+    await expect(page.getByText("MSW-2611").first()).toBeVisible();
+    await page.getByLabel("Item 1").fill("MD60 deck sheets");
+    await page.getByLabel("Quantity 1").fill("40");
+    await expect(page.getByLabel("Delivered by")).toHaveValue("Gareth Evans");
+    await page.getByRole("button", { name: /Next: driver signs/ }).click();
+    await draw(page, 0);
+    await page.getByRole("button", { name: /Next: receiver signs/ }).click();
+    await page.getByLabel("Print name").fill("Martin Doyle");
+    await draw(page, 0);
+    await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: "Sign & submit" }).click();
+    await expect(page.getByText(/Signed — the MSW copy is saved/)).toBeVisible();
+    await expect(page.getByText("MD60 deck sheets")).toBeVisible();
+    const pdf = await page.request.get(await page.getByRole("link", { name: /Open PDF/ }).getAttribute("href") as string);
+    expect(pdf.headers()["content-type"]).toBe("application/pdf");
   });
 
   test("an MSW operative logs today's timesheet; subcontractors have no timesheet", async ({ page }) => {
@@ -147,3 +165,13 @@ test.describe("operative mobile experience", () => {
     expect((await page.goto("/timesheet"))?.status()).toBe(404);
   });
 });
+
+async function draw(page: import("@playwright/test").Page, index: number) {
+  const pad = page.getByLabel(/Signature box/).nth(index);
+  await pad.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  const box = (await pad.boundingBox())!;
+  await page.mouse.move(box.x + 30, box.y + 120);
+  await page.mouse.down();
+  for (const [dx, dy] of [[60, 40], [110, 100], [160, 50], [220, 110], [280, 60]]) await page.mouse.move(box.x + dx, box.y + dy, { steps: 6 });
+  await page.mouse.up();
+}

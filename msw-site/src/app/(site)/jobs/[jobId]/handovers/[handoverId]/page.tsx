@@ -20,7 +20,7 @@ export default async function SiteHandoverPage({ params, searchParams }: {
   return (
     <div>
       <PageHeader back={{ href: `/jobs/${jobId}#reports`, label: h.job_name }} title={<span className="sr-only">Handover</span>} />
-      {signed && <Alert tone="ok" className="mb-4" title="Handover signed and sent to the MSW office">The certificate is ready below.</Alert>}
+      {signed && <Alert tone="ok" className="mb-4" title="Signed — the MSW copy is saved and the office has been notified">Now send the client their copy below.</Alert>}
       <HandoverView h={h} />
     </div>
   );

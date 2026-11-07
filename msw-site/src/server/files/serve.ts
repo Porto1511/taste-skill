@@ -76,14 +76,22 @@ export async function servePhoto(viewerId: string, photoId: string, thumb: boole
   });
 }
 
-/** Handover photos and signatures: visible to whoever can see the handover (RLS). */
-export async function serveHandoverFile(viewerId: string, id: string, kind: "photo" | "signature", thumb = false): Promise<Response> {
+/** Handover photos and signatures (client / MSW), and daywork signatures: visible to whoever can see the record (RLS). */
+export async function serveHandoverFile(
+  viewerId: string, id: string,
+  kind: "photo" | "signature" | "msw-signature" | "daywork-client" | "daywork-msw" | "delivery-receiver" | "delivery-driver", thumb = false,
+): Promise<Response> {
   if (!UUID.test(id)) return notFound();
-  const path = await withUser(viewerId, async (tx) =>
-    kind === "photo"
-      ? (await tx.query<{ p: string }>("select storage_path as p from handover_photos where id = $1", [id])).rows[0]?.p
-      : (await tx.query<{ p: string }>("select signature_path as p from handovers where id = $1", [id])).rows[0]?.p,
-  );
+  const sql: Record<typeof kind, string> = {
+    "photo": "select storage_path as p from handover_photos where id = $1",
+    "signature": "select signature_path as p from handovers where id = $1",
+    "msw-signature": "select msw_signature_path as p from handovers where id = $1",
+    "daywork-client": "select client_signature_path as p from dayworks where id = $1",
+    "daywork-msw": "select msw_signature_path as p from dayworks where id = $1",
+    "delivery-receiver": "select receiver_signature_path as p from deliveries where id = $1",
+    "delivery-driver": "select driver_signature_path as p from deliveries where id = $1",
+  };
+  const path = await withUser(viewerId, async (tx) => (await tx.query<{ p: string | null }>(sql[kind], [id])).rows[0]?.p);
   if (!path) return notFound();
   const data = await getFileStore().get(path);
   if (!data) return notFound();

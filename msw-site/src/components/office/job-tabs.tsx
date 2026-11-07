@@ -12,7 +12,7 @@ export function JobTabs({ jobId, counts }: { jobId: string; counts: { documents:
     { href: `${base}/documents`, label: "Drawings & RAMS", count: counts.documents },
     { href: `${base}/access`, label: "People & access", count: counts.people },
     { href: `${base}/reports`, label: "Site reports", count: counts.issues, alert: counts.issues > 0 },
-    { href: `${base}/handovers`, label: "Handovers" },
+    { href: `${base}/handovers`, label: "Sign-offs" },
     { href: `${base}/activity`, label: "Activity" },
   ];
   return (

@@ -1,24 +1,33 @@
 import { cn } from "@/lib/cn";
+import { COMPANY, MSW_LOGO_PATHS, MSW_LOGO_VIEWBOX } from "@/lib/company";
 
-/** MSW Site mark: a trapezoidal metal-deck profile on a hi-vis tile. */
+/** MSW wordmark (vector, from the company logo). */
+export function MswLogo({ className, color = COMPANY.red }: { className?: string; color?: string }) {
+  const v = MSW_LOGO_VIEWBOX;
+  return (
+    <svg viewBox={`${v.x} ${v.y} ${v.w} ${v.h}`} className={cn("h-7 w-auto", className)} role="img" aria-label="MSW">
+      {MSW_LOGO_PATHS.map((d) => <path key={d} d={d} fill={color} />)}
+    </svg>
+  );
+}
+
+/** Square app mark: the wordmark on a white tile (used where a compact icon is needed). */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 40" className={cn("size-9", className)} aria-hidden>
-      <rect width="40" height="40" rx="9" fill="#FFB81C" />
-      <path d="M5 26h5l3-9h5l3 9h4l3-9h5l2 6" fill="none" stroke="#17150F" strokeWidth="3.2" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M5 31h30" stroke="#17150F" strokeWidth="2.4" strokeLinecap="round" />
-    </svg>
+    <span className={cn("inline-grid size-9 place-items-center rounded-lg bg-white px-1", className)} aria-hidden>
+      <MswLogo className="h-auto w-full" />
+    </span>
   );
 }
 
 export function Logo({ className, tone = "light", sub }: { className?: string; tone?: "light" | "dark"; sub?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <LogoMark />
+      <span className={cn("inline-flex items-center rounded-md px-2 py-1.5", tone === "light" ? "bg-white" : "")}>
+        <MswLogo className="h-6" />
+      </span>
       <span className="leading-none">
-        <span className={cn("block text-[17px] font-bold tracking-tight", tone === "light" ? "text-white" : "text-ink")}>
-          MSW <span className="font-medium opacity-70">Site</span>
-        </span>
+        <span className={cn("block text-[17px] font-semibold tracking-tight", tone === "light" ? "text-white" : "text-ink")}>Site</span>
         {sub && <span className={cn("mt-1 block text-[11px] font-medium uppercase tracking-[0.12em]", tone === "light" ? "text-white/55" : "text-muted")}>{sub}</span>}
       </span>
     </span>

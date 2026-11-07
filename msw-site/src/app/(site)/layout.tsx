@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireViewer } from "@/server/auth/viewer";
-import { LogoMark } from "@/components/ui/logo";
+import { MswLogo } from "@/components/ui/logo";
 import { DemoStrip } from "@/components/layout/demo-strip";
 import { BottomNav } from "@/components/layout/bottom-nav";
 
@@ -11,8 +11,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <header className="sticky top-0 z-30 bg-ink pt-[env(safe-area-inset-top)] text-white">
         <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
           <Link href="/jobs" className="flex items-center gap-2" aria-label="Your jobs">
-            <LogoMark className="size-8" />
-            <span className="text-[16px] font-bold tracking-tight">MSW <span className="font-medium text-white/60">Site</span></span>
+            <span className="rounded-md bg-white px-2 py-1.5"><MswLogo className="h-5" /></span>
+            <span className="text-[16px] font-semibold tracking-tight text-white/85">Site</span>
           </Link>
           {viewer.isStaff && (
             <Link href="/office" className="rounded-full border border-white/20 px-3 py-1.5 text-[13px] font-semibold text-white/85 hover:bg-white/10">Office</Link>

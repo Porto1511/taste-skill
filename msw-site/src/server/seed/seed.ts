@@ -378,7 +378,11 @@ export async function patchDemoHandovers(driver: Driver, store: FileStore) {
   );
   const netsId = demoId("handover:bm-l3-nets");
   const exists = await driver.query("select 1 from public.handovers where id = $1", [netsId]);
-  if (exists.rowCount) return;
+  if (!exists.rowCount) await insertNetsHandover(driver, store, netsId);
+  await patchDemoCertificates(driver, store);
+}
+
+async function insertNetsHandover(driver: Driver, store: FileStore, netsId: string) {
   const sigPath = storagePaths.signature(jobId("bm"), netsId);
   await store.put(sigPath, await makeSignaturePng(), "image/png");
   const when = 6 * DAY - 3 * 60 * MIN;
@@ -406,6 +410,83 @@ export async function patchDemoHandovers(driver: Driver, store: FileStore) {
     tx.query("insert into public.handover_photos (id, handover_id, storage_path, caption, file_size, width, height, created_at) values ($1,$2,$3,$4,$5,1600,1200,$6)",
       [photoId, netsId, path, "Level 3 nets N1–N7 rigged", img.length, at(when)]),
   );
+}
+
+/**
+ * Certificate details (paper-form fields), MSW signatures, a daywork sheet
+ * and a delivery note for the demo (fictional data). Idempotent.
+ */
+export async function patchDemoCertificates(driver: Driver, store: FileStore) {
+  const weekOf = (back: number) => {
+    const d = new Date(`${londonDate(back * DAY)}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return d.toISOString().slice(0, 10);
+  };
+  const certs = [
+    { id: demoId("handover:bm-l2"), back: 3, days: ["mon", "tue", "wed"], details: {
+      deck: { area: "Level 2, grids A–H / 1–6 including edge trims to north and east elevations" },
+      studs: { floorLevel: "Level 2", totalStuds: "1240", studSize: "19 × 100" },
+      notes: { notes: "Decked over riser void at D3 as instructed by site manager — void to be cut out and protected by others." },
+    } },
+    { id: demoId("handover:bm-l3-nets"), back: 6, days: ["mon", "tue"], details: {
+      netting: { gridlines: "Level 3, grids A–H / 1–6", serials: "N1 4471, N2 4472, N3 4473, N4 4474, N5 4475, N6 4476, N7 4477" },
+    } },
+  ];
+  for (const c of certs) {
+    const [row] = (await driver.query<{ msw_signature_path: string | null; job_id: string }>(
+      "select msw_signature_path, job_id from public.handovers where id = $1", [c.id])).rows;
+    if (!row || row.msw_signature_path) continue;
+    const path = storagePaths.signature(row.job_id, demoId(`${c.id}:msw-sig`));
+    await store.put(path, await makeSignaturePng(), "image/png");
+    await runAsSystem(driver, (tx) =>
+      tx.query("update public.handovers set details = $2::jsonb, days_worked = $3, week_commencing = $4, msw_signature_path = $5 where id = $1",
+        [c.id, JSON.stringify(c.details), c.days, weekOf(c.back), path]));
+  }
+
+  const dayworkId = demoId("daywork:bm-standing");
+  if (!(await driver.query("select 1 from public.dayworks where id = $1", [dayworkId])).rowCount) {
+    const when = 2 * DAY - 4 * 60 * MIN;
+    const [client, msw] = [storagePaths.signature(jobId("bm"), demoId("daywork:bm-standing:client")), storagePaths.signature(jobId("bm"), demoId("daywork:bm-standing:msw"))];
+    await store.put(client, await makeSignaturePng(), "image/png");
+    await store.put(msw, await makeSignaturePng(), "image/png");
+    await runAsSystem(driver, (tx) =>
+      tx.query(
+        `insert into public.dayworks (id, job_id, week_commencing, workers, description, materials, work_complete, client_name, client_position,
+           client_company, client_email, client_signature_path, msw_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id, signed_at, created_at)
+         values ($1,$2,$3,$4::jsonb,$5,null,true,'Martin Doyle','Site Manager','Kingsgate Construction Ltd',null,$6,$7,$8,'-','-',$9,$10,$10)`,
+        [dayworkId, jobId("bm"), weekOf(2),
+          JSON.stringify([
+            { name: "Liam Turner", trade: "Edge protection", hours: { mon: 0, tue: 3, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 } },
+            { name: "Ryan Hughes", trade: "Netting", hours: { mon: 0, tue: 3, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 } },
+          ]),
+          "Standing time — crane unavailable 07:30–10:30, could not lift deck bundles to Level 4.",
+          client, msw, userId("liam"), "00000000-0000-0000-0000-000000000000", at(when)],
+      ), { actorId: userId("liam"), at: at(when) },
+    );
+  }
+
+  const deliveryId = demoId("delivery:bm-studs");
+  if (!(await driver.query("select 1 from public.deliveries where id = $1", [deliveryId])).rowCount) {
+    const when = 1 * DAY - 6 * 60 * MIN;
+    const [receiver, driverSig] = [storagePaths.signature(jobId("bm"), demoId("delivery:bm-studs:receiver")), storagePaths.signature(jobId("bm"), demoId("delivery:bm-studs:driver"))];
+    await store.put(receiver, await makeSignaturePng(), "image/png");
+    await store.put(driverSig, await makeSignaturePng(), "image/png");
+    await runAsSystem(driver, (tx) =>
+      tx.query(
+        `insert into public.deliveries (id, job_id, items, delivered_by, vehicle_reg, notes, receiver_name, receiver_position, receiver_company, receiver_email,
+           receiver_signature_path, driver_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id, signed_at, created_at)
+         values ($1,$2,$3::jsonb,'Gareth Evans','MS21 NET',$4,'Martin Doyle','Site Manager','Kingsgate Construction Ltd',null,$5,$6,$7,'-','-',$8,$9,$9)`,
+        [deliveryId, jobId("bm"),
+          JSON.stringify([
+            { description: "19 × 100 shear studs (boxes)", quantity: "12" },
+            { description: "Ceramic ferrules (boxes)", quantity: "12" },
+            { description: "Edge trim 150 mm × 3 m", quantity: "40" },
+          ]),
+          "One box of ferrules damaged in transit — replacement on next drop.",
+          receiver, driverSig, userId("gareth"), "00000000-0000-0000-0000-000000000000", at(when)],
+      ), { actorId: userId("gareth"), at: at(when) },
+    );
+  }
 }
 
 /**

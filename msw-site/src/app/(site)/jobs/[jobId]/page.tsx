@@ -3,11 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   Phone, NavigationArrow, WarningOctagon, Signature, Certificate, ArrowSquareOut, ShieldWarning, MapPin, UserCircle,
-  Buildings, CalendarBlank, TrendUp, Camera, CaretLeft, CaretRight,
+  Buildings, CalendarBlank, TrendUp, Camera, CaretLeft, CaretRight, Timer, Truck,
 } from "@phosphor-icons/react/dist/ssr";
 import { requireViewer } from "@/server/auth/viewer";
 import { getSiteJob } from "@/server/queries/site";
-import { listHandovers } from "@/server/queries/handovers";
+import { listDayworks, listDeliveries, listHandovers } from "@/server/queries/handovers";
 import { EmptyState } from "@/components/ui/card";
 import { DocumentList } from "@/components/site/document-list";
 import { PhotoGrid } from "@/components/site/photo-grid";
@@ -62,7 +62,7 @@ export default async function SiteJobPage({ params }: Props) {
   if (!/^[0-9a-f-]{36}$/i.test(jobId)) notFound();
   const data = await getSiteJob(viewer, jobId);
   if (!data) notFound(); // not allocated, or not live: indistinguishable from "does not exist"
-  const handovers = await listHandovers(viewer, jobId);
+  const [handovers, dayworks, deliveries] = await Promise.all([listHandovers(viewer, jobId), listDayworks(viewer, jobId), listDeliveries(viewer, jobId)]);
 
   const { job, assignment, areas, office, documents, reports, photos } = data;
   const now = requestNow();
@@ -169,12 +169,14 @@ export default async function SiteJobPage({ params }: Props) {
             ),
           },
           {
-            id: "reports", label: "Reports", count: mine.length + handovers.length || undefined,
+            id: "reports", label: "Reports", count: mine.length + handovers.length + dayworks.length + deliveries.length || undefined,
             content: (
               <>
                 <div className="mb-4 grid grid-cols-2 gap-2">
                   <Link href={`/jobs/${job.id}/report?kind=progress`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><TrendUp className="size-5" weight="bold" /> Progress update</Link>
                   <Link href={`/jobs/${job.id}/report?kind=photo`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Camera className="size-5" /> Upload photos</Link>
+                  <Link href={`/jobs/${job.id}/daywork`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Timer className="size-5" /> Daywork sheet</Link>
+                  <Link href={`/jobs/${job.id}/delivery`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Truck className="size-5" /> Delivery note</Link>
                 </div>
                 <Section title={isManager ? "Your company's reports" : "Your reports"}>
                   {mine.length
@@ -186,7 +188,7 @@ export default async function SiteJobPage({ params }: Props) {
                     <div className={listCls}>{shared.map((r) => <ReportRow key={r.id} report={r} href={`/jobs/${job.id}/reports/${r.id}`} showAuthor now={now} />)}</div>
                   </Section>
                 )}
-                <Section title="Handovers signed" action={<Link href={`/jobs/${job.id}/handover`} className="text-[13px] font-semibold text-signal-ink">+ New</Link>}>
+                <Section title="Completion certificates" action={<Link href={`/jobs/${job.id}/handover`} className="text-[13px] font-semibold text-signal-ink">+ New handover</Link>}>
                   {handovers.length > 0 && <div className="mb-2"><HandoverStatus areas={areas} handovers={handovers} /></div>}
                   {handovers.length ? (
                     <div className={listCls}>
@@ -204,6 +206,38 @@ export default async function SiteJobPage({ params }: Props) {
                     </div>
                   ) : <p className="text-[13px] text-muted">None yet for your areas.</p>}
                 </Section>
+                {deliveries.length > 0 && (
+                  <Section title="Delivery notes">
+                    <div className={listCls}>
+                      {deliveries.map((d) => (
+                        <Link key={d.id} href={`/jobs/${job.id}/delivery/${d.id}`} className="flex items-center gap-3 px-4 py-3">
+                          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-info-soft text-info"><Truck className="size-5" weight="bold" /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold leading-snug">{d.first_item}{d.item_count > 1 ? ` + ${d.item_count - 1} more` : ""}</span>
+                            <span className="block text-[12.5px] text-muted">{formatDate(d.signed_at)} · received by {d.receiver_name}</span>
+                          </span>
+                          <CaretRight className="size-4 text-subtle" weight="bold" />
+                        </Link>
+                      ))}
+                    </div>
+                  </Section>
+                )}
+                {dayworks.length > 0 && (
+                  <Section title="Daywork sheets">
+                    <div className={listCls}>
+                      {dayworks.map((d) => (
+                        <Link key={d.id} href={`/jobs/${job.id}/daywork/${d.id}`} className="flex items-center gap-3 px-4 py-3">
+                          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-warn-soft text-warn"><Timer className="size-5" weight="bold" /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold leading-snug">{d.description}</span>
+                            <span className="block text-[12.5px] text-muted">{d.total_hours}h · W/C {formatDate(d.week_commencing)} · {d.client_name}</span>
+                          </span>
+                          <CaretRight className="size-4 text-subtle" weight="bold" />
+                        </Link>
+                      ))}
+                    </div>
+                  </Section>
+                )}
               </>
             ),
           },
