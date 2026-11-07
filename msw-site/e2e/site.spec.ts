@@ -131,6 +131,29 @@ test.describe("operative mobile experience", () => {
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
   });
 
+  test("a daywork sheet starts with four rows; spare rows are left blank", async ({ page }) => {
+    await signIn(page, "john.smith@abcdecking.example");
+    await page.goto(`/jobs/${BM}/daywork`);
+    for (const n of [1, 2, 3, 4]) await expect(page.getByLabel(`Name ${n}`)).toBeVisible();
+    await expect(page.getByLabel("Name 1")).toHaveValue("John Smith");
+    await page.getByLabel("Person 1 hours Tuesday").or(page.getByLabel("John Smith hours Tuesday")).fill("3");
+    await page.getByLabel("Name 2").fill("Mark Jones");
+    await page.getByRole("button", { name: /Next: MSW signs/ }).click();
+    await expect(page.getByText("Enter the hours for Mark Jones, or clear their name.")).toBeVisible();
+    await page.getByLabel("Mark Jones hours Tuesday").fill("3");
+    await page.getByLabel("Description of work").fill("Standing time waiting for the crane");
+    await page.getByRole("button", { name: "yes", exact: true }).click();
+    await page.getByRole("button", { name: /Next: MSW signs/ }).click();
+    await draw(page, 0);
+    await page.getByRole("button", { name: /Next: client signs/ }).click();
+    await page.getByLabel("Print name").fill("Martin Doyle");
+    await draw(page, 0);
+    await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: "Sign & submit" }).click();
+    await expect(page.getByText(/Signed — the MSW copy is saved/)).toBeVisible();
+    await expect(page.getByText("Mark Jones")).toBeVisible();
+  });
+
   test("an MSW operative logs today's timesheet; subcontractors have no timesheet", async ({ page }) => {
     await signIn(page, "gareth.evans@msw.example");
     await page.getByRole("link", { name: "Timesheet" }).click();
