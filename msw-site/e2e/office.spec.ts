@@ -87,4 +87,26 @@ test.describe("office workflows", () => {
     await page.getByRole("link", { name: "Back to the office dashboard" }).click();
     await expect(page).toHaveURL(/\/office$/);
   });
+
+  test("drop several PDFs: details come from the file names; a known number becomes its next revision", async ({ page }) => {
+    const pdf = Buffer.from("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
+    await signIn(page, "claire.morgan@msw.example");
+    await page.goto(`/office/jobs/${BM}/documents`);
+    await page.getByLabel("Choose PDFs").setInputFiles([
+      { name: "MSW-2611-DK-105_C01_Level 2 Deck Infill.pdf", mimeType: "application/pdf", buffer: pdf },
+      { name: "MSW-2611-DK-101 C03.pdf", mimeType: "application/pdf", buffer: pdf },
+    ]);
+    const rows = page.locator("li").filter({ has: page.getByLabel("Revision") });
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0).getByLabel("Number")).toHaveValue("MSW-2611-DK-105");
+    await expect(rows.nth(0).getByLabel("Title")).toHaveValue("Level 2 Deck Infill");
+    await expect(rows.nth(0).getByLabel("Area")).toHaveValue(await rows.nth(0).getByLabel("Area").locator("option", { hasText: "Level 2" }).getAttribute("value") as string);
+    await expect(rows.nth(1).getByText("New revision · was C02")).toBeVisible();
+    await expect(rows.nth(1).getByLabel("Revision")).toHaveValue("C03");
+    await page.getByRole("button", { name: "Upload 2 files" }).click();
+    await expect(page.getByLabel("Uploaded")).toHaveCount(2);
+    await page.reload();
+    await expect(page.getByText("MSW-2611-DK-105")).toBeVisible();
+    await expect(page.getByRole("link").filter({ hasText: "MSW-2611-DK-101" })).toContainText("Rev C03 current");
+  });
 });

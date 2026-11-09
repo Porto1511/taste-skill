@@ -5,7 +5,7 @@ import { requireStaff } from "@/server/auth/viewer";
 import { getOfficeJob, listOfficeDocuments, type OfficeDocument } from "@/server/queries/office";
 import { Card, EmptyState, SectionTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DocumentUploadForm } from "@/components/office/document-upload-form";
+import { BulkUpload } from "@/components/office/bulk-upload";
 import { formatDate } from "@/lib/format";
 
 export default async function JobDocumentsPage({ params }: { params: Promise<{ jobId: string }> }) {
@@ -15,7 +15,16 @@ export default async function JobDocumentsPage({ params }: { params: Promise<{ j
   if (!job) notFound();
   const areas = job.areas.map((a) => ({ id: a.id, name: a.name }));
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
+    <div className="grid gap-6">
+      <section>
+        <SectionTitle>Upload</SectionTitle>
+        <Card className="p-5">
+          <BulkUpload jobId={jobId} areas={areas} existing={docs.map((d) => ({
+            id: d.id, docNumber: d.doc_number, title: d.title,
+            latest: d.revisions[0]?.revision ?? null, areas: d.areas.length ? d.areas.map((a) => a.name).join(", ") : "Whole job",
+          }))} />
+        </Card>
+      </section>
       <div className="grid content-start gap-6">
         {(["drawing", "rams"] as const).map((kind) => {
           const list = docs.filter((d) => d.kind === kind);
@@ -25,16 +34,12 @@ export default async function JobDocumentsPage({ params }: { params: Promise<{ j
               {list.length ? (
                 <Card className="divide-y divide-line overflow-hidden">{list.map((d) => <DocRow key={d.id} doc={d} jobId={jobId} />)}</Card>
               ) : (
-                <EmptyState icon={<FilePdf />} title={`No ${kind === "drawing" ? "drawings" : "RAMS"} yet`}>Upload a PDF using the form.</EmptyState>
+                <EmptyState icon={<FilePdf />} title={`No ${kind === "drawing" ? "drawings" : "RAMS"} yet`}>Drop the PDFs into the upload box above.</EmptyState>
               )}
             </section>
           );
         })}
       </div>
-      <aside>
-        <SectionTitle>Add a document</SectionTitle>
-        <Card className="p-5"><DocumentUploadForm jobId={jobId} areas={areas} /></Card>
-      </aside>
     </div>
   );
 }

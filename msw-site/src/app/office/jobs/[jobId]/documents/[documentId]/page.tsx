@@ -6,18 +6,11 @@ import { getOfficeDocument } from "@/server/queries/office";
 import { Card, SectionTitle } from "@/components/ui/card";
 import { Badge, RevisionStatusBadge } from "@/components/ui/badge";
 import { RevisionActions } from "@/components/office/revision-actions";
+import { nextRevision } from "@/lib/drawing-name";
 import { DocumentUploadForm } from "@/components/office/document-upload-form";
 import { DocumentDetailsForm } from "@/components/office/document-details-form";
 import { formatBytes, formatDate, formatDateTime, relativeTime } from "@/lib/format";
 import { requestNow } from "@/lib/now";
-
-function nextRevision(rev?: string) {
-  if (!rev) return "";
-  const m = /^(.*?)(\d+)$/.exec(rev);
-  if (m) return m[1] + String(Number(m[2]) + 1).padStart(m[2].length, "0");
-  if (/^[A-Y]$/i.test(rev)) return String.fromCharCode(rev.toUpperCase().charCodeAt(0) + 1);
-  return "";
-}
 
 export default async function OfficeDocumentPage({ params }: { params: Promise<{ jobId: string; documentId: string }> }) {
   const viewer = await requireStaff();
