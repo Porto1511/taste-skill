@@ -19,10 +19,10 @@ const personas: { group: string; people: { key: string; hint: string }[] }[] = [
     { key: "john", hint: "ABC Decking · Levels 1–2" },
     { key: "liam", hint: "Northern Edge · Levels 3–4" },
   ] },
-  { group: "Access boundaries", people: [
-    { key: "paul", hint: "ABC Decking · NOT on British Museum" },
-    { key: "dave", hint: "ABC director · reports by grant only" },
-    { key: "gareth", hint: "MSW operative · all areas" },
+  { group: "Check who can see what", people: [
+    { key: "paul", hint: "ABC Decking · not on the British Museum job, so sees none of it" },
+    { key: "dave", hint: "ABC director · sees ABC's own reports, only where the office allows" },
+    { key: "gareth", hint: "MSW operative · every area, keeps a timesheet" },
   ] },
 ];
 
