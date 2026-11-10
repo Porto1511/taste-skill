@@ -12,7 +12,7 @@ export function DayworkTable({ items, showJob = true, hrefBase = "/office/daywor
           <Link href={`${hrefBase}/${d.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-paper">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-warn-soft text-warn"><ClockClockwise className="size-5" weight="bold" /></span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate font-semibold">{d.description}</span>
+              <span className="block truncate font-semibold"><span className={d.kind === "standing" ? "text-warn" : "text-info"}>{d.kind === "standing" ? "Standing time" : "Extra work"}</span> · {d.description}</span>
               <span className="block text-[12.5px] text-muted">
                 {showJob && <><span className="font-mono">{d.job_number}</span> · </>}W/C {formatDate(d.week_commencing)} · {d.people} {d.people === 1 ? "person" : "people"} · {d.total_hours}h · {d.captured_by_name} ({d.captured_by_company}) · signed by {d.client_name}
               </span>

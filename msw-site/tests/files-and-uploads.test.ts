@@ -79,7 +79,7 @@ describe("photo access", () => {
   it("serves report photos only to people who can see the report", async () => {
     const [photo] = await system(db)<{ id: string }>("select id from report_photos where report_id = $1", [ids.report("bm-edge")]);
     expect((await servePhoto(ids.user("john"), photo.id, true)).status).toBe(200);
-    expect((await servePhoto(ids.user("dave"), photo.id, false)).status).toBe(200); // ABC manager with report grant
+    expect((await servePhoto(ids.user("dave"), photo.id, false)).status).toBe(200); // Derby Decking manager with report grant
     expect((await servePhoto(ids.user("mark"), photo.id, false)).status).toBe(404); // colleague, not shared
     expect((await servePhoto(ids.user("liam"), photo.id, false)).status).toBe(404);
     expect((await servePhoto(ids.user("sarah"), photo.id, false)).status).toBe(404);

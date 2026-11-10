@@ -8,7 +8,7 @@ export function DayworkView({ d }: { d: DayworkDetail }) {
   return (
     <div className="grid gap-4">
       <div className="rounded-2xl border border-line bg-card p-4 shadow-[var(--shadow-card)]">
-        <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-ok">Daywork sheet · signed by the client</p>
+        <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-ok">Daywork sheet · {d.kind === "standing" ? "Standing time" : "Extra work"} · signed by the client</p>
         <h1 className="mt-1 text-[20px] font-semibold leading-snug">{d.description}</h1>
         <p className="mt-1 text-[13px] text-muted"><span className="font-mono">{d.job_number}</span> · W/C {formatDate(d.week_commencing)} · Work complete: <span className="font-semibold text-ink">{d.work_complete ? "Yes" : "No"}</span></p>
         <div className="mt-4">

@@ -451,9 +451,9 @@ export async function patchDemoCertificates(driver: Driver, store: FileStore) {
     await store.put(msw, await makeSignaturePng(), "image/png");
     await runAsSystem(driver, (tx) =>
       tx.query(
-        `insert into public.dayworks (id, job_id, week_commencing, workers, description, materials, work_complete, client_name, client_position,
+        `insert into public.dayworks (id, job_id, kind, week_commencing, workers, description, materials, work_complete, client_name, client_position,
            client_company, client_email, client_signature_path, msw_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id, signed_at, created_at)
-         values ($1,$2,$3,$4::jsonb,$5,null,true,'Martin Doyle','Site Manager','Kingsgate Construction Ltd',null,$6,$7,$8,'-','-',$9,$10,$10)`,
+         values ($1,$2,'standing',$3,$4::jsonb,$5,null,true,'Martin Doyle','Site Manager','Kingsgate Construction Ltd',null,$6,$7,$8,'-','-',$9,$10,$10)`,
         [dayworkId, jobId("bm"), weekOf(2),
           JSON.stringify([
             { name: "Liam Turner", trade: "Edge protection", hours: { mon: 0, tue: 3, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 } },
@@ -462,6 +462,28 @@ export async function patchDemoCertificates(driver: Driver, store: FileStore) {
           "Standing time — crane unavailable 07:30–10:30, could not lift deck bundles to Level 4.",
           client, msw, userId("liam"), "00000000-0000-0000-0000-000000000000", at(when)],
       ), { actorId: userId("liam"), at: at(when) },
+    );
+  }
+
+  const extraId = demoId("daywork:bm-extra-trims");
+  if (!(await driver.query("select 1 from public.dayworks where id = $1", [extraId])).rowCount) {
+    const when = 1 * DAY - 2 * 60 * MIN;
+    const [client, msw] = [storagePaths.signature(jobId("bm"), demoId("daywork:bm-extra:client")), storagePaths.signature(jobId("bm"), demoId("daywork:bm-extra:msw"))];
+    await store.put(client, await makeSignaturePng(), "image/png");
+    await store.put(msw, await makeSignaturePng(), "image/png");
+    await runAsSystem(driver, (tx) =>
+      tx.query(
+        `insert into public.dayworks (id, job_id, kind, week_commencing, workers, description, materials, work_complete, client_name, client_position,
+           client_company, client_email, client_signature_path, msw_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id, signed_at, created_at)
+         values ($1,$2,'extra',$3,$4::jsonb,$5,$6,true,'Martin Doyle','Site Manager','Kingsgate Construction Ltd',null,$7,$8,$9,'-','-',$10,$11,$11)`,
+        [extraId, jobId("bm"), weekOf(1),
+          JSON.stringify([
+            { name: "John Smith", trade: "Decking", hours: { mon: 2, tue: 1.5, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 } },
+            { name: "Mark Jones", trade: "Decking", hours: { mon: 2, tue: 1.5, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 } },
+          ]),
+          "Extra edge trim to new riser opening at D4, instructed by the site manager.", "4 × 3 m edge trim, fixings",
+          client, msw, userId("john"), "00000000-0000-0000-0000-000000000000", at(when)],
+      ), { actorId: userId("john"), at: at(when) },
     );
   }
 

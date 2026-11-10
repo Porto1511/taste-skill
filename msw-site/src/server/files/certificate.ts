@@ -257,7 +257,7 @@ export async function buildDayworkSheet(d: DayworkDetail, signatures: { client: 
   y -= 12;
   const fullW = W - 2 * M;
   box(p, M, y - 62, fullW, 62);
-  txt(p, "Description of work:", M + 6, y - 13, 9.5, f.reg);
+  txt(p, `Description of work:   ${d.kind === "standing" ? "STANDING TIME" : "EXTRA WORK"}`, M + 6, y - 13, 9.5, f.reg);
   para(p, d.description, M + 6, y - 28, fullW - 12, 9.5, f.bold, false, 2);
   y -= 74;
   box(p, M, y - 20, 120, 20); box(p, M + 120, y - 20, 140, 20);

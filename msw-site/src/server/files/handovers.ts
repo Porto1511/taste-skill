@@ -135,6 +135,7 @@ export const dayworkInput = z.object({
     trade: z.string().trim().max(80).default(""),
     hours: z.object(Object.fromEntries(DAYS.map((d) => [d.id, hours])) as Record<(typeof DAYS)[number]["id"], typeof hours>),
   })).min(1, "Add at least one person").max(20),
+  kind: z.enum(["standing", "extra"], { message: "Is it standing time or extra work?" }),
   description: z.string().trim().min(3, "Describe the work").max(4000),
   materials: optText(2000),
   workComplete: z.boolean(),
@@ -154,11 +155,11 @@ export async function createDaywork(viewer: Viewer, input: z.infer<typeof daywor
       const clientPath = storagePaths.signature(input.jobId, randomUUID());
       const mswPath = storagePaths.signature(input.jobId, randomUUID());
       await tx.query(
-        `insert into dayworks (id, job_id, week_commencing, workers, description, materials, work_complete, client_name, client_position,
+        `insert into dayworks (id, job_id, kind, week_commencing, workers, description, materials, work_complete, client_name, client_position,
            client_company, client_email, client_signature_path, msw_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id)
-         values ($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12,$13, auth.uid(), '-', '-', (select company_id from profiles where id = auth.uid()))`,
+         values ($1,$2,$14,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12,$13, auth.uid(), '-', '-', (select company_id from profiles where id = auth.uid()))`,
         [id, input.jobId, input.weekCommencing, JSON.stringify(input.workers), input.description, input.materials, input.workComplete,
-          input.clientName, input.clientPosition, input.clientCompany, input.clientEmail, clientPath, mswPath],
+          input.clientName, input.clientPosition, input.clientCompany, input.clientEmail, clientPath, mswPath, input.kind],
       );
       await store.put(clientPath, clientSig, "image/png");
       track(clientPath);

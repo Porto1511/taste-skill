@@ -228,7 +228,7 @@ describe("daywork sheets and delivery notes", () => {
   const hours = (tue: number) => ({ mon: 0, tue, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 });
   const daywork = (job = ids.job("bm")) => ({
     jobId: job, weekCommencing: "2026-11-02", workers: [{ name: "Mark Jones", trade: "Decker", hours: hours(2) }],
-    description: "Standing time waiting for crane", materials: null, workComplete: true,
+    kind: "standing" as const, description: "Standing time waiting for crane", materials: null, workComplete: true,
     clientName: "Martin Doyle", clientCompany: "Kingsgate Construction Ltd", clientPosition: null, clientEmail: null,
   });
   const delivery = (job = ids.job("bm")) => ({
@@ -254,11 +254,11 @@ describe("daywork sheets and delivery notes", () => {
     for (const table of ["dayworks", "deliveries"]) {
       expect(await seen("claire", table)).toBeGreaterThanOrEqual(2);
       expect(await seen("paul", table)).toBe(0);
-      // ABC's manager has the report grant: sees ABC's (Mark's) sheet, never Northern Edge's or MSW's.
+      // Derby Decking's manager has the report grant: sees Derby Decking's (Mark's) sheet, never SOS's or MSW's.
       const names = (await asUser(db, "dave").query<{ captured_by_name: string }>(`select captured_by_name from ${table}`)).map((r) => r.captured_by_name);
-      expect(names).toEqual(["Mark Jones"]);
+      expect(names.sort()).toEqual(table === "dayworks" ? ["John Smith", "Mark Jones"] : ["Mark Jones"]); // Derby Decking staff only
     }
-    expect(await seen("sarah", "dayworks")).toBe(0); // Northern Edge manager without the report grant on this job
+    expect(await seen("sarah", "dayworks")).toBe(0); // SOS manager without the report grant on this job
     expect(await seen("liam", "dayworks")).toBe(1); // their own standing-time sheet
     expect(await seen("ryan", "dayworks")).toBe(0); // same gang, not the person who raised it
     expect(await seen("gareth", "deliveries")).toBe(1);

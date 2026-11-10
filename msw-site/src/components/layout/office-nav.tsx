@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SquaresFour, Buildings, WarningCircle, UsersThree, ClockCounterClockwise, Bell, Signature, ClockClockwise, Timer, Truck } from "@phosphor-icons/react";
+import { SquaresFour, Buildings, WarningCircle, UsersThree, ClockCounterClockwise, Bell, Signature, ClockClockwise, Timer, Truck, ListChecks } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 
 export function OfficeNav({ openReports, urgent, unread }: { openReports: number; urgent: number; unread: number }) {
@@ -15,6 +15,7 @@ export function OfficeNav({ openReports, urgent, unread }: { openReports: number
     { href: "/office/daywork", label: "Daywork sheets", icon: Timer },
     { href: "/office/deliveries", label: "Deliveries", icon: Truck },
     { href: "/office/timesheets", label: "Timesheets", icon: ClockClockwise },
+    { href: "/office/qs", label: "QS check", icon: ListChecks },
     { href: "/office/people", label: "People & access", icon: UsersThree },
     { href: "/office/activity", label: "Activity", icon: ClockCounterClockwise },
     { href: "/office/notifications", label: "Notifications", icon: Bell, count: unread },

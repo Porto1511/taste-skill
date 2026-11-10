@@ -43,15 +43,15 @@ describe("job visibility — individual allocation only", () => {
     expect(await jobNumbers("sarah")).toEqual([]);
   });
 
-  it("another subcontractor cannot see ABC Decking's other jobs", async () => {
-    // Liam (Northern Edge) works on BM but must never see Riverside, where ABC's second gang is.
+  it("another subcontractor cannot see Derby Decking's other jobs", async () => {
+    // Liam (SOS) works on BM but must never see Riverside, where Derby Decking's second gang is.
     expect(await jobNumbers("liam")).toEqual(["MSW-2611"]);
     const riverside = await asUser(db, "liam").query("select * from reports where job_id = $1", [ids.job("riverside")]);
     expect(riverside).toHaveLength(0);
   });
 
   it("a subcontractor owner does not automatically see every job involving their employees", async () => {
-    // Dave (ABC director) is granted BM only — not Riverside where Paul and Steve work.
+    // Dave (Derby Decking director) is granted BM only — not Riverside where Paul and Steve work.
     expect(await jobNumbers("dave")).toEqual(["MSW-2611"]);
   });
 
@@ -226,7 +226,7 @@ describe("access management is admin-only and auditable", () => {
     );
     expect(log.map((l) => l.action)).toEqual(["access.granted", "access.revoked"]);
     expect(log[0].summary).toContain("Deck 3");
-    expect(log[1].actor_name).toBe("Claire Morgan");
+    expect(log[1].actor_name).toBe("Damian Pendleton");
   });
 
   it("deactivating a user suspends all their access", async () => {
@@ -243,7 +243,7 @@ describe("access management is admin-only and auditable", () => {
     const notes = await asUser(db, "john").query<{ user_id: string }>("select user_id from notifications");
     expect(notes.every((n) => n.user_id === ids.user("john"))).toBe(true);
     const companies = await asUser(db, "john").query<{ name: string }>("select name from companies");
-    expect(companies.map((c) => c.name)).toEqual(["ABC Decking Ltd"]);
+    expect(companies.map((c) => c.name)).toEqual(["Derby Decking"]);
   });
 
   it("operatives cannot escalate their own role", async () => {
@@ -273,7 +273,7 @@ describe("site reports", () => {
   it("cannot submit a report as another user (author is always the caller)", async () => {
     const [r] = await asUser(db, "john").query<{ author_id: string; author_name: string }>(
       `insert into reports (job_id, kind, category, title, author_id, author_name, author_company_id, author_company_name)
-       values ($1, 'issue', 'other', 'Spoof attempt', $2, 'Mark Jones', $3, 'ABC Decking Ltd')
+       values ($1, 'issue', 'other', 'Spoof attempt', $2, 'Mark Jones', $3, 'Derby Decking')
        returning author_id, author_name`,
       [ids.job("bm"), ids.user("mark"), demoId("company:abc")],
     );
@@ -308,11 +308,11 @@ describe("site reports", () => {
       "select author_company_name, job_id from reports",
     );
     expect(dave.length).toBeGreaterThan(0);
-    expect(dave.every((r) => r.author_company_name === "ABC Decking Ltd" && r.job_id === ids.job("bm"))).toBe(true);
-    // Paul's Riverside report is ABC's, but Dave has no grant on Riverside.
+    expect(dave.every((r) => r.author_company_name === "Derby Decking" && r.job_id === ids.job("bm"))).toBe(true);
+    // Paul's Riverside report is Derby Decking's, but Dave has no grant on Riverside.
     const paulReport = await asUser(db, "dave").query("select * from reports where id = $1", [ids.report("rq-short")]);
     expect(paulReport).toHaveLength(0);
-    // Sarah (Northern Edge) has no grant at all.
+    // Sarah (SOS) has no grant at all.
     expect(await asUser(db, "sarah").query("select * from reports")).toHaveLength(0);
   });
 

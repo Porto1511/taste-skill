@@ -22,10 +22,10 @@ export const demoCompanies: Record<CompanyKey, {
   name: string; isMsw?: boolean; trade: string; contactName: string; contactPhone: string; contactEmail: string;
 }> = {
   msw: { name: "MSW UK Ltd", isMsw: true, trade: "Safety netting, metal decking, shear studs, edge trims, concrete", contactName: "MSW Office", contactPhone: "07700 900100", contactEmail: "office@msw.example" },
-  abc: { name: "ABC Decking Ltd", trade: "Metal decking", contactName: "Dave Clarke", contactPhone: "07700 900301", contactEmail: "office@abcdecking.example" },
-  northern: { name: "Northern Edge Protection Ltd", trade: "Safety netting & edge protection", contactName: "Sarah Booth", contactPhone: "07700 900401", contactEmail: "ops@northernedge.example" },
-  studweld: { name: "Studweld Services Ltd", trade: "Shear stud welding", contactName: "Office", contactPhone: "07700 900501", contactEmail: "info@studweld.example" },
-  precision: { name: "Precision Concrete Finishing Ltd", trade: "Concrete placing & finishing", contactName: "Office", contactPhone: "07700 900601", contactEmail: "info@precisionconcrete.example" },
+  abc: { name: "Derby Decking", trade: "Safety netting & metal decking", contactName: "Dave Clarke", contactPhone: "07700 900301", contactEmail: "office@derbydecking.example" },
+  northern: { name: "SOS", trade: "Safety netting & metal decking", contactName: "Sarah Booth", contactPhone: "07700 900401", contactEmail: "ops@sos.example" },
+  studweld: { name: "Top Deck", trade: "Safety netting & metal decking", contactName: "Office", contactPhone: "07700 900501", contactEmail: "info@topdeck.example" },
+  precision: { name: "Newby Decking Services", trade: "Safety netting & metal decking", contactName: "Office", contactPhone: "07700 900601", contactEmail: "info@newbydecking.example" },
   capital: { name: "Capital Trims Ltd", trade: "Edge trims", contactName: "Office", contactPhone: "07700 900701", contactEmail: "info@capitaltrims.example" },
 };
 
@@ -43,34 +43,35 @@ export interface DemoUser {
 
 const emailDomain: Record<CompanyKey, string> = {
   msw: "msw.example",
-  abc: "abcdecking.example",
-  northern: "northernedge.example",
-  studweld: "studweld.example",
-  precision: "precisionconcrete.example",
+  abc: "derbydecking.example",
+  northern: "sos.example",
+  studweld: "topdeck.example",
+  precision: "newbydecking.example",
   capital: "capitaltrims.example",
 };
 
 export const demoUsers: DemoUser[] = [
-  { key: "claire", name: "Claire Morgan", company: "msw", role: "admin", title: "Contracts Manager", phone: "07700 900101" },
+  { key: "claire", name: "Damian Pendleton", company: "msw", role: "admin", title: "Contracts Manager", phone: "07700 900101" },
   { key: "richard", name: "Richard Hale", company: "msw", role: "admin", title: "Operations Director", phone: "07700 900102" },
-  { key: "sam", name: "Sam Patel", company: "msw", role: "office", title: "Document Controller", phone: "07700 900103" },
+  { key: "sam", name: "Alan Stokoe", company: "msw", role: "office", title: "Office", phone: "07700 900103" },
+  { key: "pete", name: "Pete", company: "msw", role: "office", title: "Quantity Surveyor", phone: "07700 900107" },
   { key: "gareth", name: "Gareth Evans", company: "msw", role: "operative", title: "Safety Netting Supervisor", phone: "07700 900104" },
   { key: "luke", name: "Luke Bennett", company: "msw", role: "operative", title: "Safety Netting Operative", phone: "07700 900105" },
   { key: "chris", name: "Chris Dawson", company: "msw", role: "operative", title: "Shear Stud Welder", phone: "07700 900106" },
   { key: "dave", name: "Dave Clarke", company: "abc", role: "manager", title: "Director", phone: "07700 900301" },
-  { key: "john", name: "John Smith", company: "abc", role: "operative", title: "Decking Gang Leader", phone: "07700 900311" },
-  { key: "mark", name: "Mark Jones", company: "abc", role: "operative", title: "Metal Deck Fixer", phone: "07700 900312" },
-  { key: "paul", name: "Paul Brown", company: "abc", role: "operative", title: "Metal Deck Fixer", phone: "07700 900313" },
-  { key: "steve", name: "Steve Wilson", company: "abc", role: "operative", title: "Metal Deck Fixer", phone: "07700 900314" },
+  { key: "john", name: "John Smith", company: "abc", role: "operative", title: "Gang Leader", phone: "07700 900311" },
+  { key: "mark", name: "Mark Jones", company: "abc", role: "operative", title: "Netting & Deck Operative", phone: "07700 900312" },
+  { key: "paul", name: "Paul Brown", company: "abc", role: "operative", title: "Netting & Deck Operative", phone: "07700 900313" },
+  { key: "steve", name: "Steve Wilson", company: "abc", role: "operative", title: "Netting & Deck Operative", phone: "07700 900314" },
   { key: "sarah", name: "Sarah Booth", company: "northern", role: "manager", title: "Operations Manager", phone: "07700 900401" },
-  { key: "liam", name: "Liam Turner", company: "northern", role: "operative", title: "Edge Protection Gang Leader", phone: "07700 900411" },
-  { key: "ryan", name: "Ryan Hughes", company: "northern", role: "operative", title: "Netting Operative", phone: "07700 900412" },
-  { key: "kieran", name: "Kieran Walsh", company: "northern", role: "operative", title: "Netting Operative", phone: "07700 900413" },
-  { key: "tom", name: "Tom Baker", company: "studweld", role: "operative", title: "Stud Welder", phone: "07700 900511" },
-  { key: "gary", name: "Gary Lewis", company: "studweld", role: "operative", title: "Stud Welder", phone: "07700 900512" },
-  { key: "adam", name: "Adam Price", company: "precision", role: "operative", title: "Concrete Finisher", phone: "07700 900611" },
-  { key: "jason", name: "Jason Reid", company: "precision", role: "operative", title: "Concrete Finisher", phone: "07700 900612" },
-  { key: "carl", name: "Carl Moore", company: "precision", role: "operative", title: "Concrete Pump Operator", phone: "07700 900613" },
+  { key: "liam", name: "Liam Turner", company: "northern", role: "operative", title: "Gang Leader", phone: "07700 900411" },
+  { key: "ryan", name: "Ryan Hughes", company: "northern", role: "operative", title: "Netting & Deck Operative", phone: "07700 900412" },
+  { key: "kieran", name: "Kieran Walsh", company: "northern", role: "operative", title: "Netting & Deck Operative", phone: "07700 900413" },
+  { key: "tom", name: "Tom Baker", company: "studweld", role: "operative", title: "Netting & Deck Operative", phone: "07700 900511" },
+  { key: "gary", name: "Gary Lewis", company: "studweld", role: "operative", title: "Netting & Deck Operative", phone: "07700 900512" },
+  { key: "adam", name: "Adam Price", company: "precision", role: "operative", title: "Netting & Deck Operative", phone: "07700 900611" },
+  { key: "jason", name: "Jason Reid", company: "precision", role: "operative", title: "Netting & Deck Operative", phone: "07700 900612" },
+  { key: "carl", name: "Carl Moore", company: "precision", role: "operative", title: "Netting & Deck Operative", phone: "07700 900613" },
   { key: "ben", name: "Ben Foster", company: "capital", role: "operative", title: "Edge Trim Installer", phone: "07700 900711" },
   { key: "danny", name: "Danny Ward", company: "capital", role: "operative", title: "Edge Trim Installer", phone: "07700 900712", active: false },
 ];
@@ -368,19 +369,19 @@ export interface DemoGrant {
 }
 
 export const demoGrants: DemoGrant[] = [
-  // Gang A (ABC Decking): Levels 1 & 2 only.  Paul and Steve are NOT on this job.
+  // Gang A (Derby Decking): Levels 1 & 2 only.  Paul and Steve are NOT on this job.
   { job: "bm", users: ["john", "mark"], areas: ["l1", "l2"], note: "Gang A — Levels 1 & 2", fromDays: -30, toDays: 30, daysAgo: 31 },
-  // Gang B (Northern Edge): Levels 3 & 4 only.
+  // Gang B (SOS): Levels 3 & 4 only.
   { job: "bm", users: ["liam", "ryan"], areas: ["l3", "l4"], note: "Gang B — Levels 3 & 4", fromDays: -20, toDays: 40, daysAgo: 21 },
   // Kieran was moved off the job (gang allocation change, history retained).
   { job: "bm", users: ["kieran"], areas: ["l3", "l4"], note: "Gang B", fromDays: -20, toDays: 40, daysAgo: 21, revokeDaysAgo: 5 },
-  { job: "bm", users: ["tom"], areas: ["l1"], note: "Studs following deck on Level 1", fromDays: -10, toDays: 10, daysAgo: 12 },
+  { job: "bm", users: ["tom"], areas: ["l1"], note: "Following on Level 1", fromDays: -10, toDays: 10, daysAgo: 12 },
   { job: "bm", users: ["gareth"], allAreas: true, note: "MSW supervisor", daysAgo: 38 },
-  // ABC's director: job-wide information plus ABC's own reports on THIS job only.
-  { job: "bm", users: ["dave"], areas: [], note: "ABC Decking director — report visibility", daysAgo: 25, managerReports: true },
+  // Derby Decking's director: job-wide information plus Derby Decking's own reports on THIS job only.
+  { job: "bm", users: ["dave"], areas: [], note: "Derby Decking director — report visibility", daysAgo: 25, managerReports: true },
 
-  // Riverside: ABC's other gang (Paul & Steve) — Dave has NOT been granted this job.
-  { job: "riverside", users: ["paul", "steve"], allAreas: true, note: "ABC gang 2", fromDays: -45, toDays: 30, daysAgo: 46 },
+  // Riverside: Derby Decking's other gang (Paul & Steve) — Dave has NOT been granted this job.
+  { job: "riverside", users: ["paul", "steve"], allAreas: true, note: "Derby Decking gang 2", fromDays: -45, toDays: 30, daysAgo: 46 },
   { job: "riverside", users: ["adam", "jason"], areas: ["p1"], note: "Pours in Phase 1", daysAgo: 40 },
   { job: "riverside", users: ["luke"], allAreas: true, daysAgo: 58 },
 

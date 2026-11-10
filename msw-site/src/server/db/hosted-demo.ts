@@ -24,19 +24,18 @@ export async function createHostedDemoDriver(): Promise<Driver> {
   await driver.transaction(async (lock) => {
     await lock.query("select pg_advisory_xact_lock(7311)");
     const ran = await migrateLocal(driver);
-    const { rows } = await driver.query<{ n: number }>("select count(*)::int as n from public.profiles");
-    if (rows[0].n === 0) {
-      const [{ seedDemo }, { localAuthUserFactory }, { createDbStore }, { DEMO_PASSWORD }] = await Promise.all([
-        import("../seed/seed"), import("../seed/local-auth"), import("../storage/db-store"), import("../seed/demo-data"),
-      ]);
-      const counts = await seedDemo(driver, createDbStore(driver), localAuthUserFactory(driver), DEMO_PASSWORD);
-      log.info("demo.seeded", { ...counts, ms: Date.now() - started });
-    } else {
+    const [{ seedOrRebuildDemo }, { localAuthUserFactory }, { createDbStore }, { DEMO_PASSWORD }, { seedExtras, patchDemoTimesheets, patchDemoHandovers }] = await Promise.all([
+      import("../seed/rebuild"), import("../seed/local-auth"), import("../storage/db-store"), import("../seed/demo-data"), import("../seed/seed"),
+    ]);
+    const store = createDbStore(driver);
+    const outcome = await seedOrRebuildDemo(driver, store, localAuthUserFactory(driver), DEMO_PASSWORD);
+    if (outcome === "current") {
       // Bring an existing demo database up to date with newer demo content.
-      const [{ seedExtras, patchDemoTimesheets, patchDemoHandovers }, { createDbStore }] = await Promise.all([import("../seed/seed"), import("../storage/db-store")]);
-      await seedExtras(driver, createDbStore(driver));
+      await seedExtras(driver, store);
       await patchDemoTimesheets(driver);
-      await patchDemoHandovers(driver, createDbStore(driver));
+      await patchDemoHandovers(driver, store);
+    } else {
+      log.info(`demo.${outcome}`, { ms: Date.now() - started });
     }
     log.info("db.connect", { mode: "hosted-demo", migrationsApplied: ran.length, ms: Date.now() - started });
   });

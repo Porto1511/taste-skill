@@ -28,6 +28,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
     name: me.name, trade: me.trade,
     hours: Object.fromEntries(DAYS.map((d) => [d.id, myHours[d.id] ? String(myHours[d.id]) : ""])) as Record<DayId, string>,
   }, ...Array.from({ length: START_ROWS - 1 }, () => ({ name: "", trade: "", hours: emptyHours() }))]);
+  const [kind, setKind] = useState<"standing" | "extra" | "">("");
   const [description, setDescription] = useState("");
   const [materials, setMaterials] = useState("");
   const [complete, setComplete] = useState<"yes" | "no" | "">("");
@@ -52,6 +53,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
     if (noHours) return setError(`Enter the hours for ${noHours.name.trim()}, or clear their name.`);
     if (filled.some((w) => DAYS.some((d) => { const v = Number(w.hours[d.id] || 0); return v < 0 || v > 24 || Math.round(v * 4) !== v * 4; })))
       return setError("Hours must be between 0 and 24, in quarter hours.");
+    if (!kind) return setError("Is it standing time or extra work?");
     if (description.trim().length < 3) return setError("Describe the work.");
     if (!complete) return setError("Is the work complete? Choose yes or no.");
     goTo(2);
@@ -75,6 +77,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
     fd.set("jobId", jobId);
     fd.set("weekCommencing", weekCommencing);
     fd.set("workers", JSON.stringify(filled.map((w) => ({ name: w.name, trade: w.trade, hours: Object.fromEntries(DAYS.map((d) => [d.id, Number(w.hours[d.id]) || 0])) }))));
+    fd.set("kind", kind);
     fd.set("description", description);
     fd.set("materials", materials);
     fd.set("workComplete", complete);
@@ -148,9 +151,18 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
             </button>
           </div>
 
+          <fieldset>
+            <legend className="mb-2 text-sm font-semibold">What is it?</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {([["standing", "Standing time"], ["extra", "Extra work"]] as const).map(([v, label]) => (
+                <button key={v} type="button" aria-pressed={kind === v} onClick={() => setKind(v)}
+                  className={cn("h-12 rounded-xl border text-[15px] font-semibold", kind === v ? "border-ink bg-ink text-white" : "border-line-strong bg-card")}>{label}</button>
+              ))}
+            </div>
+          </fieldset>
           <Field label="Description of work" htmlFor="desc">
             <Textarea id="desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={4000}
-              placeholder="e.g. Standing time — hoist out of service, gang waiting from 07:30 to 10:00" />
+              placeholder={kind === "extra" ? "e.g. Extra edge trim to new riser at D4, instructed by site manager" : "e.g. Hoist out of service, gang waiting from 07:30 to 10:00"} />
           </Field>
           <Field label="Materials used" htmlFor="mat" optional>
             <Textarea id="mat" rows={2} className="min-h-0" value={materials} onChange={(e) => setMaterials(e.target.value)} maxLength={2000} />
@@ -173,7 +185,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
 
       {step === 2 && (
         <>
-          <DayworkSummary workers={filled} description={description} complete={complete} />
+          <DayworkSummary workers={filled} description={description} complete={complete} kind={kind} />
           <div>
             <p className="mb-2 text-sm font-semibold">Signed MSW — {me.name}</p>
             <SignaturePad ref={mswPad} onChange={setMswInk} />
@@ -194,7 +206,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
             <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-signal">Hand the phone to the client</p>
             <p className="mt-1 text-[14px] text-white/70">Please check the hours below, then print your name and sign.</p>
           </div>
-          <DayworkSummary workers={filled} description={description} complete={complete} />
+          <DayworkSummary workers={filled} description={description} complete={complete} kind={kind} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Print name" htmlFor="cname"><Input id="cname" value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} /></Field>
             <Field label="Position" htmlFor="cpos" optional><Input id="cpos" value={client.position} onChange={(e) => setClient({ ...client, position: e.target.value })} /></Field>
@@ -222,10 +234,10 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
   );
 }
 
-function DayworkSummary({ workers, description, complete }: { workers: Worker[]; description: string; complete: string }) {
+function DayworkSummary({ workers, description, complete, kind }: { workers: Worker[]; description: string; complete: string; kind: string }) {
   return (
     <div className="grid gap-2 rounded-2xl border border-line bg-card p-4 text-[14px]">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Daywork sheet</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Daywork sheet · {kind === "standing" ? "Standing time" : "Extra work"}</p>
       {workers.map((w, i) => (
         <p key={i} className="flex justify-between gap-2"><span><span className="font-semibold">{w.name}</span> <span className="text-muted">{w.trade}</span></span>
           <span className="tabular font-bold">{total(w)}h</span></p>

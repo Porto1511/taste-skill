@@ -49,7 +49,7 @@ export async function getHandover(viewer: Viewer, id: string): Promise<HandoverD
 // ---------------------------------------------------------------------------
 export interface DayworkSummary {
   id: string; job_id: string; job_number: string; job_name: string; week_commencing: string; description: string;
-  work_complete: boolean; client_name: string; client_company: string; captured_by_name: string; captured_by_company: string;
+  kind: "standing" | "extra"; work_complete: boolean; client_name: string; client_company: string; captured_by_name: string; captured_by_company: string;
   signed_at: string; total_hours: number; people: number;
 }
 export interface DayworkDetail extends DayworkSummary {
@@ -58,7 +58,7 @@ export interface DayworkDetail extends DayworkSummary {
   client_signature_path: string; msw_signature_path: string; main_contractor: string | null; site_address: string;
 }
 
-const dwSummary = `select d.id, d.job_id, j.job_number, j.name as job_name, d.week_commencing, d.description, d.work_complete,
+const dwSummary = `select d.id, d.job_id, j.job_number, j.name as job_name, d.week_commencing, d.kind, d.description, d.work_complete,
   d.client_name, d.client_company, d.captured_by_name, d.captured_by_company, d.signed_at,
   coalesce((select sum((h.value)::numeric) from jsonb_array_elements(d.workers) w, jsonb_each_text(w->'hours') h), 0)::float as total_hours,
   jsonb_array_length(d.workers) as people

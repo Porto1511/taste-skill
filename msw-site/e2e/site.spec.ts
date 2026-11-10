@@ -5,7 +5,7 @@ import { demoId } from "../src/server/seed/demo-data";
 
 test.describe("operative mobile experience", () => {
   test("John sees only his allocated job and only Level 1–2 drawings", async ({ page }) => {
-    await signIn(page, "john.smith@abcdecking.example");
+    await signIn(page, "john.smith@derbydecking.example");
     await expect(page.getByRole("heading", { name: "Your jobs" })).toBeVisible();
     const cards = page.locator('a[href^="/jobs/"]');
     await expect(cards).toHaveCount(1);
@@ -33,7 +33,7 @@ test.describe("operative mobile experience", () => {
   });
 
   test("the PDF viewer renders the current approved revision", async ({ page }) => {
-    await signIn(page, "john.smith@abcdecking.example");
+    await signIn(page, "john.smith@derbydecking.example");
     await page.goto(`/jobs/${BM}/documents/${demoId("doc:bm-dk1")}`);
     await expect(page.getByText("Rev C02")).toBeVisible();
     const canvas = page.locator('[data-page="1"] canvas').first();
@@ -44,7 +44,7 @@ test.describe("operative mobile experience", () => {
   });
 
   test("John reports an issue with a photo; the office is notified", async ({ page }) => {
-    await signIn(page, "john.smith@abcdecking.example");
+    await signIn(page, "john.smith@derbydecking.example");
     await page.goto(`/jobs/${BM}/report?kind=issue`);
     await page.getByRole("button", { name: "Materials problem" }).click();
     await page.getByLabel("Where?").selectOption({ label: "Level 1" });
@@ -60,7 +60,7 @@ test.describe("operative mobile experience", () => {
   });
 
   test("safety categories prompt an immediate phone call", async ({ page }) => {
-    await signIn(page, "liam.turner@northernedge.example");
+    await signIn(page, "liam.turner@sos.example");
     await page.goto(`/jobs/${BM}/report?kind=issue`);
     await page.getByRole("button", { name: "Safety concern" }).click();
     await expect(page.getByText("Is anyone at risk right now?")).toBeVisible();
@@ -68,7 +68,7 @@ test.describe("operative mobile experience", () => {
   });
 
   test("Paul (same company, not allocated) cannot reach the job, its drawings or its files", async ({ page, request }) => {
-    await signIn(page, "paul.brown@abcdecking.example");
+    await signIn(page, "paul.brown@derbydecking.example");
     await expect(page.locator('a[href^="/jobs/"]')).toHaveCount(1);
     await expect(page.getByText("British Museum")).toHaveCount(0);
 
@@ -88,7 +88,7 @@ test.describe("operative mobile experience", () => {
   });
 
   test("John hands over Level 1 nets: certificate fields, MSW signs, client signs, both copies", async ({ page }) => {
-    await signIn(page, "john.smith@abcdecking.example");
+    await signIn(page, "john.smith@derbydecking.example");
     await page.goto(`/jobs/${BM}`);
     await page.getByRole("link", { name: /Handover/ }).first().click();
     await page.getByLabel("Area", { exact: true }).selectOption({ label: "Level 1" });
@@ -137,7 +137,7 @@ test.describe("operative mobile experience", () => {
   });
 
   test("a daywork sheet starts with four rows; spare rows are left blank", async ({ page }) => {
-    await signIn(page, "john.smith@abcdecking.example");
+    await signIn(page, "john.smith@derbydecking.example");
     await page.goto(`/jobs/${BM}/daywork`);
     for (const n of [1, 2, 3, 4]) await expect(page.getByLabel(`Name ${n}`)).toBeVisible();
     await expect(page.getByLabel("Name 1")).toHaveValue("John Smith");
@@ -146,7 +146,8 @@ test.describe("operative mobile experience", () => {
     await page.getByRole("button", { name: /Next: MSW signs/ }).click();
     await expect(page.getByText("Enter the hours for Mark Jones, or clear their name.")).toBeVisible();
     await page.getByLabel("Mark Jones hours Tuesday").fill("3");
-    await page.getByLabel("Description of work").fill("Standing time waiting for the crane");
+    await page.getByRole("button", { name: "Standing time", exact: true }).click();
+    await page.getByLabel("Description of work").fill("Waiting for the crane");
     await page.getByRole("button", { name: "yes", exact: true }).click();
     await page.getByRole("button", { name: /Next: MSW signs/ }).click();
     await draw(page, 0);
@@ -188,7 +189,7 @@ test.describe("operative mobile experience", () => {
     await expect(page.locator("ol > li")).toHaveCount(2);
     await expect(page.getByText("Passenger with Luke Bennett")).toBeVisible();
     await signOut(page);
-    await signIn(page, "john.smith@abcdecking.example");
+    await signIn(page, "john.smith@derbydecking.example");
     await expect(page.getByRole("link", { name: "Timesheet" })).toHaveCount(0);
     expect((await page.goto("/timesheet"))?.status()).toBe(404);
   });

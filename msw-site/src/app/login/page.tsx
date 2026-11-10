@@ -14,14 +14,15 @@ const personas: { group: string; people: { key: string; hint: string }[] }[] = [
   { group: "MSW office", people: [
     { key: "claire", hint: "Admin · controls access" },
     { key: "sam", hint: "Office · documents & reports" },
+    { key: "pete", hint: "QS · checks hours & deliveries against invoices" },
   ] },
   { group: "British Museum gangs", people: [
-    { key: "john", hint: "ABC Decking · Levels 1–2" },
-    { key: "liam", hint: "Northern Edge · Levels 3–4" },
+    { key: "john", hint: "Derby Decking · Levels 1–2" },
+    { key: "liam", hint: "SOS · Levels 3–4" },
   ] },
   { group: "Check who can see what", people: [
-    { key: "paul", hint: "ABC Decking · not on the British Museum job, so sees none of it" },
-    { key: "dave", hint: "ABC director · sees ABC's own reports, only where the office allows" },
+    { key: "paul", hint: "Derby Decking · not on the British Museum job, so sees none of it" },
+    { key: "dave", hint: "Derby Decking director · sees Derby Decking's own reports, only where the office allows" },
     { key: "gareth", hint: "MSW operative · every area, keeps a timesheet" },
   ] },
 ];
