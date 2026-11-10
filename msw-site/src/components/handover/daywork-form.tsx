@@ -112,7 +112,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
       <ol className="grid grid-cols-3 gap-1.5 text-[12.5px] font-semibold">
         {["Details", "MSW signs", "Client signs"].map((s, i) => (
           <li key={s} className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-2", step === i + 1 ? "bg-ink text-white" : "bg-ink/[0.06] text-muted")}>
-            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[12px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-signal text-ink" : "bg-ink/10")}>
+            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[12px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-brand text-white" : "bg-ink/10")}>
               {step > i + 1 ? <Check className="size-3" weight="bold" /> : i + 1}
             </span>
             {s}
@@ -180,7 +180,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
             </div>
           </fieldset>
           {error && <Alert>{error}</Alert>}
-          <button type="button" onClick={nextFromDetails} className="flex h-14 items-center justify-center gap-2 rounded-xl bg-signal text-[17px] font-bold text-ink">
+          <button type="button" onClick={nextFromDetails} className="flex h-14 items-center justify-center gap-2 rounded-xl bg-brand text-[17px] font-bold text-white shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)]">
             <PenNib className="size-6" weight="bold" /> Next: MSW signs
           </button>
         </>
@@ -197,7 +197,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
           {error && <Alert>{error}</Alert>}
           <div className="grid grid-cols-[auto_1fr] gap-2">
             <button type="button" onClick={() => goTo(1)} className="h-14 rounded-xl border border-line-strong bg-card px-5 font-semibold">Back</button>
-            <button type="button" onClick={nextFromMsw} disabled={!mswInk} className="flex h-14 items-center justify-center gap-2 rounded-xl bg-signal text-[17px] font-bold text-ink disabled:opacity-40">
+            <button type="button" onClick={nextFromMsw} disabled={!mswInk} className="flex h-14 items-center justify-center gap-2 rounded-xl bg-brand text-[17px] font-bold text-white shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)] disabled:opacity-40">
               <HandArrowDown className="size-6" weight="bold" /> Next: client signs
             </button>
           </div>

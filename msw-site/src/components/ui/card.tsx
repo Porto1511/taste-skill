@@ -8,7 +8,9 @@ export function Card({ className, ...props }: ComponentProps<"div">) {
 export function SectionTitle({ children, action, className, id }: { children: ReactNode; action?: ReactNode; className?: string; id?: string }) {
   return (
     <div className={cn("mb-3 flex items-end justify-between gap-3", className)}>
-      <h2 id={id} className="text-[13px] font-bold uppercase tracking-[0.08em] text-muted">{children}</h2>
+      <h2 id={id} className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.1em] text-ink">
+        <span className="h-3.5 w-1 rounded-sm bg-brand" aria-hidden />{children}
+      </h2>
       {action}
     </div>
   );
@@ -25,14 +27,23 @@ export function EmptyState({ icon, title, children, action, className }: { icon?
   );
 }
 
-export function Stat({ label, value, tone, hint, href }: { label: string; value: number | string; tone?: "danger" | "warn" | "ok"; hint?: string; href?: string }) {
+export function Stat({ label, value, tone, hint, href, icon }: {
+  label: string; value: number | string; tone?: "danger" | "warn" | "ok"; hint?: string; href?: string; icon?: ReactNode;
+}) {
   const body = (
     <>
-      <p className="text-[13px] font-medium text-muted">{label}</p>
-      <p className={cn("tabular mt-1 text-3xl font-semibold tracking-tight", tone === "danger" && "text-danger", tone === "warn" && "text-warn", tone === "ok" && "text-ok")}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-subtle">{hint}</p>}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[13px] font-semibold text-muted">{label}</p>
+        {icon && <span className={cn("grid size-8 place-items-center rounded-lg [&_svg]:size-[18px]",
+          tone === "danger" ? "bg-brand-soft text-brand" : tone === "warn" ? "bg-warn-soft text-warn" : tone === "ok" ? "bg-ok-soft text-ok" : "bg-paper text-ink")}>{icon}</span>}
+      </div>
+      <p className={cn("tabular mt-2 text-[34px] font-bold leading-none tracking-tight", tone === "danger" && "text-brand", tone === "warn" && "text-warn", tone === "ok" && "text-ok")}>{value}</p>
+      {hint && <p className="mt-1.5 text-[12px] text-subtle">{hint}</p>}
     </>
   );
-  const cls = "block rounded-[var(--radius-card)] border border-line bg-card p-4 shadow-[var(--shadow-card)]";
-  return href ? <a href={href} className={cn(cls, "transition-colors hover:border-ink/30")}>{body}</a> : <div className={cls}>{body}</div>;
+  const cls = cn("relative block overflow-hidden rounded-[var(--radius-card)] border border-line bg-card p-4 shadow-[var(--shadow-card)]",
+    tone === "danger" && "border-l-[3px] border-l-brand", tone === "warn" && "border-l-[3px] border-l-warn");
+  return href
+    ? <a href={href} className={cn(cls, "transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow-lift)]")}>{body}</a>
+    : <div className={cls}>{body}</div>;
 }

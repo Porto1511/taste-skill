@@ -6,11 +6,11 @@ type Variant = "primary" | "dark" | "secondary" | "ghost" | "danger" | "success"
 type Size = "sm" | "md" | "lg" | "xl";
 
 const base =
-  "inline-flex select-none items-center justify-center gap-2 rounded-xl font-semibold transition-[transform,background-color,border-color,color,box-shadow] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0";
+  "cursor-pointer inline-flex select-none items-center justify-center gap-2 rounded-lg font-semibold transition-[transform,background-color,border-color,color,box-shadow] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0";
 const variants: Record<Variant, string> = {
-  primary: "bg-signal text-ink shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)] hover:bg-[#ffc240]",
+  primary: "bg-brand text-white shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)] hover:bg-brand-2",
   dark: "bg-ink text-white hover:bg-ink-2",
-  secondary: "border border-line-strong bg-card text-ink hover:border-ink/40 hover:bg-white",
+  secondary: "border border-line-strong bg-card text-ink shadow-[0_1px_2px_rgba(17,18,20,0.05)] hover:border-ink/40",
   ghost: "text-ink hover:bg-ink/5",
   danger: "border border-danger/30 bg-card text-danger hover:bg-danger-soft",
   success: "bg-ok text-white hover:bg-[#125f31]",

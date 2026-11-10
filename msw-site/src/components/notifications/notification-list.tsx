@@ -37,7 +37,7 @@ export function NotificationList({ items, now }: { items: NotificationRow[]; now
             <li key={n.id}>
               <form action={openNotificationAction}>
                 <input type="hidden" name="id" value={n.id} />
-                <button type="submit" className={cn("flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-paper", !n.read_at && "bg-signal-soft/40")}>
+                <button type="submit" className={cn("flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-paper", !n.read_at && "bg-brand-soft/60/40")}>
                   <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", urgent ? "bg-danger text-white" : n.read_at ? "bg-ink/[0.05] text-muted" : "bg-ink text-signal")}>
                     <Icon className="size-5" weight="fill" />
                   </span>
@@ -46,7 +46,7 @@ export function NotificationList({ items, now }: { items: NotificationRow[]; now
                     {n.body && <span className="mt-0.5 block text-[14px] leading-snug text-muted">{n.body}</span>}
                     <span className="mt-1 block text-[12px] text-subtle">{n.job_number ? `${n.job_number} · ` : ""}{relativeTime(n.created_at, now)}</span>
                   </span>
-                  {!n.read_at && <span className="mt-2 size-2.5 shrink-0 rounded-full bg-signal" aria-label="Unread" />}
+                  {!n.read_at && <span className="mt-2 size-2.5 shrink-0 rounded-full bg-brand" aria-label="Unread" />}
                 </button>
               </form>
             </li>

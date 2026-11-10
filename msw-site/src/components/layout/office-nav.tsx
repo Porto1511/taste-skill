@@ -7,43 +7,49 @@ import { cn } from "@/lib/cn";
 
 export function OfficeNav({ openReports, urgent, unread }: { openReports: number; urgent: number; unread: number }) {
   const path = usePathname();
-  const items = [
-    { href: "/office", label: "Dashboard", icon: SquaresFour, exact: true },
-    { href: "/office/jobs", label: "Jobs", icon: Buildings },
-    { href: "/office/reports", label: "Site reports", icon: WarningCircle, count: openReports, alert: urgent > 0 },
-    { href: "/office/handovers", label: "Handovers", icon: Signature },
-    { href: "/office/daywork", label: "Daywork sheets", icon: Timer },
-    { href: "/office/deliveries", label: "Deliveries", icon: Truck },
-    { href: "/office/timesheets", label: "Timesheets", icon: ClockClockwise },
-    { href: "/office/qs", label: "QS check", icon: ListChecks },
-    { href: "/office/people", label: "People & access", icon: UsersThree },
-    { href: "/office/activity", label: "Activity", icon: ClockCounterClockwise },
-    { href: "/office/notifications", label: "Notifications", icon: Bell, count: unread },
+  const groups = [
+    { title: "Overview", items: [
+      { href: "/office", label: "Dashboard", icon: SquaresFour, exact: true },
+      { href: "/office/jobs", label: "Jobs", icon: Buildings },
+      { href: "/office/reports", label: "Site reports", icon: WarningCircle, count: openReports, alert: urgent > 0 },
+      { href: "/office/notifications", label: "Notifications", icon: Bell, count: unread },
+    ] },
+    { title: "Sign-offs", items: [
+      { href: "/office/handovers", label: "Handovers", icon: Signature },
+      { href: "/office/daywork", label: "Daywork sheets", icon: Timer },
+      { href: "/office/deliveries", label: "Deliveries", icon: Truck },
+    ] },
+    { title: "Office", items: [
+      { href: "/office/timesheets", label: "Timesheets", icon: ClockClockwise },
+      { href: "/office/qs", label: "QS check", icon: ListChecks },
+      { href: "/office/people", label: "People & access", icon: UsersThree },
+      { href: "/office/activity", label: "Activity", icon: ClockCounterClockwise },
+    ] },
   ];
   return (
-    <nav aria-label="Office" className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible lg:px-3 lg:pb-0">
-      {items.map(({ href, label, icon: Icon, exact, count, alert }) => {
-        const active = exact ? path === href : path === href || path.startsWith(`${href}/`);
-        return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors",
-              active ? "bg-white/10 text-white" : "text-white/65 hover:bg-white/5 hover:text-white",
-            )}
-          >
-            <Icon className={cn("size-5", active && "text-signal")} weight={active ? "fill" : "regular"} />
-            <span className="whitespace-nowrap">{label}</span>
-            {count ? (
-              <span className={cn("tabular ml-auto rounded-full px-2 text-[12px] font-bold leading-5", alert ? "bg-danger text-white" : "bg-white/12 text-white/85")}>
-                {count}
-              </span>
-            ) : null}
-          </Link>
-        );
-      })}
+    <nav aria-label="Office" className="flex gap-1 overflow-x-auto px-3 pb-3 lg:block lg:overflow-visible lg:pb-0">
+      {groups.map((g) => (
+        <div key={g.title} className="contents lg:mb-5 lg:block">
+          <p className="hidden px-3 pb-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-white/70 lg:block">{g.title}</p>
+          {g.items.map(({ href, label, icon: Icon, exact, count, alert }) => {
+            const active = exact ? path === href : path === href || path.startsWith(`${href}/`);
+            return (
+              <Link key={href} href={href} aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors lg:my-0.5",
+                  active ? "bg-white/[0.09] text-white" : "text-white/75 hover:bg-white/[0.05] hover:text-white",
+                )}>
+                {active && <span className="absolute inset-y-2 left-0 hidden w-[3px] rounded-r bg-brand lg:block" aria-hidden />}
+                <Icon className={cn("size-5", active ? "text-brand" : "text-white/60")} weight={active ? "fill" : "regular"} />
+                <span className="whitespace-nowrap">{label}</span>
+                {count ? (
+                  <span className={cn("tabular ml-auto rounded-full px-2 text-[12px] font-bold leading-5", alert ? "bg-brand text-white" : "bg-white/12 text-white/90")}>{count}</span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 }

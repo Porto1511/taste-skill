@@ -58,7 +58,7 @@ export default async function TimesheetPage({ searchParams }: { searchParams: Pr
           const name = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
           const inner = (
             <>
-              <span className={cn("w-12 shrink-0 text-center", d === today && "text-signal-ink")}>
+              <span className={cn("w-12 shrink-0 text-center", d === today && "text-brand")}>
                 <span className="block text-[12px] font-bold uppercase">{name}</span>
                 <span className="block text-[20px] font-semibold leading-none">{Number(d.slice(8))}</span>
               </span>
@@ -75,7 +75,7 @@ export default async function TimesheetPage({ searchParams }: { searchParams: Pr
               {r ? (
                 <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-bold uppercase", statusChip[r.status!])}>{r.status === "submitted" ? "Sent" : r.status}</span>
               ) : !future ? (
-                <span className="grid size-9 place-items-center rounded-full bg-signal text-ink"><Plus className="size-5" weight="bold" /></span>
+                <span className="grid size-9 place-items-center rounded-full bg-brand text-white"><Plus className="size-5" weight="bold" /></span>
               ) : null}
             </>
           );

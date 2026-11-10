@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export const inputClass =
-  "block w-full rounded-xl border border-line-strong bg-white px-3.5 py-3 text-[16px] text-ink placeholder:text-subtle shadow-[inset_0_1px_2px_rgba(23,21,15,0.04)] transition-colors focus:border-ink focus:outline-none focus:ring-3 focus:ring-signal/40 disabled:bg-paper disabled:text-muted aria-invalid:border-danger";
+  "block w-full rounded-lg border border-line-strong bg-white px-3.5 py-3 text-[16px] text-ink placeholder:text-subtle shadow-[inset_0_1px_2px_rgba(23,21,15,0.04)] transition-colors focus:border-ink focus:outline-none focus:ring-3 focus:ring-brand/20 disabled:bg-paper disabled:text-muted aria-invalid:border-danger";
 
 export function Field({
   label, htmlFor, hint, error, children, className, optional,

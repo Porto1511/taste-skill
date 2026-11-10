@@ -19,12 +19,12 @@ export function BottomNav({ unread, timesheet }: { unread: number; timesheet: bo
         {items.map(({ href, label, icon: Icon, active, count }) => (
           <li key={href} className="flex-1">
             <Link href={href} aria-current={active ? "page" : undefined}
-              className={cn("relative flex h-16 flex-col items-center justify-center gap-1 text-[12px] font-semibold transition-colors", active ? "text-ink" : "text-subtle hover:text-ink")}>
-              {active && <span className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-signal" aria-hidden />}
-              <span className="relative">
-                <Icon className="size-6" weight={active ? "fill" : "regular"} />
+              className={cn("relative flex h-16 flex-col items-center justify-center gap-1 text-[12px] font-semibold transition-colors", active ? "text-ink" : "text-muted hover:text-ink")}>
+              {active && <span className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-brand" aria-hidden />}
+              <span className={cn("relative grid h-8 w-14 place-items-center rounded-full transition-colors", active && "bg-brand-soft")}>
+                <Icon className={cn("size-6", active && "text-brand")} weight={active ? "fill" : "regular"} />
                 {count ? (
-                  <span className="tabular absolute -right-2.5 -top-1.5 grid min-w-[18px] place-items-center rounded-full bg-danger px-1 text-[12px] font-bold leading-[18px] text-white">
+                  <span className="tabular absolute -right-0.5 -top-1.5 grid min-w-[18px] place-items-center rounded-full bg-brand px-1 text-[12px] font-bold leading-[18px] text-white">
                     {count > 99 ? "99+" : count}
                   </span>
                 ) : null}

@@ -69,7 +69,7 @@ export default async function TimesheetDayPage({ params, searchParams }: {
             <li key={e.id}>
               <Link href={`/timesheet/${date}?edit=${e.id}`} className="block rounded-2xl border border-line bg-card p-4 shadow-[var(--shadow-card)] active:scale-[0.99]">
                 <div className="flex items-start gap-3">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-signal text-[14px] font-bold text-ink">{i + 1}</span>
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-ink text-[14px] font-bold text-white">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold leading-snug">{e.job_number ? `${e.job_number} · ${e.job_name}` : e.location_note ?? "Other"}</p>
                     {(e.work_done.length > 0 || e.premium) && (

@@ -32,7 +32,7 @@ export function ShareCopy({ url, fileName, title, email, who = "client" }: { url
   return (
     <div className="grid gap-2">
       <button type="button" onClick={share} disabled={state === "busy"}
-        className="flex h-14 items-center justify-center gap-2 rounded-xl bg-signal text-[16px] font-bold text-ink disabled:opacity-60">
+        className="flex h-14 items-center justify-center gap-2 rounded-xl bg-brand text-[16px] font-bold text-white disabled:opacity-60">
         <PaperPlaneTilt className="size-5" weight="fill" /> {state === "busy" ? "Preparing…" : `Send copy to ${who}`}
       </button>
       <a href={url} target="_blank" className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[15px] font-semibold">

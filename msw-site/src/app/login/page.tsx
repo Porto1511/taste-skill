@@ -36,11 +36,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="grid min-h-[100dvh] lg:grid-cols-[1.05fr_1fr]">
       <section className="relative hidden overflow-hidden bg-ink text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
         <DeckPattern />
+        <div className="hazard absolute inset-x-0 top-0 h-1.5" aria-hidden />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-brand/25 blur-3xl" aria-hidden />
         <Logo sub="MSW UK Ltd" className="relative" />
         <div className="relative max-w-md">
           <p className="text-5xl font-semibold leading-[1.02] tracking-tight">
             The right drawing.<br />
-            <span className="text-signal">The right people.</span>
+            <span className="text-brand">The right people.</span>
           </p>
           <p className="mt-5 text-lg leading-relaxed text-white/65">
             Approved drawings, RAMS and site information for every MSW job — with reporting straight back to the office.
@@ -49,10 +51,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <p className="relative text-sm text-white/65">Safety netting · Metal decking · Shear studs · Edge trims · Concrete</p>
       </section>
 
-      <section className="flex flex-col px-5 pb-10 pt-8 sm:px-10 lg:justify-center lg:px-16">
-        <div className="mx-auto w-full max-w-[420px]">
-          <div className="mb-8 lg:hidden"><Logo tone="dark" sub="MSW UK Ltd" /></div>
-          <h1 className="text-[28px] font-semibold tracking-tight">Sign in</h1>
+      <section className="flex flex-col pb-10 lg:justify-center lg:px-16">
+        <div className="relative mb-6 overflow-hidden bg-ink px-5 pb-7 pt-8 text-white sm:px-10 lg:hidden">
+          <DeckPattern />
+          <div className="hazard absolute inset-x-0 top-0 h-1" aria-hidden />
+          <Logo sub="MSW UK Ltd" className="relative" />
+          <p className="relative mt-6 text-[26px] font-bold leading-tight tracking-tight">The right drawing.<br /><span className="text-brand">The right people.</span></p>
+        </div>
+        <div className="mx-auto w-full max-w-[420px] px-5 sm:px-0">
+          <h1 className="text-[28px] font-bold tracking-tight">Sign in</h1>
           <p className="mt-1 text-muted">Use the email address MSW has registered for you.</p>
           <div className="mt-7 grid gap-4">
             {error && <Alert>{error}</Alert>}

@@ -81,18 +81,19 @@ export default async function SiteJobPage({ params }: Props) {
     <div>
       <Link href="/jobs" className="-ml-1 mb-1 inline-flex min-h-11 items-center gap-0.5 pr-3 text-[13px] font-semibold text-muted"><CaretLeft className="size-4" weight="bold" /> Your jobs</Link>
 
-      <header className="rounded-2xl bg-ink p-4 text-white">
-        <p className="font-mono text-[12px] text-white/55">{job.job_number}{job.main_contractor ? ` · ${job.main_contractor.replace(/ \(fictional\)$/, "")}` : ""}</p>
-        <h1 className="mt-1 text-[21px] font-semibold leading-tight tracking-tight">{job.name}</h1>
-        <a href={mapsHref(job.site_address, job.postcode)} target="_blank" rel="noopener noreferrer" className="mt-1 flex min-h-11 items-center gap-1.5 text-[13px] text-white/80">
+      <header className="grid-texture relative overflow-hidden rounded-2xl bg-ink p-5 text-white shadow-[var(--shadow-lift)]">
+        <span className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-brand/30 blur-3xl" aria-hidden />
+        <p className="relative font-mono text-[12px] text-white/70">{job.job_number}{job.main_contractor ? ` · ${job.main_contractor.replace(/ \(fictional\)$/, "")}` : ""}</p>
+        <h1 className="relative mt-1 text-[23px] font-bold leading-tight tracking-tight">{job.name}</h1>
+        <a href={mapsHref(job.site_address, job.postcode)} target="_blank" rel="noopener noreferrer" className="relative mt-1 flex min-h-11 items-center gap-1.5 text-[13px] text-white/85 underline-offset-2 hover:underline">
           <MapPin className="mt-0.5 size-4 shrink-0" />{job.site_address}{job.postcode ? `, ${job.postcode}` : ""}
         </a>
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <div className="relative mt-2 flex flex-wrap items-center gap-1.5">
           <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/70">{isManager ? "Access" : "Your area"}</span>
           {areaChips.map((a) => <span key={a} className="rounded-md bg-signal px-2 py-0.5 text-[12.5px] font-bold text-ink">{a}</span>)}
         </div>
         {(attendance || assignment?.note) && (
-          <p className="mt-2 flex items-center gap-1.5 text-[12.5px] text-white/60">
+          <p className="relative mt-2 flex items-center gap-1.5 text-[12.5px] text-white/75">
             {attendance && <><CalendarBlank className="size-4" />{attendance}</>}{attendance && assignment?.note ? " · " : ""}{assignment?.note}
           </p>
         )}

@@ -22,7 +22,7 @@ export function JobTabs({ jobId, counts }: { jobId: string; counts: { documents:
         return (
           <Link key={t.href} href={t.href} aria-current={active ? "page" : undefined}
             className={cn("-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 text-[15px] font-semibold transition-colors",
-              active ? "border-signal text-ink" : "border-transparent text-muted hover:text-ink")}>
+              active ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink")}>
             {t.label}
             {t.count !== undefined && (
               <span className={cn("tabular rounded-full px-1.5 text-[12px] leading-5", t.alert ? "bg-danger text-white" : "bg-ink/[0.07] text-muted")}>{t.count}</span>

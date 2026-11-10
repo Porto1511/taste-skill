@@ -199,7 +199,7 @@ function LoadingSheet({ progress }: { progress: number }) {
       <div className="w-full max-w-md">
         <div className="skeleton aspect-[1.414] w-full opacity-20" />
         <div className="mx-auto mt-5 h-1.5 w-48 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-signal transition-[width] duration-200" style={{ width: `${Math.max(8, progress * 100)}%` }} />
+          <div className="h-full rounded-full bg-brand transition-[width] duration-200" style={{ width: `${Math.max(8, progress * 100)}%` }} />
         </div>
         <p className="mt-3 text-center text-sm text-white/60">Loading drawing…</p>
       </div>

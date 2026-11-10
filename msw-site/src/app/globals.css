@@ -10,16 +10,23 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 
-  --color-ink: #17150f;
-  --color-ink-2: #24221c;
-  --color-ink-3: #34312a;
-  --color-paper: #f4f2ee;
+  /* Industrial neutrals: cool concrete greys, near-black steel. */
+  --color-ink: #111214;
+  --color-ink-2: #1c1e22;
+  --color-ink-3: #2a2d33;
+  --color-paper: #f2f3f5;
   --color-card: #ffffff;
-  --color-line: #e3dfd8;
-  --color-line-strong: #cfc9bf;
-  --color-muted: #5f5a51;
-  --color-subtle: #6f6a60;
+  --color-line: #e3e5e9;
+  --color-line-strong: #cdd1d8;
+  --color-muted: #4a4f57;
+  --color-subtle: #626873;
 
+  /* MSW red: brand, primary actions, current location. */
+  --color-brand: #d31112;
+  --color-brand-2: #b30e10;
+  --color-brand-soft: #fdecec;
+
+  /* Hi-vis amber: things that must be seen on site (warnings, new drawings). */
   --color-signal: #ffb81c;
   --color-signal-soft: #fff3d1;
   --color-signal-ink: #8a4b00;
@@ -33,9 +40,9 @@
   --color-info: #175cd3;
   --color-info-soft: #e5efff;
 
-  --radius-card: 14px;
-  --shadow-card: 0 1px 0 rgba(23, 21, 15, 0.04), 0 1px 3px rgba(23, 21, 15, 0.06);
-  --shadow-lift: 0 10px 30px -12px rgba(23, 21, 15, 0.25);
+  --radius-card: 12px;
+  --shadow-card: 0 1px 2px rgba(17, 18, 20, 0.06), 0 0 0 1px rgba(17, 18, 20, 0.02);
+  --shadow-lift: 0 12px 32px -14px rgba(17, 18, 20, 0.35);
 
   --animate-rise: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-shimmer: shimmer 1.4s linear infinite;
@@ -61,11 +68,12 @@
     font-feature-settings: "ss01", "cv11";
   }
   :focus-visible {
-    outline: 3px solid var(--color-signal);
+    outline: 3px solid var(--color-brand);
     outline-offset: 2px;
     border-radius: 6px;
   }
-  ::selection { background: var(--color-signal-soft); }
+  ::selection { background: var(--color-brand-soft); }
+  h1, h2, h3 { letter-spacing: -0.015em; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
@@ -73,7 +81,7 @@
 
 @layer components {
   .skeleton {
-    background: linear-gradient(90deg, #ebe7e0 0%, #f6f4f0 40%, #ebe7e0 80%);
+    background: linear-gradient(90deg, #e6e8ec 0%, #f4f5f7 40%, #e6e8ec 80%);
     background-size: 800px 100%;
     animation: var(--animate-shimmer);
     border-radius: 8px;
@@ -85,5 +93,14 @@
   .stagger > *:nth-child(5) { animation-delay: 160ms; }
   .stagger > *:nth-child(n + 6) { animation-delay: 200ms; }
   .tabular { font-variant-numeric: tabular-nums; }
+  /* Thin diagonal hazard stripe used as an accent (decorative). */
+  .hazard {
+    background: repeating-linear-gradient(-45deg, var(--color-signal) 0 10px, var(--color-ink) 10px 20px);
+  }
+  /* Faint engineering grid on dark panels (decorative). */
+  .grid-texture {
+    background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
   .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 }

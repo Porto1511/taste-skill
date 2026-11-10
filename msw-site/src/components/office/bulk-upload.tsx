@@ -90,7 +90,7 @@ export function BulkUpload({ jobId, areas, existing }: { jobId: string; areas: {
       <button type="button" onClick={() => picker.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files); }}
-        className={cn("grid place-items-center gap-1 rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-colors", drag ? "border-ink bg-signal-soft" : "border-line-strong bg-paper hover:bg-card")}>
+        className={cn("grid place-items-center gap-1 rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-colors", drag ? "border-brand bg-brand-soft" : "border-line-strong bg-paper hover:bg-card")}>
         <UploadSimple className="size-8" weight="bold" />
         <span className="text-[16px] font-semibold">Drop drawings or RAMS here</span>
         <span className="text-[13px] text-muted">or click to choose — select as many PDFs as you like</span>

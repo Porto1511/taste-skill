@@ -104,7 +104,7 @@ export function AccessManager({ jobId, areas, assignments, companies, canEdit }:
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-sm font-semibold">2. Tick the people</p>
                     <button type="button" onClick={() => setSelected(allSelected ? new Set() : new Set(company.people.map((p) => p.id)))}
-                      className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-signal-ink hover:underline">
+                      className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline">
                       {allSelected ? <CheckSquare className="size-4" weight="fill" /> : <Square className="size-4" />} {allSelected ? "Clear" : "Select all"}
                     </button>
                   </div>

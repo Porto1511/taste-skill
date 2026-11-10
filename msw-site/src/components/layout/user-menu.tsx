@@ -15,7 +15,7 @@ export function UserMenu({ viewer, tone = "dark", align = "right", showSwitch = 
         )}
         aria-label="Account menu"
       >
-        <span className="grid size-9 place-items-center rounded-full bg-signal text-[13px] font-bold text-ink">{initials(viewer.fullName)}</span>
+        <span className="grid size-9 place-items-center rounded-full bg-brand text-[13px] font-bold text-white">{initials(viewer.fullName)}</span>
       </summary>
       <div
         className={cn(
