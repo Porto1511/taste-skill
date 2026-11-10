@@ -23,12 +23,11 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({ className, tone = "light", sub }: { className?: string; tone?: "light" | "dark"; sub?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <span className={cn("inline-flex items-center rounded-md px-2 py-1.5", tone === "light" ? "bg-white" : "")}>
-        <MswLogo className="h-6" />
-      </span>
+      <MswLogo className="h-7" />
+      <span className={cn("h-7 w-px", tone === "light" ? "bg-white/15" : "bg-line-strong")} aria-hidden />
       <span className="leading-none">
         <span className={cn("block text-[17px] font-semibold tracking-tight", tone === "light" ? "text-white" : "text-ink")}>Site</span>
-        {sub && <span className={cn("mt-1 block text-[12px] font-medium uppercase tracking-[0.12em]", tone === "light" ? "text-white/55" : "text-muted")}>{sub}</span>}
+        {sub && <span className={cn("mt-1 block text-[12px] font-medium uppercase tracking-[0.12em]", tone === "light" ? "text-white/70" : "text-muted")}>{sub}</span>}
       </span>
     </span>
   );

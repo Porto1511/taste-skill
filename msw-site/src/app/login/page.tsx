@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { config } from "@/server/config";
 import { getViewer, homePathFor } from "@/server/auth/viewer";
 import { demoEmail, demoUsers } from "@/server/seed/demo-data";
-import { MswLogo } from "@/components/ui/logo";
+import { Logo } from "@/components/ui/logo";
 import { Alert } from "@/components/ui/form";
 import { LoginForm } from "./login-form";
 import { ArrowRight, CaretDown, UsersThree } from "@phosphor-icons/react/dist/ssr";
@@ -36,23 +36,21 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { next, error } = await searchParams;
 
   return (
-    <main className="min-h-[100dvh] lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+    <main className="flex min-h-[100dvh] flex-col lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       {/* Photo panel */}
-      <section aria-hidden className="relative m-2 h-[30vh] min-h-52 overflow-hidden rounded-[1.75rem] bg-ink lg:m-3 lg:h-auto lg:rounded-[2rem]">
+      <section aria-hidden className="relative h-[42vh] min-h-64 shrink-0 overflow-hidden bg-ink lg:m-3 lg:h-auto lg:rounded-[2rem]">
         <div className="absolute inset-0 bg-[url('/img/login-bg.webp')] bg-cover bg-[center_35%]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(8_9_12/0.35)_0%,transparent_30%,transparent_55%,rgb(8_9_12/0.7)_100%)]" />
-        <div className="absolute left-4 top-4 lg:left-8 lg:top-8">
-          <span className="block rounded-2xl bg-white/90 px-3 py-2 shadow-[0_8px_24px_-10px_rgb(0_0_0/0.5)] backdrop-blur-md"><MswLogo className="h-7 lg:h-8" /></span>
-        </div>
-        <p className="absolute bottom-4 left-5 text-[13px] font-medium text-white/90 lg:bottom-8 lg:left-8">{COMPANY.name} · Safety netting, decking &amp; shear studs</p>
+        <p className="absolute left-5 top-[max(1.25rem,env(safe-area-inset-top))] text-[13px] font-medium text-white/90 [text-shadow:0_1px_8px_rgb(0_0_0/0.5)] lg:bottom-8 lg:left-8 lg:top-auto">{COMPANY.name} · Safety netting, decking &amp; shear studs</p>
       </section>
 
       {/* Sign-in */}
-      <section className="flex flex-col px-5 pb-8 pt-6 sm:px-10 lg:px-16 lg:py-10">
+      <section className="relative z-10 -mt-8 flex flex-1 flex-col rounded-t-[2rem] bg-[#f8f9fb] px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-7 shadow-[0_-20px_40px_-20px_rgb(0_0_0/0.35)] sm:px-10 lg:mt-0 lg:rounded-none lg:bg-transparent lg:px-16 lg:py-10 lg:shadow-none">
         <div className="flex flex-1 flex-col justify-center">
           <div className="mx-auto w-full max-w-[400px]">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-muted">MSW Site</p>
-            <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.025em]">Sign in</h1>
+            <span aria-hidden className="mx-auto mb-5 block h-1 w-10 rounded-full bg-ink/15 lg:hidden" />
+            <Logo tone="dark" />
+            <h1 className="mt-7 text-[30px] font-semibold tracking-[-0.025em]">Sign in</h1>
             <p className="mt-1.5 text-[15px] text-muted">For MSW staff and approved subcontractors.</p>
             <div className="mt-7 grid gap-4">
               {error && <Alert>{error}</Alert>}

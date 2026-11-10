@@ -9,14 +9,14 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <div className="min-h-[100dvh] overflow-x-clip pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
       <header className="sticky top-0 z-30 px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
-        <div className="glass-bar-dark mx-auto flex h-14 max-w-2xl items-center justify-between rounded-full pl-2 pr-1.5 text-white">
+        <div className="glass-bar-dark mx-auto flex h-14 max-w-2xl items-center justify-between rounded-full pl-5 pr-1.5 text-white">
           <Link href="/jobs" className="flex min-h-11 items-center gap-2.5" aria-label="Your jobs">
-            <span className="rounded-full bg-white px-3 py-1.5"><MswLogo className="h-5" /></span>
-            <span className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/80">Site</span>
+            <MswLogo className="h-6" />
+            <span className="h-6 w-px bg-white/15" aria-hidden /><span className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/80">Site</span>
           </Link>
           <Link href="/account" className="flex min-h-11 min-w-11 items-center justify-end gap-2 text-[14px] font-medium text-white/85" aria-label="Your account">
             <span className="hidden sm:inline">{viewer.fullName.split(" ")[0]}</span>
-            <span className="grid size-10 place-items-center rounded-full bg-[linear-gradient(180deg,#e11d1e,#b30e10)] text-[13px] font-bold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25)]">{viewer.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("")}</span>
+            <span className="grid size-10 place-items-center rounded-full bg-white/[0.08] text-[13px] font-semibold text-white/90 ring-1 ring-white/15">{viewer.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("")}</span>
           </Link>
         </div>
       </header>
