@@ -10,7 +10,7 @@ const csv = (v: unknown) => {
   return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 };
 
-/** One CSV for the QS: a line per person per day of daywork, then deliveries, then MSW travel. */
+/** One CSV for the QS: a line per person per day of daywork, then handovers, then site issues. */
 export async function GET(request: Request) {
   const viewer = await getViewer();
   if (!viewer?.isStaff) return notFound();
@@ -20,11 +20,11 @@ export async function GET(request: Request) {
   for (const l of d.daywork) {
     lines.push(["Daywork", l.day, l.job_number, l.company, l.kind === "standing" ? "Standing time" : "Extra work", l.person, l.trade, l.hours, l.client_name, l.week_commencing].map(csv).join(","));
   }
-  for (const v of d.deliveries) for (const i of v.items) {
-    lines.push(["Delivery", v.signed_at.slice(0, 10), v.job_number, v.company, `Delivered by ${v.delivered_by}`, i.description, i.quantity, "", v.receiver_name, ""].map(csv).join(","));
+  for (const h of d.handovers) {
+    lines.push(["Handover", h.signed_at.slice(0, 10), h.job_number, h.company, h.scopes.join(" + "), h.title, "", "", h.signer_name, ""].map(csv).join(","));
   }
-  for (const t of d.travel) {
-    lines.push(["MSW travel", `${f.from} to ${f.to}`, "", "MSW", "Driving", t.full_name, `${t.days} days, ${t.miles} miles`, (t.driving_minutes / 60).toFixed(2), "", ""].map(csv).join(","));
+  for (const i of d.issues) {
+    lines.push(["Site issue", i.created_at.slice(0, 10), i.job_number, i.company, i.status, i.title, i.category, "", i.author_name, ""].map(csv).join(","));
   }
   return new Response(lines.join("\r\n") + "\r\n", {
     headers: {

@@ -17,11 +17,11 @@ export async function GET(request: Request) {
   const monday = weekStart(week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? week : londonToday());
   const people = await officeTimesheetWeek(viewer, monday);
   const lines = [["Date", "Operative", "Job", "Location", "Travel", "Vehicle", "Driven by", "Set off", "Arrived", "Left site", "Got back",
-    "Site hours", "Driving hours", "Travel hours", "Miles", "Work done", "Work details", "Status", "Office note", "Notes"].join(",")];
+    "Site hours", "Driving hours", "Travel hours", "Miles", "Premium", "Work done", "Work details", "Status", "Office note", "Notes"].join(",")];
   for (const p of people) for (const t of p.days) {
     lines.push([t.work_date, p.full_name, t.job_number ?? "", t.location_note ?? "", t.travel_mode, t.vehicle_reg ?? "",
       t.driven_by ?? "", t.travel_out_start ?? "", t.travel_out_end ?? "", t.travel_back_start ?? "", t.travel_back_end ?? "",
-      hours(t.site_minutes), hours(t.driving_minutes), hours(t.travel_minutes), t.mileage ?? "",
+      hours(t.site_minutes), hours(t.driving_minutes), hours(t.travel_minutes), t.mileage ?? "", t.premium ? "Yes" : "",
       t.work_done.map(workLabel).join("; "), t.work_description ?? "", t.status, t.office_note ?? "", t.notes ?? ""].map(csv).join(","));
   }
   return new Response(lines.join("\r\n") + "\r\n", {

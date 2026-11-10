@@ -36,6 +36,7 @@ export default async function OfficeTimesheetDayPage({ params }: { params: Promi
         {entries.map((t, i) => {
           const rows: [string, string][] = [
             ["Work done", [t.work_done.map(workLabel).join(", "), t.work_description].filter(Boolean).join(" — ") || "—"],
+            ["Premium time", t.premium ? "Yes" : "No"],
             ["Travel", t.travel_mode === "passenger" ? `Passenger${t.driven_by ? ` — driven by ${t.driven_by}` : ""}${t.vehicle_reg ? ` (${t.vehicle_reg})` : ""}` : `Driving ${t.vehicle_reg ?? ""}`],
             ["Set off / arrived", t.travel_out_start ? `${t.travel_out_start} → ${t.travel_out_end} (${fmtMinutes(app(t.travel_out_start, t.travel_out_end ?? t.travel_out_start))})` : "—"],
             ["On site", t.travel_out_end && t.travel_back_start ? `${t.travel_out_end} → ${t.travel_back_start} (${fmtMinutes(t.site_minutes)})` : "—"],

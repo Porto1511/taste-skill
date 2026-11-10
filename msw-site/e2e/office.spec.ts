@@ -110,13 +110,15 @@ test.describe("office workflows", () => {
     await expect(page.getByRole("link").filter({ hasText: "MSW-2611-DK-101" })).toContainText("Rev C03 current");
   });
 
-  test("Pete (QS) sees daywork hours by company, deliveries and MSW driving, and can export them", async ({ page }) => {
+  test("Pete (QS) sees sign-offs, daywork hours by company and site issues, and can export them", async ({ page }) => {
     await signIn(page, "pete@msw.example");
     await page.getByRole("link", { name: "QS check" }).click();
     await page.getByRole("link", { name: "This month" }).click();
     await expect(page.getByRole("heading", { name: "Derby Decking" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "SOS" })).toBeVisible();
-    await expect(page.getByText("Deliveries", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText(/Sign-offs \(handovers\)/)).toBeVisible();
+    await expect(page.getByText(/Site issues ·/)).toBeVisible();
+    await expect(page.getByText("MSW driving")).toHaveCount(0); // driving is for timesheet sign-off, not the QS
     await page.locator("summary").filter({ hasText: "Extra work" }).first().click();
     await expect(page.getByRole("cell", { name: "John Smith" })).toBeVisible();
     const href = await page.getByRole("link", { name: /Export CSV/ }).getAttribute("href");

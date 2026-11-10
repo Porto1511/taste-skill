@@ -126,12 +126,14 @@ test.describe("operative mobile experience", () => {
     await page.getByRole("button", { name: /Next: driver signs/ }).click();
     await draw(page, 0);
     await page.getByRole("button", { name: /Next: receiver signs/ }).click();
-    await page.getByLabel("Print name").fill("Martin Doyle");
+    await expect(page.getByText("Hand the phone to the person receiving the delivery")).toBeVisible();
+    await page.getByLabel(/Received by — print name/).fill("Martin Doyle");
     await draw(page, 0);
     await page.getByRole("checkbox").check();
     await page.getByRole("button", { name: "Sign & submit" }).click();
     await expect(page.getByText(/Signed — the MSW copy is saved/)).toBeVisible();
     await expect(page.getByText("MD60 deck sheets")).toBeVisible();
+    await expect(page.getByText(/Delivered by Gareth Evans/)).toBeVisible();
     const pdf = await page.request.get(await page.getByRole("link", { name: /Open PDF/ }).getAttribute("href") as string);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
   });
@@ -152,7 +154,8 @@ test.describe("operative mobile experience", () => {
     await page.getByRole("button", { name: /Next: MSW signs/ }).click();
     await draw(page, 0);
     await page.getByRole("button", { name: /Next: client signs/ }).click();
-    await page.getByLabel("Print name").fill("Martin Doyle");
+    await expect(page.getByText("Hand the phone to the client")).toBeVisible();
+    await page.getByLabel(/Client — print name/).fill("Martin Doyle");
     await draw(page, 0);
     await page.getByRole("checkbox").check();
     await page.getByRole("button", { name: "Sign & submit" }).click();
@@ -164,6 +167,7 @@ test.describe("operative mobile experience", () => {
     await signIn(page, "gareth.evans@msw.example");
     await page.getByRole("link", { name: "Timesheet" }).click();
     await page.locator('a[href^="/timesheet/"]').filter({ hasText: "Nothing logged" }).last().click();
+    await expect(page.getByRole("checkbox", { name: /Premium time/ })).toBeVisible();
     await page.getByRole("button", { name: "Netting", exact: true }).click();
     await page.getByLabel("Details of work done").fill("E2E: nets Level 3");
     await expect(page.getByRole("button", { name: /No travel/ })).toHaveCount(0);

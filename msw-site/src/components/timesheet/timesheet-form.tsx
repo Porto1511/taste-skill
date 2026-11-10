@@ -42,6 +42,9 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly, previous }: {
   const [mode, setMode] = useState<"driver" | "passenger">(initialMode);
   const [jobId, setJobId] = useState(sheet ? sheet.job_id ?? "other" : jobs.length === 1 && !previous ? jobs[0].id : "");
   const [work, setWork] = useState<string[]>(sheet?.work_done ?? []);
+  // Weekends default to premium; anyone can untick it (or tick it on a weekday).
+  const weekend = [0, 6].includes(new Date(`${date}T12:00:00Z`).getUTCDay());
+  const [premium, setPremium] = useState(sheet ? sheet.premium : weekend);
   const [t, setT] = useState({
     setOff: sheet?.travel_out_start ?? previous?.travel_back_start ?? "",
     arrived: sheet?.travel_out_end ?? "",
@@ -61,6 +64,7 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly, previous }: {
       <input type="hidden" name="travelMode" value={mode} />
       {sheet && <input type="hidden" name="entryId" value={sheet.id} />}
       {work.map((w) => <input key={w} type="hidden" name="workDone" value={w} />)}
+      {premium && <input type="hidden" name="premium" value="1" />}
       <fieldset disabled={readOnly} className="grid gap-5 disabled:opacity-80">
         {/* 1. Job */}
         <Field label="Job" htmlFor="jobId" error={fe.jobId}>
@@ -95,6 +99,12 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly, previous }: {
           <Textarea name="workDescription" defaultValue={sheet?.work_description ?? ""} rows={2} maxLength={1000}
             className="mt-2 min-h-0" placeholder="e.g. Laid and pinned bays A1–D3, Level 1" aria-label="Details of work done" />
         </fieldset>
+
+        <label className={cn("flex items-center gap-3 rounded-2xl border-2 p-4", premium ? "border-signal bg-signal-soft" : "border-line bg-card")}>
+          <input type="checkbox" checked={premium} onChange={(e) => setPremium(e.target.checked)} className="size-6 shrink-0 accent-ink" />
+          <span><span className="block text-[16px] font-semibold">Premium time</span>
+            <span className="block text-[13px] text-muted">{weekend ? "Ticked because it's the weekend — untick if it isn't premium." : "Tick if this is premium time (e.g. Saturday or nights)."}</span></span>
+        </label>
 
         {/* 3. Travel */}
         <fieldset className="grid gap-3">

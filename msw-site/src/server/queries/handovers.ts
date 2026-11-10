@@ -11,7 +11,7 @@ export interface HandoverDetail extends HandoverSummary {
   scope: string | null; checklist: { label: string; checked: boolean; section?: string }[];
   drawing_refs: { doc_number: string; title: string; revision: string }[];
   signer_position: string | null; signer_email: string | null; declaration: string; captured_by_company: string;
-  signature_path: string; msw_signature_path: string | null; main_contractor: string | null; site_address: string;
+  signature_path: string; msw_signature_path: string | null; msw_signer_name: string | null; main_contractor: string | null; site_address: string;
   details: Record<string, Record<string, string>>; days_worked: string[]; week_commencing: string | null;
   photos: { id: string; caption: string | null; storage_path: string }[];
 }
@@ -32,7 +32,7 @@ export async function getHandover(viewer: Viewer, id: string): Promise<HandoverD
     const h = (await tx.query<Omit<HandoverDetail, "photos">>(
       `select h.id, h.job_id, j.job_number, j.name as job_name, ar.name as area_name, h.area_id, h.scopes, h.title, h.signer_name, h.signer_company,
               h.captured_by_name, h.signed_at, 0 as photo_count, h.scope, h.checklist, h.drawing_refs, h.signer_position, h.signer_email,
-              h.declaration, h.captured_by_company, h.signature_path, h.msw_signature_path, j.main_contractor, j.site_address,
+              h.declaration, h.captured_by_company, h.signature_path, h.msw_signature_path, h.msw_signer_name, j.main_contractor, j.site_address,
               h.details, h.days_worked, h.week_commencing
        from handovers h join jobs j on j.id = h.job_id left join job_areas ar on ar.id = h.area_id where h.id = $1`, [id],
     )).rows[0];
@@ -55,7 +55,7 @@ export interface DayworkSummary {
 export interface DayworkDetail extends DayworkSummary {
   workers: { name: string; trade: string; hours: Record<string, number> }[];
   materials: string | null; client_position: string | null; client_email: string | null;
-  client_signature_path: string; msw_signature_path: string; main_contractor: string | null; site_address: string;
+  client_signature_path: string; msw_signature_path: string; msw_signer_name: string | null; main_contractor: string | null; site_address: string;
 }
 
 const dwSummary = `select d.id, d.job_id, j.job_number, j.name as job_name, d.week_commencing, d.kind, d.description, d.work_complete,
@@ -73,7 +73,7 @@ export async function listDayworks(viewer: Viewer, jobId?: string) {
 export async function getDaywork(viewer: Viewer, id: string): Promise<DayworkDetail | null> {
   return withUser(viewer.id, async (tx) =>
     (await tx.query<DayworkDetail>(
-      `select s.*, d.workers, d.materials, d.client_position, d.client_email, d.client_signature_path, d.msw_signature_path,
+      `select s.*, d.workers, d.materials, d.client_position, d.client_email, d.client_signature_path, d.msw_signature_path, d.msw_signer_name,
               j.main_contractor, j.site_address
        from (${dwSummary} where d.id = $1) s join dayworks d on d.id = s.id join jobs j on j.id = s.job_id`, [id],
     )).rows[0] ?? null,

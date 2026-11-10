@@ -51,8 +51,8 @@ export function HandoverView({ h }: { h: HandoverDetail }) {
           <div className="rounded-2xl border border-line bg-card p-4">
             <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">Signed MSW</p>
             {/* eslint-disable-next-line @next/next/no-img-element -- authorised API image */}
-            <img src={`/api/files/signatures/${h.id}?who=msw`} alt={`Signature of ${h.captured_by_name}`} className="mt-2 h-20 max-w-full object-contain" />
-            <p className="mt-1 font-semibold">{h.captured_by_name}</p>
+            <img src={`/api/files/signatures/${h.id}?who=msw`} alt={`Signature of ${h.msw_signer_name ?? h.captured_by_name}`} className="mt-2 h-20 max-w-full object-contain" />
+            <p className="mt-1 font-semibold uppercase">{h.msw_signer_name ?? h.captured_by_name}</p>
             <p className="text-[13px] text-muted">{h.captured_by_company}</p>
           </div>
         )}

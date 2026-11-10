@@ -3,9 +3,9 @@ import { withUser } from "../db";
 import type { Viewer } from "../auth/viewer";
 
 /**
- * QS check: quantities recorded on site for a date range — daywork hours
- * (standing time / extra work), deliveries, handovers and MSW travel — to
- * check against subcontractor invoices.  Hours and counts only, no rates.
+ * QS check: what was signed off on site for a date range — handovers, daywork
+ * hours (standing time / extra work) and site issues — to check against
+ * subcontractor invoices.  Hours and counts only, no rates.
  * Runs as the signed-in user, so database policies still apply.
  */
 export interface QsFilter { from: string; to: string; jobId?: string; companyId?: string }
@@ -15,15 +15,10 @@ export interface DayworkLine {
   company_id: string; company: string; week_commencing: string; client_name: string; signed_at: string;
   person: string; trade: string; day: string; hours: number;
 }
-export interface QsDelivery {
-  id: string; job_id: string; job_number: string; company_id: string; company: string; delivered_by: string;
-  vehicle_reg: string | null; receiver_name: string; signed_at: string; item_count: number; items: { description: string; quantity: string }[];
-  notes: string | null;
-}
-export interface QsHandover { id: string; job_number: string; title: string; scopes: string[]; company: string; signed_at: string }
-export interface QsTravel {
-  user_id: string; full_name: string; days: number; entries: number; driving_minutes: number; passenger_minutes: number;
-  site_minutes: number; miles: number; unapproved: number;
+export interface QsHandover { id: string; job_number: string; title: string; scopes: string[]; company: string; signer_name: string; signed_at: string }
+export interface QsIssue {
+  id: string; job_number: string; title: string; category: string; priority: string; status: string;
+  author_name: string; company: string; created_at: string;
 }
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -48,18 +43,8 @@ export async function qsSummary(viewer: Viewer, f: QsFilter) {
       [...args, DAYS],
     )).rows;
 
-    const deliveries = (await tx.query<QsDelivery>(
-      `select v.id, v.job_id, j.job_number, v.captured_by_company_id as company_id, v.captured_by_company as company,
-              v.delivered_by, v.vehicle_reg, v.receiver_name, v.signed_at, jsonb_array_length(v.items) as item_count, v.items, v.notes
-         from deliveries v join jobs j on j.id = v.job_id
-        where ${londonDay("v.signed_at")} between $1::date and $2::date
-          and ($3::uuid is null or v.job_id = $3) and ($4::uuid is null or v.captured_by_company_id = $4)
-        order by v.signed_at`,
-      args,
-    )).rows;
-
     const handovers = (await tx.query<QsHandover>(
-      `select h.id, j.job_number, h.title, h.scopes, h.captured_by_company as company, h.signed_at
+      `select h.id, j.job_number, h.title, h.scopes, h.captured_by_company as company, h.signer_name, h.signed_at
          from handovers h join jobs j on j.id = h.job_id left join profiles p on p.id = h.captured_by
         where ${londonDay("h.signed_at")} between $1::date and $2::date
           and ($3::uuid is null or h.job_id = $3) and ($4::uuid is null or p.company_id = $4)
@@ -67,20 +52,17 @@ export async function qsSummary(viewer: Viewer, f: QsFilter) {
       args,
     )).rows;
 
-    // MSW's own operatives only (subcontractors don't keep timesheets).
-    const travel = (await tx.query<QsTravel>(
-      `select t.user_id, p.full_name, count(distinct t.work_date)::int as days, count(*)::int as entries,
-              sum(t.driving_minutes)::int as driving_minutes, sum(t.travel_minutes - t.driving_minutes)::int as passenger_minutes,
-              sum(t.site_minutes)::int as site_minutes, coalesce(sum(t.mileage), 0)::int as miles,
-              count(*) filter (where t.status <> 'approved')::int as unapproved
-         from timesheets t join profiles p on p.id = t.user_id
-        where t.work_date between $1::date and $2::date
-          and ($3::uuid is null or t.job_id = $3) and ($4::uuid is null or p.company_id = $4)
-        group by t.user_id, p.full_name order by p.full_name`,
+    const issues = (await tx.query<QsIssue>(
+      `select r.id, j.job_number, r.title, r.category::text, r.priority::text, r.status::text, r.author_name,
+              r.author_company_name as company, r.created_at
+         from reports r join jobs j on j.id = r.job_id
+        where r.kind = 'issue' and ${londonDay("r.created_at")} between $1::date and $2::date
+          and ($3::uuid is null or r.job_id = $3) and ($4::uuid is null or r.author_company_id = $4)
+        order by r.created_at`,
       args,
     )).rows;
 
-    return { daywork, deliveries, handovers, travel };
+    return { daywork, handovers, issues };
   });
 }
 

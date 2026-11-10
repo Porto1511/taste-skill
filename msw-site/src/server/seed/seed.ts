@@ -549,4 +549,14 @@ export async function patchDemoTimesheets(driver: Driver) {
               '{netting}', 'Unloaded and repacked nets from British Museum Level 2', status
        from public.timesheets where id = $1`, [day.id]);
   });
+  // A Saturday on premium time (Luke, Riverside).
+  const sat = (() => { const d = new Date(`${londonDate(0)}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7 || 7)); return d.toISOString().slice(0, 10); })();
+  await runAsSystem(driver, (tx) =>
+    tx.query(
+      `insert into public.timesheets (user_id, work_date, job_id, vehicle_reg, travel_mode, travel_out_start, travel_out_end,
+         travel_back_start, travel_back_end, break_minutes, mileage, work_done, work_description, premium, status)
+       select $1, $2::date, $3, 'MS70 DEK', 'driver', '06:00', '07:20', '13:00', '14:20', 0, 48, '{deck}', 'Saturday catch-up: deck bays E1–H6', true, 'submitted'
+       where not exists (select 1 from public.timesheets where user_id = $1 and work_date = $2::date)`,
+      [userId("luke"), sat, jobId("riverside")]),
+  );
 }

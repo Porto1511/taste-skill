@@ -24,6 +24,7 @@ const schema = z.object({
   setOff: time, arrived: time, leftSite: time, gotBack: time,
   mileage: z.string().optional().transform((v) => (v ? Number(v) : null)).refine((v) => v === null || (Number.isInteger(v) && v >= 0 && v <= 2000), "Miles must be 0–2000"),
   notes: z.string().trim().max(1000).optional().transform((v) => v || null),
+  premium: z.boolean(),
 });
 
 /** Add or update one job on a day. */
@@ -33,7 +34,7 @@ export async function saveTimesheetAction(_p: ActionState, f: FormData): Promise
     ["entryId", "workDate", "jobId", "locationNote", "workDescription", "travelMode", "vehicleReg", "drivenBy",
       "setOff", "arrived", "leftSite", "gotBack", "mileage", "notes"].map((k) => [k, str(f, k) ?? undefined]),
   );
-  const parsed = schema.safeParse({ ...raw, workDone: strs(f, "workDone"), travelMode: raw.travelMode ?? "driver" });
+  const parsed = schema.safeParse({ ...raw, workDone: strs(f, "workDone"), travelMode: raw.travelMode ?? "driver", premium: str(f, "premium") === "1" });
   if (!parsed.success) return { error: parsed.error.issues[0].message, nonce: Date.now() };
   const t = parsed.data;
   const fe: Record<string, string> = {};
@@ -48,23 +49,23 @@ export async function saveTimesheetAction(_p: ActionState, f: FormData): Promise
   if (Object.keys(fe).length) return { error: Object.values(fe)[0], fieldErrors: fe, nonce: Date.now() };
 
   const values = [t.jobId, t.locationNote, t.vehicleReg, t.travelMode, t.drivenBy, t.setOff, t.arrived, t.leftSite, t.gotBack,
-    t.mileage, t.notes, t.workDone, t.workDescription];
+    t.mileage, t.notes, t.workDone, t.workDescription, t.premium];
   const res = await attempt("timesheets.save", async () => {
     await withUser(viewer.id, async (tx) => {
       if (t.entryId) {
         const { rowCount } = await tx.query(
           `update timesheets set job_id=$1, location_note=$2, vehicle_reg=$3, travel_mode=$4, driven_by=$5,
              travel_out_start=$6, travel_out_end=$7, travel_back_start=$8, travel_back_end=$9, mileage=$10, notes=$11,
-             work_done=$12::text[], work_description=$13, site_start=null, site_finish=null, break_minutes=0
-           where id = $14 and user_id = auth.uid()`,
+             work_done=$12::text[], work_description=$13, premium=$14, site_start=null, site_finish=null, break_minutes=0
+           where id = $15 and user_id = auth.uid()`,
           [...values, t.entryId],
         );
         if (!rowCount) throw Object.assign(new Error("This entry has been approved and can no longer be changed."), { code: "22023" });
       } else {
         await tx.query(
           `insert into timesheets (job_id, location_note, vehicle_reg, travel_mode, driven_by, travel_out_start, travel_out_end,
-             travel_back_start, travel_back_end, mileage, notes, work_done, work_description, break_minutes, user_id, work_date)
-           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::text[],$13, 0, auth.uid(), $14)`,
+             travel_back_start, travel_back_end, mileage, notes, work_done, work_description, premium, break_minutes, user_id, work_date)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::text[],$13,$14, 0, auth.uid(), $15)`,
           [...values, t.workDate],
         );
       }

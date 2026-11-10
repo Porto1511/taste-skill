@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try { workers = JSON.parse(String(form.get("workers") ?? "[]")); } catch { /* validated below */ }
   const parsed = dayworkInput.safeParse({
     jobId: form.get("jobId"), weekCommencing: form.get("weekCommencing"), workers,
-    kind: form.get("kind"), description: form.get("description"), materials: form.get("materials") || undefined, workComplete: form.get("workComplete") === "yes",
+    kind: form.get("kind"), mswName: form.get("mswName"), description: form.get("description"), materials: form.get("materials") || undefined, workComplete: form.get("workComplete") === "yes",
     clientName: form.get("clientName"), clientCompany: form.get("clientCompany"),
     clientPosition: form.get("clientPosition") || undefined, clientEmail: form.get("clientEmail") || undefined,
   });

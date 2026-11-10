@@ -159,15 +159,16 @@ describe("handover sign-off", () => {
     jobId: ids.job("bm"), areaId: ids.area("bm", area), title: "Level 1 deck complete", scopes,
     details: { deck: { area: "Level 1, grids A–D" }, netting: { gridlines: "Level 1, grids A–D" } } as Record<string, Record<string, string>>,
     daysWorked: ["mon", "tue"], weekCommencing: "2026-11-02",
-    signerName: "Martin Doyle", signerCompany: "Kingsgate Construction Ltd", signerPosition: "Site Manager", signerEmail: null,
+    mswName: "Mark Jones", signerName: "Martin Doyle", signerCompany: "Kingsgate Construction Ltd", signerPosition: "Site Manager", signerEmail: null,
   });
   const sigs = async (client?: Buffer) => ({ client: { name: "c.png", bytes: client ?? await signature() }, msw: { name: "m.png", bytes: await signature() } });
 
   it("an allocated operative captures a signed handover; drawings at handover are recorded server-side", async () => {
     const res = await createHandover(viewer("mark"), input("l1"), await sigs(), []);
-    const [h] = await system(db)<{ captured_by_name: string; drawing_refs: { doc_number: string }[] }>(
-      "select captured_by_name, drawing_refs from handovers where id = $1", [res.id]);
+    const [h] = await system(db)<{ captured_by_name: string; msw_signer_name: string; drawing_refs: { doc_number: string }[] }>(
+      "select captured_by_name, msw_signer_name, drawing_refs from handovers where id = $1", [res.id]);
     expect(h.captured_by_name).toBe("Mark Jones");
+    expect(h.msw_signer_name).toBe("Mark Jones");
     expect(h.drawing_refs.map((d) => d.doc_number)).toContain("MSW-2611-DK-101");
     expect(h.drawing_refs.map((d) => d.doc_number)).not.toContain("MSW-2611-DK-103");
     const office = await asUser(db, "claire").query<{ title: string }>("select title from notifications where kind = 'handover.signed'");
@@ -212,11 +213,12 @@ describe("handover sign-off", () => {
 describe("certificate fields", () => {
   it("only keeps the fields for the trades being handed over, and requires the paper-form fields", async () => {
     const { handoverInput } = await import("@/server/files/handovers");
-    const base = { jobId: ids.job("bm"), areaId: "", title: "Level 1", daysWorked: ["mon"], weekCommencing: "2026-11-02", signerName: "Martin Doyle", signerCompany: "Kingsgate", signerPosition: "", signerEmail: "" };
+    const base = { jobId: ids.job("bm"), areaId: "", title: "Level 1", daysWorked: ["mon"], weekCommencing: "2026-11-02", mswName: "Mark Jones", signerName: "Martin Doyle", signerCompany: "Kingsgate", signerPosition: "", signerEmail: "" };
     expect(handoverInput.safeParse({ ...base, scopes: ["deck"], details: {} }).success).toBe(false);
     expect(handoverInput.safeParse({ ...base, scopes: ["studs"], details: { studs: { floorLevel: "L1", totalStuds: "lots" } } }).success).toBe(false);
     expect(handoverInput.safeParse({ ...base, scopes: ["deck"], details: { deck: { area: "L1 A–D" } }, daysWorked: [] }).success).toBe(false);
     expect(handoverInput.safeParse({ ...base, scopes: ["deck"], details: { deck: { area: "L1 A–D" } } }).success).toBe(true);
+    expect(handoverInput.safeParse({ ...base, mswName: " ", scopes: ["deck"], details: { deck: { area: "L1 A–D" } } }).success).toBe(false);
   });
 });
 
@@ -228,7 +230,7 @@ describe("daywork sheets and delivery notes", () => {
   const hours = (tue: number) => ({ mon: 0, tue, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 });
   const daywork = (job = ids.job("bm")) => ({
     jobId: job, weekCommencing: "2026-11-02", workers: [{ name: "Mark Jones", trade: "Decker", hours: hours(2) }],
-    kind: "standing" as const, description: "Standing time waiting for crane", materials: null, workComplete: true,
+    kind: "standing" as const, mswName: "Mark Jones", description: "Standing time waiting for crane", materials: null, workComplete: true,
     clientName: "Martin Doyle", clientCompany: "Kingsgate Construction Ltd", clientPosition: null, clientEmail: null,
   });
   const delivery = (job = ids.job("bm")) => ({

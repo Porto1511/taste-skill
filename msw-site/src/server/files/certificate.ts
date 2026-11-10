@@ -120,11 +120,14 @@ async function signatureBlock(pdf: PDFDocument, p: PDFPage, f: Fonts, y: number,
   txt(p, "Signed MSW", M, y, 10.5, f.reg);
   dots(M + 90, y - 2, 190);
   if (o.msw) await place(o.msw, M + 96, y - 4);
-  txt(p, o.mswName, M + 96, y - 12, 7.5, f.reg, grey);
   txt(p, "Print Name", 460, y, 10.5, f.reg);
   dots(560, y - 2, 200);
-  txt(p, o.clientName, 566, y + 1, 10.5, f.bold);
+  txt(p, o.clientName.toUpperCase(), 566, y + 1, 10.5, f.bold);
   if (o.clientRole) txt(p, o.clientRole, 566, y - 12, 7.5, f.reg, grey);
+  y -= 28;
+  txt(p, "Print Name", M, y, 10.5, f.reg);
+  dots(M + 90, y - 2, 190);
+  txt(p, o.mswName.toUpperCase(), M + 96, y + 1, 10.5, f.bold);
   return y - 20;
 }
 
@@ -201,7 +204,7 @@ export async function buildHandoverCertificate(
     y -= 30;
     await signatureBlock(pdf, p, f, y, {
       dateLabel: "W/C Date", date: h.week_commencing ? ukDate(h.week_commencing) : ukDate(h.signed_at),
-      msw: signatures.msw, mswName: `${h.captured_by_name} (${h.captured_by_company})`,
+      msw: signatures.msw, mswName: h.msw_signer_name ?? h.captured_by_name,
       client: signatures.client, clientName: h.signer_name, clientRole: [h.signer_position, h.signer_company].filter(Boolean).join(", "),
     });
     footer(p, f, `Signed electronically on site via MSW Site, ${ukDateTime(h.signed_at)} (UK). ${area ? `Area: ${area}. ` : ""}Ref ${h.id.slice(0, 8)}. MSW copy and client copy are identical.`);
@@ -275,7 +278,7 @@ export async function buildDayworkSheet(d: DayworkDetail, signatures: { client: 
   para(p, d.materials ?? "None", M + 6, y - 27, fullW - 12, 9.5, f.bold, false, 2);
   y -= 64;
   await signatureBlock(pdf, p, f, y, {
-    dateLabel: "Date", date: ukDate(d.signed_at), msw: signatures.msw, mswName: `${d.captured_by_name} (${d.captured_by_company})`,
+    dateLabel: "Date", date: ukDate(d.signed_at), msw: signatures.msw, mswName: d.msw_signer_name ?? d.captured_by_name,
     client: signatures.client, clientName: d.client_name, clientRole: [d.client_position, d.client_company].filter(Boolean).join(", "),
   });
   footer(p, f, `Signed electronically on site via MSW Site, ${ukDateTime(d.signed_at)} (UK). Ref ${d.id.slice(0, 8)}. MSW copy and client copy are identical.`);
@@ -329,9 +332,10 @@ export async function buildDeliveryNote(d: DeliveryDetail, signatures: { receive
   txt(p, "Received by", 460, y, 10.5, f.reg); dots(560, y - 2, 200); await place(signatures.receiver, 566, y - 4);
   y -= 40;
   txt(p, "Driver", M, y, 10.5, f.reg); dots(M + 90, y - 2, 190); await place(signatures.driver, M + 96, y - 4);
-  txt(p, d.delivered_by, M + 96, y - 12, 7.5, f.reg, grey);
-  txt(p, "Print Name", 460, y, 10.5, f.reg); dots(560, y - 2, 200); txt(p, d.receiver_name, 566, y + 1, 10.5, f.bold);
+  txt(p, "Print Name", 460, y, 10.5, f.reg); dots(560, y - 2, 200); txt(p, d.receiver_name.toUpperCase(), 566, y + 1, 10.5, f.bold);
   txt(p, [d.receiver_position, d.receiver_company].filter(Boolean).join(", "), 566, y - 12, 7.5, f.reg, grey);
+  y -= 28;
+  txt(p, "Print Name", M, y, 10.5, f.reg); dots(M + 90, y - 2, 190); txt(p, d.delivered_by.toUpperCase(), M + 96, y + 1, 10.5, f.bold);
   footer(p, f, `Signed electronically on site via MSW Site, ${ukDateTime(d.signed_at)} (UK). Ref ${d.id.slice(0, 8)}. MSW copy and receiver copy are identical.`);
   return Buffer.from(await pdf.save());
 }

@@ -57,6 +57,7 @@ export default async function OfficeTimesheetsPage({ searchParams }: { searchPar
                             <span className="tabular block font-semibold">{fmtMinutes(r.site)}</span>
                             <span className="tabular block text-[11px] text-muted">{r.driving ? `${fmtMinutes(r.driving)} drv` : ""}</span>
                             <span className="block truncate font-mono text-[10px] text-subtle">{r.jobs.join(" + ")}</span>
+                            {r.premium && <span className="mt-0.5 inline-block rounded bg-signal px-1 text-[10px] font-bold text-ink">Premium</span>}
                           </Link>
                         ) : <span className="text-subtle">·</span>}
                       </td>

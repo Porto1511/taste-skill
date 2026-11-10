@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const parsed = handoverInput.safeParse({
     jobId: form.get("jobId"), areaId: form.get("areaId") || undefined, title: form.get("title"),
     scopes: form.getAll("scopes").map(String), details, daysWorked: form.getAll("daysWorked").map(String),
-    weekCommencing: form.get("weekCommencing"), signerName: form.get("signerName"), signerCompany: form.get("signerCompany"),
+    weekCommencing: form.get("weekCommencing"), mswName: form.get("mswName"), signerName: form.get("signerName"), signerCompany: form.get("signerCompany"),
     signerPosition: form.get("signerPosition") || undefined, signerEmail: form.get("signerEmail") || undefined,
   });
   if (!parsed.success) return Response.json({ error: parsed.error.issues[0].message, fieldErrors: fieldErrors(parsed.error) }, { status: 422 });

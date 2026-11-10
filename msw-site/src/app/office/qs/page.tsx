@@ -9,7 +9,7 @@ import { Card, SectionTitle } from "@/components/ui/card";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form";
 import { DAYS, tradeLabel } from "@/lib/handover";
-import { formatDate, formatDateTime, formatShortDate } from "@/lib/format";
+import { formatDate, formatShortDate, labels } from "@/lib/format";
 import { hrs, parseQsParams, qsPresets } from "@/lib/qs";
 import { cn } from "@/lib/cn";
 
@@ -27,7 +27,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
   const standing = companies.reduce((s, c) => s + c.standing, 0);
   const extra = companies.reduce((s, c) => s + c.extra, 0);
   const sheets = companies.reduce((s, c) => s + c.sheets.length, 0);
-  const driving = data.travel.reduce((s, t) => s + t.driving_minutes, 0) / 60;
+  const openIssues = data.issues.filter((i) => i.status === "open" || i.status === "in_progress").length;
   const qs = (o: Partial<Params>) => {
     const q = new URLSearchParams({ from: f.from, to: f.to, ...(f.jobId ? { job: f.jobId } : {}), ...(f.companyId ? { company: f.companyId } : {}), ...o });
     for (const [k, v] of [...q.entries()]) if (!v) q.delete(k);
@@ -37,7 +37,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
   return (
     <div className="grid gap-6">
       <PageHeader title="QS check"
-        description="Everything recorded on site for the dates below — daywork hours (standing time and extra work), deliveries, handovers and MSW travel — to check against subcontractor invoices. Hours and counts only."
+        description="What was signed off on site for the dates below — handovers, daywork (standing time and extra work) and site issues — to check against subcontractor invoices. Hours and counts only."
         actions={<ButtonLink href={`/api/qs/export?${qs({})}`} external><DownloadSimple className="size-5" /> Export CSV</ButtonLink>} />
 
       <Card className="grid gap-3 p-4">
@@ -64,13 +64,29 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
       </Card>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Stat label="Handovers signed" value={String(data.handovers.length)} />
+        <Stat label="Daywork sheets" value={String(sheets)} />
         <Stat label="Standing time" value={hrs(standing)} tone="warn" />
         <Stat label="Extra work" value={hrs(extra)} tone="info" />
-        <Stat label="Daywork sheets" value={String(sheets)} />
-        <Stat label="Deliveries" value={String(data.deliveries.length)} />
-        <Stat label="Handovers" value={String(data.handovers.length)} />
-        <Stat label="MSW driving" value={hrs(driving)} />
+        <Stat label="Site issues" value={String(data.issues.length)} />
+        <Stat label="Issues still open" value={String(openIssues)} tone={openIssues ? "warn" : undefined} />
       </div>
+
+      <section>
+        <SectionTitle>Sign-offs (handovers) · {data.handovers.length}</SectionTitle>
+        {data.handovers.length ? (
+          <Card className="divide-y divide-line">
+            {data.handovers.map((h) => (
+              <Link key={h.id} href={`/office/handovers/${h.id}`} className="flex flex-wrap items-center gap-x-3 px-4 py-2.5 text-[14px] hover:bg-paper">
+                <span className="w-28 text-muted">{formatShortDate(h.signed_at.slice(0, 10))}</span>
+                <span className="font-mono text-[13px]">{h.job_number}</span>
+                <span className="font-medium">{h.title}</span>
+                <span className="text-muted">{h.scopes.map(tradeLabel).join(", ")} · {h.company} · signed by {h.signer_name}</span>
+              </Link>
+            ))}
+          </Card>
+        ) : <Empty>No handovers in these dates.</Empty>}
+      </section>
 
       <section>
         <SectionTitle>Daywork by company</SectionTitle>
@@ -125,67 +141,22 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
         ) : <Empty>No daywork in these dates.</Empty>}
       </section>
 
-      <section>
-        <SectionTitle>Deliveries · {data.deliveries.length}</SectionTitle>
-        {data.deliveries.length ? (
-          <Card className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-[13.5px]">
-              <thead><tr className="border-b border-line text-left text-muted"><th className="px-4 py-2 font-semibold">Date</th><th className="pr-4 font-semibold">Job</th><th className="pr-4 font-semibold">What</th><th className="pr-4 font-semibold">Delivered by</th><th className="pr-4 font-semibold">Received by</th></tr></thead>
-              <tbody>
-                {data.deliveries.map((d) => (
-                  <tr key={d.id} className="border-b border-line last:border-0 align-top">
-                    <td className="px-4 py-2 whitespace-nowrap"><Link href={`/office/deliveries/${d.id}`} className="underline">{formatDateTime(d.signed_at)}</Link></td>
-                    <td className="py-2 pr-4 font-mono whitespace-nowrap">{d.job_number}</td>
-                    <td className="py-2 pr-4">{d.items.map((i, n) => <span key={n} className="block">{i.quantity ? `${i.quantity} × ` : ""}{i.description}</span>)}{d.notes && <span className="block text-warn">Note: {d.notes}</span>}</td>
-                    <td className="py-2 pr-4">{d.delivered_by}{d.vehicle_reg ? ` · ${d.vehicle_reg}` : ""}<span className="block text-muted">{d.company}</span></td>
-                    <td className="py-2 pr-4">{d.receiver_name}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        ) : <Empty>No deliveries in these dates.</Empty>}
-      </section>
 
       <section>
-        <SectionTitle>Handovers · {data.handovers.length}</SectionTitle>
-        {data.handovers.length ? (
+        <SectionTitle>Site issues · {data.issues.length}</SectionTitle>
+        {data.issues.length ? (
           <Card className="divide-y divide-line">
-            {data.handovers.map((h) => (
-              <Link key={h.id} href={`/office/handovers/${h.id}`} className="flex flex-wrap items-center gap-x-3 px-4 py-2.5 text-[14px] hover:bg-paper">
-                <span className="w-28 text-muted">{formatShortDate(h.signed_at.slice(0, 10))}</span>
-                <span className="font-mono text-[13px]">{h.job_number}</span>
-                <span className="font-medium">{h.title}</span>
-                <span className="text-muted">{h.scopes.map(tradeLabel).join(", ")} · {h.company}</span>
+            {data.issues.map((i) => (
+              <Link key={i.id} href={`/office/reports/${i.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-[14px] hover:bg-paper">
+                <span className="w-28 text-muted">{formatShortDate(i.created_at.slice(0, 10))}</span>
+                <span className="font-mono text-[13px]">{i.job_number}</span>
+                <span className="font-medium">{i.title}</span>
+                <span className="text-muted">{labels.category[i.category] ?? i.category} · {i.author_name} ({i.company})</span>
+                <span className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold", i.status === "open" || i.status === "in_progress" ? "bg-warn-soft text-warn" : "bg-ok-soft text-ok")}>{labels.reportStatus[i.status] ?? i.status}</span>
               </Link>
             ))}
           </Card>
-        ) : <Empty>No handovers in these dates.</Empty>}
-      </section>
-
-      <section>
-        <SectionTitle>MSW driving &amp; travel</SectionTitle>
-        <p className="-mt-1 mb-2 text-[13px] text-muted">From MSW&apos;s own operatives&apos; timesheets — not on subcontractor invoices.</p>
-        {data.travel.length ? (
-          <Card className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-[13.5px]">
-              <thead><tr className="border-b border-line text-left text-muted"><th className="px-4 py-2 font-semibold">Operative</th><th className="text-right font-semibold">Days</th><th className="text-right font-semibold">Driving</th><th className="text-right font-semibold">Passenger</th><th className="text-right font-semibold">On site</th><th className="text-right font-semibold">Miles</th><th className="pr-4 text-right font-semibold">Not yet approved</th></tr></thead>
-              <tbody>
-                {data.travel.map((t) => (
-                  <tr key={t.user_id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-2 font-medium">{t.full_name}</td>
-                    <td className="tabular text-right">{t.days}</td>
-                    <td className="tabular text-right font-semibold">{hrs(t.driving_minutes / 60)}</td>
-                    <td className="tabular text-right">{hrs(t.passenger_minutes / 60)}</td>
-                    <td className="tabular text-right">{hrs(t.site_minutes / 60)}</td>
-                    <td className="tabular text-right">{t.miles}</td>
-                    <td className={cn("tabular pr-4 text-right", t.unapproved && "font-semibold text-warn")}>{t.unapproved || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        ) : <Empty>No timesheets in these dates.</Empty>}
+        ) : <Empty>No site issues in these dates.</Empty>}
       </section>
     </div>
   );

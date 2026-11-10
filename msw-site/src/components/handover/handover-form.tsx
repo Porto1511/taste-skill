@@ -6,7 +6,7 @@ import { Camera, ImageSquare, X, Check, HandArrowDown, PenNib } from "@phosphor-
 import { compressImage } from "@/lib/compress-image";
 import { cn } from "@/lib/cn";
 import { Alert, Field, Input, Select, Textarea } from "@/components/ui/form";
-import { SignaturePad, type SignaturePadHandle } from "./signature-pad";
+import { PrintName, SignaturePad, type SignaturePadHandle } from "./signature-pad";
 import { CLIENT_DECLARATION, DAYS, HANDOVER_TRADES, NOTES_FIELD, scopeSummary } from "@/lib/handover";
 import { dayIdOf, londonToday, mondayOf } from "@/lib/week";
 
@@ -27,6 +27,7 @@ export function HandoverForm({ jobId, jobName, areas, defaultClient, mswName }: 
   const [week, setWeek] = useState(mondayOf(today));
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [client, setClient] = useState<Client>(defaultClient);
+  const [mswPrint, setMswPrint] = useState(mswName);
   const [mswSig, setMswSig] = useState<Blob | null>(null);
   const [mswInk, setMswInk] = useState(false);
   const [clientInk, setClientInk] = useState(false);
@@ -84,6 +85,7 @@ export function HandoverForm({ jobId, jobName, areas, defaultClient, mswName }: 
   }
 
   async function nextFromMsw() {
+    if (mswPrint.trim().length < 2) return setError("Print the name of the MSW person signing.");
     if (!mswPad.current || mswPad.current.isEmpty()) return setError("Sign in the box for MSW.");
     setMswSig(await mswPad.current.toBlob());
     goTo(3);
@@ -105,6 +107,7 @@ export function HandoverForm({ jobId, jobName, areas, defaultClient, mswName }: 
     fd.set("details", JSON.stringify(details));
     days.forEach((d) => fd.append("daysWorked", d));
     fd.set("weekCommencing", week);
+    fd.set("mswName", mswPrint);
     fd.set("signerName", client.name);
     fd.set("signerCompany", client.company);
     fd.set("signerPosition", client.position);
@@ -248,7 +251,8 @@ export function HandoverForm({ jobId, jobName, areas, defaultClient, mswName }: 
         <>
           <Summary title={title} trades={trades} details={details} days={days} />
           <div>
-            <p className="mb-2 text-sm font-semibold">Signed MSW — {mswName}</p>
+            <PrintName id="mswname" label="Signed for MSW — print name" value={mswPrint} onChange={setMswPrint} />
+            <p className="mb-2 mt-3 text-sm font-semibold">Signature</p>
             <SignaturePad ref={mswPad} onChange={setMswInk} />
           </div>
           {error && <Alert>{error}</Alert>}
@@ -269,13 +273,13 @@ export function HandoverForm({ jobId, jobName, areas, defaultClient, mswName }: 
           </div>
           <Summary title={title} trades={trades} details={details} days={days} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Print name" htmlFor="cname"><Input id="cname" value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} autoComplete="name" /></Field>
             <Field label="Position" htmlFor="cpos" optional><Input id="cpos" value={client.position} onChange={(e) => setClient({ ...client, position: e.target.value })} placeholder="Site Manager" /></Field>
             <Field label="Company" htmlFor="ccomp"><Input id="ccomp" value={client.company} onChange={(e) => setClient({ ...client, company: e.target.value })} /></Field>
             <Field label="Email for your copy" htmlFor="cmail" optional><Input id="cmail" type="email" value={client.email} onChange={(e) => setClient({ ...client, email: e.target.value })} /></Field>
           </div>
           <div>
-            <p className="mb-2 text-sm font-semibold">Signed client</p>
+            <PrintName id="cname" label="Client — print name" value={client.name} onChange={(v) => setClient({ ...client, name: v })} />
+            <p className="mb-2 mt-3 text-sm font-semibold">Signature</p>
             <SignaturePad ref={clientPad} onChange={setClientInk} />
           </div>
           <label className="flex items-start gap-3 rounded-2xl border border-line bg-card p-4">

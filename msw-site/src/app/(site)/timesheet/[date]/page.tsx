@@ -72,8 +72,9 @@ export default async function TimesheetDayPage({ params, searchParams }: {
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-signal text-[14px] font-bold text-ink">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold leading-snug">{e.job_number ? `${e.job_number} · ${e.job_name}` : e.location_note ?? "Other"}</p>
-                    {e.work_done.length > 0 && (
-                      <div className="mt-1.5 flex flex-wrap gap-1">{e.work_done.map((w) => <span key={w} className="rounded-md bg-ink px-2 py-0.5 text-[12px] font-semibold text-white">{workLabel(w)}</span>)}</div>
+                    {(e.work_done.length > 0 || e.premium) && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">{e.work_done.map((w) => <span key={w} className="rounded-md bg-ink px-2 py-0.5 text-[12px] font-semibold text-white">{workLabel(w)}</span>)}
+                        {e.premium && <span className="rounded-md bg-signal px-2 py-0.5 text-[12px] font-bold text-ink">Premium</span>}</div>
                     )}
                     {e.work_description && <p className="mt-1.5 text-[14px] text-muted">{e.work_description}</p>}
                     <div className="mt-2 grid gap-0.5 text-[13px] tabular text-muted">

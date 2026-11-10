@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Check, Plus, Trash, PenNib, HandArrowDown } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 import { Alert, Field, Input, Textarea } from "@/components/ui/form";
-import { SignaturePad, type SignaturePadHandle } from "./signature-pad";
+import { PrintName, SignaturePad, type SignaturePadHandle } from "./signature-pad";
 
 type Item = { description: string; quantity: string };
 type Receiver = { name: string; position: string; company: string; email: string };
@@ -136,11 +136,12 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
       {step === 2 && (
         <>
           {summary}
-          <div><p className="mb-2 text-sm font-semibold">Driver — {deliveredBy}</p><SignaturePad ref={driverPad} onChange={setDriverInk} /></div>
+          <div><PrintName id="dname" label="Driver — print name" value={deliveredBy} onChange={setDeliveredBy} /><p className="mb-2 mt-3 text-sm font-semibold">Signature</p><SignaturePad ref={driverPad} onChange={setDriverInk} /></div>
           {error && <Alert>{error}</Alert>}
           <div className="grid grid-cols-[auto_1fr] gap-2">
             <button type="button" onClick={() => goTo(1)} className="h-14 rounded-xl border border-line-strong bg-card px-5 font-semibold">Back</button>
             <button type="button" disabled={!driverInk} onClick={async () => {
+              if (deliveredBy.trim().length < 2) return setError("Print the driver's name.");
               if (!driverPad.current || driverPad.current.isEmpty()) return setError("Sign in the box.");
               setDriverSig(await driverPad.current.toBlob()); goTo(3);
             }} className="flex h-14 items-center justify-center gap-2 rounded-xl bg-signal text-[17px] font-bold text-ink disabled:opacity-40">
@@ -158,12 +159,11 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
           </div>
           {summary}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Print name" htmlFor="rname"><Input id="rname" value={receiver.name} onChange={(e) => setReceiver({ ...receiver, name: e.target.value })} /></Field>
             <Field label="Position" htmlFor="rpos" optional><Input id="rpos" value={receiver.position} onChange={(e) => setReceiver({ ...receiver, position: e.target.value })} /></Field>
             <Field label="Company" htmlFor="rcomp"><Input id="rcomp" value={receiver.company} onChange={(e) => setReceiver({ ...receiver, company: e.target.value })} /></Field>
             <Field label="Email for your copy" htmlFor="rmail" optional><Input id="rmail" type="email" value={receiver.email} onChange={(e) => setReceiver({ ...receiver, email: e.target.value })} /></Field>
           </div>
-          <div><p className="mb-2 text-sm font-semibold">Received by</p><SignaturePad ref={receiverPad} onChange={setReceiverInk} /></div>
+          <div><PrintName id="rname" label="Received by — print name" value={receiver.name} onChange={(v) => setReceiver({ ...receiver, name: v })} /><p className="mb-2 mt-3 text-sm font-semibold">Signature</p><SignaturePad ref={receiverPad} onChange={setReceiverInk} /></div>
           <label className="flex items-start gap-3 rounded-2xl border border-line bg-card p-4">
             <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 size-6 shrink-0 accent-ink" />
             <span className="text-[14px] leading-snug">{DELIVERY_DECLARATION}</span>

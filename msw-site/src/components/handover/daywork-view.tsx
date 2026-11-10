@@ -36,8 +36,8 @@ export function DayworkView({ d }: { d: DayworkDetail }) {
         <div className="rounded-2xl border border-line bg-card p-4">
           <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">Signed MSW</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/api/files/signatures/${d.id}?who=daywork-msw`} alt={`Signature of ${d.captured_by_name}`} className="mt-2 h-20 max-w-full object-contain" />
-          <p className="mt-1 font-semibold">{d.captured_by_name}</p><p className="text-[13px] text-muted">{d.captured_by_company}</p>
+          <img src={`/api/files/signatures/${d.id}?who=daywork-msw`} alt={`Signature of ${d.msw_signer_name ?? d.captured_by_name}`} className="mt-2 h-20 max-w-full object-contain" />
+          <p className="mt-1 font-semibold uppercase">{d.msw_signer_name ?? d.captured_by_name}</p><p className="text-[13px] text-muted">{d.captured_by_company}</p>
         </div>
         <div className="rounded-2xl border border-line bg-card p-4">
           <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">Signed client</p>

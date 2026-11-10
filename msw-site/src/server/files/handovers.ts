@@ -27,6 +27,7 @@ export const handoverInput = z.object({
   details: z.record(z.string(), z.record(z.string(), z.string().max(2000))),
   daysWorked: z.array(z.enum(dayIds)).min(1, "Tick the days worked"),
   weekCommencing: isoDate,
+  mswName: z.string().trim().min(2, "Print the name of the MSW person signing").max(120),
   signerName: z.string().trim().min(2, "The client needs to print their name").max(120),
   signerCompany: z.string().trim().min(2, "Enter the client's company").max(160),
   signerPosition: optText(120),
@@ -98,10 +99,10 @@ export async function createHandover(
       await tx.query(
         `insert into handovers (id, job_id, area_id, title, scope, checklist, signer_name, signer_company, signer_position, signer_email,
            declaration, signature_path, msw_signature_path, captured_by, captured_by_name, captured_by_company, scopes, details,
-           days_worked, week_commencing)
-         values ($1, $2, $3, $4, null, '[]'::jsonb, $5, $6, $7, $8, $9, $10, $11, auth.uid(), '-', '-', $12::text[], $13::jsonb, $14::text[], $15)`,
+           days_worked, week_commencing, msw_signer_name)
+         values ($1, $2, $3, $4, null, '[]'::jsonb, $5, $6, $7, $8, $9, $10, $11, auth.uid(), '-', '-', $12::text[], $13::jsonb, $14::text[], $15, $16)`,
         [id, input.jobId, input.areaId, input.title, input.signerName, input.signerCompany, input.signerPosition, input.signerEmail,
-          DECLARATION, sigPath, mswPath, input.scopes, JSON.stringify(details), input.daysWorked, input.weekCommencing],
+          DECLARATION, sigPath, mswPath, input.scopes, JSON.stringify(details), input.daysWorked, input.weekCommencing, input.mswName],
       );
       await store.put(sigPath, clientSig, "image/png");
       track(sigPath);
@@ -139,6 +140,7 @@ export const dayworkInput = z.object({
   description: z.string().trim().min(3, "Describe the work").max(4000),
   materials: optText(2000),
   workComplete: z.boolean(),
+  mswName: z.string().trim().min(2, "Print the name of the MSW person signing").max(120),
   clientName: z.string().trim().min(2, "The client needs to print their name").max(120),
   clientCompany: z.string().trim().min(2, "Enter the client's company").max(160),
   clientPosition: optText(120),
@@ -156,10 +158,10 @@ export async function createDaywork(viewer: Viewer, input: z.infer<typeof daywor
       const mswPath = storagePaths.signature(input.jobId, randomUUID());
       await tx.query(
         `insert into dayworks (id, job_id, kind, week_commencing, workers, description, materials, work_complete, client_name, client_position,
-           client_company, client_email, client_signature_path, msw_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id)
-         values ($1,$2,$14,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12,$13, auth.uid(), '-', '-', (select company_id from profiles where id = auth.uid()))`,
+           client_company, client_email, client_signature_path, msw_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id, msw_signer_name)
+         values ($1,$2,$14,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12,$13, auth.uid(), '-', '-', (select company_id from profiles where id = auth.uid()), $15)`,
         [id, input.jobId, input.weekCommencing, JSON.stringify(input.workers), input.description, input.materials, input.workComplete,
-          input.clientName, input.clientPosition, input.clientCompany, input.clientEmail, clientPath, mswPath, input.kind],
+          input.clientName, input.clientPosition, input.clientCompany, input.clientEmail, clientPath, mswPath, input.kind, input.mswName],
       );
       await store.put(clientPath, clientSig, "image/png");
       track(clientPath);

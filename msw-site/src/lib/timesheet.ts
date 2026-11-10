@@ -2,7 +2,7 @@
 export interface DayEntry {
   status: "submitted" | "approved" | "query";
   site_minutes: number; driving_minutes: number; travel_minutes: number;
-  job_number: string | null; location_note: string | null;
+  job_number: string | null; location_note: string | null; premium?: boolean;
 }
 
 /** Summarise a day's entries (several jobs in one day). */
@@ -15,6 +15,7 @@ export function summariseDay(entries: DayEntry[]) {
     driving: entries.reduce((s, e) => s + e.driving_minutes, 0),
     travel: entries.reduce((s, e) => s + e.travel_minutes, 0),
     status,
+    premium: entries.some((e) => e.premium),
     jobs: entries.map((e) => e.job_number ?? (e.location_note ? e.location_note.split(" —")[0] : "Other")),
   };
 }

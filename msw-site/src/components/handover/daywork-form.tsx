@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Check, Plus, Trash, PenNib, HandArrowDown } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 import { Alert, Field, Input, Textarea } from "@/components/ui/form";
-import { SignaturePad, type SignaturePadHandle } from "./signature-pad";
+import { PrintName, SignaturePad, type SignaturePadHandle } from "./signature-pad";
 import { DAYS, DAYWORK_DECLARATION } from "@/lib/handover";
 
 type DayId = (typeof DAYS)[number]["id"];
@@ -33,6 +33,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
   const [materials, setMaterials] = useState("");
   const [complete, setComplete] = useState<"yes" | "no" | "">("");
   const [client, setClient] = useState<Client>(defaultClient);
+  const [mswPrint, setMswPrint] = useState(me.name);
   const [mswSig, setMswSig] = useState<Blob | null>(null);
   const [mswInk, setMswInk] = useState(false);
   const [clientInk, setClientInk] = useState(false);
@@ -60,6 +61,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
   }
 
   async function nextFromMsw() {
+    if (mswPrint.trim().length < 2) return setError("Print the name of the MSW person signing.");
     if (!mswPad.current || mswPad.current.isEmpty()) return setError("Sign in the box for MSW.");
     setMswSig(await mswPad.current.toBlob());
     goTo(3);
@@ -78,6 +80,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
     fd.set("weekCommencing", weekCommencing);
     fd.set("workers", JSON.stringify(filled.map((w) => ({ name: w.name, trade: w.trade, hours: Object.fromEntries(DAYS.map((d) => [d.id, Number(w.hours[d.id]) || 0])) }))));
     fd.set("kind", kind);
+    fd.set("mswName", mswPrint);
     fd.set("description", description);
     fd.set("materials", materials);
     fd.set("workComplete", complete);
@@ -187,7 +190,8 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
         <>
           <DayworkSummary workers={filled} description={description} complete={complete} kind={kind} />
           <div>
-            <p className="mb-2 text-sm font-semibold">Signed MSW — {me.name}</p>
+            <PrintName id="mswname" label="Signed for MSW — print name" value={mswPrint} onChange={setMswPrint} />
+            <p className="mb-2 mt-3 text-sm font-semibold">Signature</p>
             <SignaturePad ref={mswPad} onChange={setMswInk} />
           </div>
           {error && <Alert>{error}</Alert>}
@@ -208,13 +212,13 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
           </div>
           <DayworkSummary workers={filled} description={description} complete={complete} kind={kind} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Print name" htmlFor="cname"><Input id="cname" value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} /></Field>
             <Field label="Position" htmlFor="cpos" optional><Input id="cpos" value={client.position} onChange={(e) => setClient({ ...client, position: e.target.value })} /></Field>
             <Field label="Company" htmlFor="ccomp"><Input id="ccomp" value={client.company} onChange={(e) => setClient({ ...client, company: e.target.value })} /></Field>
             <Field label="Email for your copy" htmlFor="cmail" optional><Input id="cmail" type="email" value={client.email} onChange={(e) => setClient({ ...client, email: e.target.value })} /></Field>
           </div>
           <div>
-            <p className="mb-2 text-sm font-semibold">Signed client</p>
+            <PrintName id="cname" label="Client — print name" value={client.name} onChange={(v) => setClient({ ...client, name: v })} />
+            <p className="mb-2 mt-3 text-sm font-semibold">Signature</p>
             <SignaturePad ref={clientPad} onChange={setClientInk} />
           </div>
           <label className="flex items-start gap-3 rounded-2xl border border-line bg-card p-4">

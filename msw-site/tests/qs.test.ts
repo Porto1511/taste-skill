@@ -22,8 +22,9 @@ describe("QS check", () => {
     const byCo = Object.fromEntries(groupDaywork(d.daywork).map((c) => [c.company, c]));
     expect(byCo["SOS"]).toMatchObject({ standing: 6, extra: 0 });
     expect(byCo["Derby Decking"]).toMatchObject({ standing: 0, extra: 7 });
-    expect(d.deliveries.length).toBeGreaterThan(0);
-    expect(d.travel.map((t) => t.full_name)).toContain("Gareth Evans");
+    expect(d.handovers.map((h) => h.title)).toContain("Level 2 — deck & studs handover");
+    expect(d.issues.length).toBeGreaterThan(0);
+    expect(d).not.toHaveProperty("travel"); // driving is Alan's (timesheets), not the QS's
   });
 
   it("counts daywork hours on the day they were worked", async () => {
@@ -41,7 +42,7 @@ describe("QS check", () => {
     const [{ id: abc }] = await system(db)<{ id: string }>("select id from companies where name = 'Derby Decking'");
     const d = await qsSummary(v("claire", true), { ...ALL, companyId: abc });
     expect(new Set(d.daywork.map((l) => l.company))).toEqual(new Set(["Derby Decking"]));
-    expect(d.travel).toEqual([]); // MSW travel isn't Derby Decking's
+    expect(new Set(d.issues.map((i) => i.company))).toEqual(new Set(["Derby Decking"]));
     const other = await qsSummary(v("claire", true), { ...ALL, jobId: ids.job("riverside") });
     expect(other.daywork).toEqual([]);
   });
@@ -49,7 +50,7 @@ describe("QS check", () => {
   it("still runs under the database policies: an operative only sees their own", async () => {
     const paul = await qsSummary(v("paul"), ALL);
     expect(paul.daywork).toEqual([]);
-    expect(paul.deliveries).toEqual([]);
+    expect(new Set(paul.issues.map((i) => i.author_name))).toEqual(new Set(["Paul Brown"])); // only his own
     const liam = await qsSummary(v("liam"), ALL);
     expect(new Set(liam.daywork.map((l) => l.company))).toEqual(new Set(["SOS"]));
   });

@@ -97,3 +97,14 @@ export const SignaturePad = forwardRef<SignaturePadHandle, { onChange?: (hasInk:
     </div>
   );
 });
+
+/** Printed name, in capitals, straight above a signature so it can be read. */
+export function PrintName({ id, value, onChange, label = "Print name" }: { id: string; value: string; onChange: (v: string) => void; label?: string }) {
+  return (
+    <label htmlFor={id} className="grid gap-1.5">
+      <span className="text-sm font-semibold">{label} <span className="font-normal text-muted">— in capitals, then sign below</span></span>
+      <input id={id} value={value} onChange={(e) => onChange(e.target.value)} autoComplete="name" autoCapitalize="characters" maxLength={120}
+        className="h-12 rounded-xl border border-line-strong bg-white px-3 text-[17px] font-semibold uppercase tracking-wide text-ink focus:border-ink focus:outline-none" />
+    </label>
+  );
+}
