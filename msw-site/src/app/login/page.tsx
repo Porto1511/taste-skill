@@ -6,6 +6,9 @@ import { demoEmail, demoUsers } from "@/server/seed/demo-data";
 import { Logo } from "@/components/ui/logo";
 import { Alert } from "@/components/ui/form";
 import { LoginForm } from "./login-form";
+import { ArrowRight, CaretDown, ClockClockwise, Phone, ShieldCheck, Signature, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { COMPANY } from "@/lib/company";
+import { telHref } from "@/lib/format";
 import { demoSignInAction } from "./actions";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -33,90 +36,101 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { next, error } = await searchParams;
 
   return (
-    <main className="grid min-h-[100dvh] lg:grid-cols-[1.05fr_1fr]">
-      <section className="glass-dark relative m-3 hidden overflow-hidden rounded-[2rem] text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <DeckPattern />
-        <span className="orb -bottom-32 -left-24 size-[28rem] bg-brand/35" aria-hidden />
-        <span className="orb -right-24 top-10 size-80 bg-signal/10" aria-hidden />
-        <Logo sub="MSW UK Ltd" className="relative" />
-        <div className="relative max-w-md">
-          <p className="text-[56px] font-semibold leading-[1] tracking-[-0.04em]">
-            The right drawing.<br />
-            <span className="text-brand">The right people.</span>
-          </p>
-          <p className="mt-5 text-lg leading-relaxed text-white/65">
-            Approved drawings, RAMS and site information for every MSW job — with reporting straight back to the office.
-          </p>
-        </div>
-        <p className="relative text-sm text-white/65">Safety netting · Metal decking · Shear studs · Edge trims · Concrete</p>
-      </section>
+    <main className="relative isolate min-h-[100dvh] overflow-hidden bg-ink text-white">
+      {/* Backdrop: the photo, softened, under a dark tint so text and form stay crisp. */}
+      <div aria-hidden className="absolute inset-0 -z-10 scale-105 bg-[url('/img/login-bg.webp')] bg-cover bg-[center_40%]" />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgb(8_9_12/0.92)_0%,rgb(8_9_12/0.72)_45%,rgb(8_9_12/0.45)_100%)]" />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(0deg,rgb(8_9_12/0.85)_0%,transparent_45%)]" />
+      <span aria-hidden className="orb -bottom-40 -left-32 -z-10 size-[34rem] bg-brand/30" />
 
-      <section className="flex flex-col pb-10 lg:justify-center lg:px-16">
-        <div className="glass-dark relative m-3 mb-6 overflow-hidden rounded-[1.75rem] px-5 pb-7 pt-7 text-white sm:px-10 lg:hidden">
-          <DeckPattern />
-          <span className="orb -right-16 -top-16 size-56 bg-brand/45" aria-hidden />
-          <Logo sub="MSW UK Ltd" className="relative" />
-          <p className="relative mt-6 text-[26px] font-bold leading-tight tracking-tight">The right drawing.<br /><span className="text-brand">The right people.</span></p>
-        </div>
-        <div className="mx-auto w-full max-w-[420px] px-5 sm:px-0">
-          <h1 className="text-[28px] font-bold tracking-tight">Sign in</h1>
-          <p className="mt-1 text-muted">Use the email address MSW has registered for you.</p>
-          <div className="mt-7 grid gap-4">
-            {error && <Alert>{error}</Alert>}
-            <LoginForm next={next} />
-            <p className="text-sm text-muted">
-              Forgotten your password or need access? Contact the MSW office — access to each job is set up individually.
+      <div className="mx-auto flex min-h-[100dvh] max-w-[1280px] flex-col px-5 py-5 sm:px-8 lg:px-12">
+        <header className="flex items-center justify-between gap-4">
+          <Logo sub="MSW UK Ltd" />
+          <a href={telHref(COMPANY.phone)} className="hidden min-h-11 items-center gap-2 rounded-full bg-white/[0.08] px-4 text-[14px] font-medium text-white/85 ring-1 ring-white/15 backdrop-blur-md transition-colors hover:bg-white/[0.14] sm:flex">
+            <Phone className="size-4" weight="fill" /> Need access? {COMPANY.phone}
+          </a>
+        </header>
+
+        <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1.1fr_440px] lg:gap-16 lg:py-12">
+          <section className="max-w-xl">
+            <p className="w-fit rounded-full bg-white/[0.08] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.18em] text-white/80 ring-1 ring-white/15 backdrop-blur-md">MSW Site</p>
+            <h2 className="mt-5 text-[40px] font-semibold leading-[1.02] tracking-[-0.035em] sm:text-[56px] lg:text-[64px]">
+              The right drawing.<br />
+              <span className="bg-[linear-gradient(90deg,#ff4b4c,#d31112)] bg-clip-text text-transparent">The right people.</span>
+            </h2>
+            <p className="mt-5 max-w-md text-[17px] leading-relaxed text-white/75">
+              Approved drawings, RAMS, sign-offs and timesheets for every MSW job — on site and in the office.
             </p>
-          </div>
+            <ul className="mt-8 hidden flex-wrap gap-2 sm:flex">
+              {[
+                [<ShieldCheck key="a" weight="fill" />, "Only approved drawings on site"],
+                [<Signature key="b" weight="fill" />, "Handovers signed on the phone"],
+                [<ClockClockwise key="c" weight="fill" />, "Timesheets & daywork in one place"],
+              ].map(([icon, text]) => (
+                <li key={text as string} className="flex items-center gap-2 rounded-full bg-white/[0.07] py-1.5 pl-1.5 pr-3.5 text-[13px] text-white/85 ring-1 ring-white/10 backdrop-blur-md">
+                  <span className="grid size-6 place-items-center rounded-full bg-brand text-white [&_svg]:size-3.5">{icon}</span>{text}
+                </li>
+              ))}
+            </ul>
+          </section>
 
-          {config.isDemo && (
-            <div className="mt-10 rounded-[var(--radius-card)] border border-line bg-card p-4 shadow-[var(--shadow-card)]">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold">Quick sign-in</p>
-                <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[12px] font-semibold text-brand-2">Try it as anyone</span>
-              </div>
-              <p className="mt-1 text-[13px] text-muted">Tap a person to sign in as them (password for all: <code className="font-mono text-ink">SiteDemo!2026</code>).</p>
-              <div className="mt-3 grid gap-4">
-                {personas.map((g) => (
-                  <div key={g.group}>
-                    <p className="mb-1.5 text-[12px] font-bold uppercase tracking-[0.1em] text-subtle">{g.group}</p>
-                    <div className="grid gap-1.5">
-                      {g.people.map((p) => {
-                        const u = demoUsers.find((x) => x.key === p.key)!;
-                        return (
-                          <form key={p.key} action={demoSignInAction}>
-                            <input type="hidden" name="email" value={demoEmail(u)} />
-                            <button type="submit" className="flex w-full items-center justify-between gap-3 rounded-xl border border-line px-3 py-2.5 text-left transition-colors hover:border-ink/30 hover:bg-paper active:scale-[0.99]">
-                              <span>
-                                <span className="block text-[15px] font-semibold">{u.name}</span>
-                                <span className="block text-[13px] text-muted">{p.hint}</span>
-                              </span>
-                              <span aria-hidden className="text-subtle">→</span>
-                            </button>
-                          </form>
-                        );
-                      })}
+          <section className="w-full">
+            <div className="rounded-[2rem] bg-white/[0.06] p-1.5 ring-1 ring-white/15 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.7)] backdrop-blur-xl">
+              <div className="rounded-[calc(2rem-0.375rem)] bg-white/95 px-6 pb-6 pt-7 text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.9)] sm:px-8 sm:pt-8">
+                <h1 className="text-[26px] font-semibold tracking-[-0.02em]">Sign in</h1>
+                <p className="mt-1 text-[15px] text-muted">Use the email address MSW has registered for you.</p>
+                <div className="mt-6 grid gap-4">
+                  {error && <Alert>{error}</Alert>}
+                  <LoginForm next={next} />
+                  <p className="text-[13px] leading-relaxed text-muted">
+                    Forgotten your password or need access? Call the MSW office on <a href={telHref(COMPANY.phone)} className="font-semibold text-ink underline underline-offset-2">{COMPANY.phone}</a>.
+                  </p>
+                </div>
+
+                {config.isDemo && (
+                  <details className="group mt-6 border-t border-line pt-4">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-[14px] font-semibold text-ink">
+                      <span className="flex items-center gap-2"><UsersThree className="size-5 text-brand" weight="fill" /> Try it as someone else</span>
+                      <CaretDown className="size-4 text-muted transition-transform duration-300 group-open:rotate-180" weight="bold" />
+                    </summary>
+                    <p className="mb-3 text-[13px] text-muted">Tap a person to go straight in as them.</p>
+                    <div className="grid max-h-[40vh] gap-3 overflow-y-auto pr-1">
+                      {personas.map((g) => (
+                        <div key={g.group}>
+                          <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-subtle">{g.group}</p>
+                          <div className="grid gap-1.5">
+                            {g.people.map((p) => {
+                              const u = demoUsers.find((x) => x.key === p.key)!;
+                              return (
+                                <form key={p.key} action={demoSignInAction}>
+                                  <input type="hidden" name="email" value={demoEmail(u)} />
+                                  <button type="submit" className="group/p flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition-colors hover:bg-paper active:scale-[0.99]">
+                                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-ink text-[12px] font-bold text-white">{u.name.split(" ").map((x) => x[0]).slice(0, 2).join("")}</span>
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block text-[14px] font-semibold">{u.name}</span>
+                                      <span className="block truncate text-[12px] text-muted">{p.hint}</span>
+                                    </span>
+                                    <ArrowRight className="size-4 shrink-0 text-muted transition-transform group-hover/p:translate-x-0.5" weight="bold" />
+                                  </button>
+                                </form>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
+                  </details>
+                )}
               </div>
             </div>
-          )}
+          </section>
         </div>
-      </section>
-    </main>
-  );
-}
 
-function DeckPattern() {
-  return (
-    <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.07]" aria-hidden>
-      <defs>
-        <pattern id="deck" width="64" height="40" patternUnits="userSpaceOnUse">
-          <path d="M0 30h10l6-18h16l6 18h10l6-18h10" fill="none" stroke="#fff" strokeWidth="2" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#deck)" />
-    </svg>
+        <footer className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-white/70">
+          <span>© {COMPANY.name} · {COMPANY.address}</span>
+          <span>Safety netting · Metal decking · Shear studs · Edge trims · Concrete</span>
+        </footer>
+      </div>
+    </main>
   );
 }
