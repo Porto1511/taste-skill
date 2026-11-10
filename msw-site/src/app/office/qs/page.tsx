@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DownloadSimple } from "@phosphor-icons/react/dist/ssr";
 import { requireStaff } from "@/server/auth/viewer";
-import { groupDaywork, qsFilterOptions, qsSummary } from "@/server/queries/qs";
+import { groupDaywork, jobCards, qsFilterOptions, qsSummary } from "@/server/queries/qs";
 import { londonToday } from "@/server/queries/timesheets";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, SectionTitle } from "@/components/ui/card";
@@ -24,6 +24,8 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
   const f = parseQsParams(raw, today);
   const [data, opts] = await Promise.all([qsSummary(viewer, f), qsFilterOptions(viewer)]);
   const companies = groupDaywork(data.daywork);
+  const job = f.jobId ? opts.jobs.find((j) => j.id === f.jobId) : undefined;
+  const cards = job ? [] : jobCards(opts.jobs, data);
   const standing = companies.reduce((s, c) => s + c.standing, 0);
   const extra = companies.reduce((s, c) => s + c.extra, 0);
   const sheets = companies.reduce((s, c) => s + c.sheets.length, 0);
@@ -63,6 +65,14 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
         <p className="text-[13px] text-muted">Showing {formatDate(f.from)} to {formatDate(f.to)}. Daywork hours are counted on the day they were worked.</p>
       </Card>
 
+      {job && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href={`/office/qs?${qs({ job: "" })}`} className="text-[14px] font-semibold underline">← All jobs</Link>
+          <h2 className="text-[20px] font-semibold"><span className="font-mono text-[16px] text-muted">{job.job_number}</span> {job.name}</h2>
+        </div>
+      )}
+      {job ? (
+        <>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Stat label="Handovers signed" value={String(data.handovers.length)} />
         <Stat label="Daywork sheets" value={String(sheets)} />
@@ -89,7 +99,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
       </section>
 
       <section>
-        <SectionTitle>Daywork by company</SectionTitle>
+        <SectionTitle>Daywork by gang</SectionTitle>
         {companies.length ? (
           <div className="grid gap-4">
             {companies.map((c) => (
@@ -138,7 +148,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
               </Card>
             ))}
           </div>
-        ) : <Empty>No daywork in these dates.</Empty>}
+        ) : <Empty>No daywork on this job in these dates.</Empty>}
       </section>
 
 
@@ -158,6 +168,32 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
           </Card>
         ) : <Empty>No site issues in these dates.</Empty>}
       </section>
+        </>
+      ) : (
+      <section>
+        <SectionTitle>Jobs · click one to see its sign-offs, daywork and issues</SectionTitle>
+        {cards.length ? (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {cards.map((c) => (
+              <Link key={c.id} href={`/office/qs?${qs({ job: c.id })}`}
+                className="grid gap-3 rounded-[var(--radius-card)] border border-line bg-card p-4 shadow-[var(--shadow-card)] transition hover:border-ink/40 hover:shadow-md">
+                <div>
+                  <p className="font-mono text-[13px] text-muted">{c.job_number}</p>
+                  <p className="text-[16px] font-semibold leading-snug">{c.name}</p>
+                  {c.gangs.length > 0 && <p className="mt-0.5 truncate text-[12.5px] text-muted">{c.gangs.join(" · ")}</p>}
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <Mini label="Sign-offs" value={String(c.handovers)} />
+                  <Mini label="Standing" value={hrs(c.standing)} tone={c.standing ? "warn" : undefined} />
+                  <Mini label="Extra" value={hrs(c.extra)} tone={c.extra ? "info" : undefined} />
+                  <Mini label="Issues" value={c.open_issues ? `${c.issues} (${c.open_issues} open)` : String(c.issues)} tone={c.open_issues ? "warn" : undefined} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : <Empty>Nothing recorded in these dates.</Empty>}
+      </section>
+      )}
     </div>
   );
 }
@@ -170,6 +206,14 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "wa
       <p className="text-[12px] font-semibold text-muted">{label}</p>
       <p className={cn("tabular mt-1 text-[26px] font-semibold leading-none", tone === "warn" && "text-warn", tone === "info" && "text-info")}>{value}</p>
     </Card>
+  );
+}
+function Mini({ label, value, tone }: { label: string; value: string; tone?: "warn" | "info" }) {
+  return (
+    <div className="rounded-lg bg-paper px-1 py-2">
+      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">{label}</p>
+      <p className={cn("tabular text-[15px] font-semibold", tone === "warn" && "text-warn", tone === "info" && "text-info")}>{value}</p>
+    </div>
   );
 }
 function Empty({ children }: { children: React.ReactNode }) {

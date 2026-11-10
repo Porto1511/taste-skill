@@ -15,9 +15,9 @@ export interface DayworkLine {
   company_id: string; company: string; week_commencing: string; client_name: string; signed_at: string;
   person: string; trade: string; day: string; hours: number;
 }
-export interface QsHandover { id: string; job_number: string; title: string; scopes: string[]; company: string; signer_name: string; signed_at: string }
+export interface QsHandover { id: string; job_id: string; job_name: string; job_number: string; title: string; scopes: string[]; company: string; signer_name: string; signed_at: string }
 export interface QsIssue {
-  id: string; job_number: string; title: string; category: string; priority: string; status: string;
+  id: string; job_id: string; job_name: string; job_number: string; title: string; category: string; priority: string; status: string;
   author_name: string; company: string; created_at: string;
 }
 
@@ -44,7 +44,7 @@ export async function qsSummary(viewer: Viewer, f: QsFilter) {
     )).rows;
 
     const handovers = (await tx.query<QsHandover>(
-      `select h.id, j.job_number, h.title, h.scopes, h.captured_by_company as company, h.signer_name, h.signed_at
+      `select h.id, h.job_id, j.name as job_name, j.job_number, h.title, h.scopes, h.captured_by_company as company, h.signer_name, h.signed_at
          from handovers h join jobs j on j.id = h.job_id left join profiles p on p.id = h.captured_by
         where ${londonDay("h.signed_at")} between $1::date and $2::date
           and ($3::uuid is null or h.job_id = $3) and ($4::uuid is null or p.company_id = $4)
@@ -53,7 +53,7 @@ export async function qsSummary(viewer: Viewer, f: QsFilter) {
     )).rows;
 
     const issues = (await tx.query<QsIssue>(
-      `select r.id, j.job_number, r.title, r.category::text, r.priority::text, r.status::text, r.author_name,
+      `select r.id, r.job_id, j.name as job_name, j.job_number, r.title, r.category::text, r.priority::text, r.status::text, r.author_name,
               r.author_company_name as company, r.created_at
          from reports r join jobs j on j.id = r.job_id
         where r.kind = 'issue' and ${londonDay("r.created_at")} between $1::date and $2::date
@@ -68,7 +68,8 @@ export async function qsSummary(viewer: Viewer, f: QsFilter) {
 
 export async function qsFilterOptions(viewer: Viewer) {
   return withUser(viewer.id, async (tx) => ({
-    jobs: (await tx.query<{ id: string; job_number: string; name: string }>("select id, job_number, name from jobs order by job_number desc")).rows,
+    jobs: (await tx.query<{ id: string; job_number: string; name: string; status: string; main_contractor: string | null }>(
+      "select id, job_number, name, status::text, main_contractor from jobs order by job_number desc")).rows,
     companies: (await tx.query<{ id: string; name: string }>("select id, name from companies order by name")).rows,
   }));
 }
@@ -85,4 +86,32 @@ export function groupDaywork(lines: DayworkLine[]) {
     companies.set(l.company_id, c);
   }
   return [...companies.entries()].map(([id, c]) => ({ id, ...c, sheets: [...c.sheets.values()] }));
+}
+
+export interface QsJobCard {
+  id: string; job_number: string; name: string; status: string; main_contractor: string | null;
+  handovers: number; sheets: number; standing: number; extra: number; issues: number; open_issues: number; gangs: string[];
+}
+
+/** One card per job: live jobs always, others only when something was recorded in the dates. */
+export function jobCards(
+  jobs: { id: string; job_number: string; name: string; status: string; main_contractor: string | null }[],
+  d: { daywork: DayworkLine[]; handovers: QsHandover[]; issues: QsIssue[] },
+): QsJobCard[] {
+  const cards = jobs.map((j) => {
+    const lines = d.daywork.filter((l) => l.job_id === j.id);
+    const issues = d.issues.filter((i) => i.job_id === j.id);
+    return {
+      ...j,
+      handovers: d.handovers.filter((h) => h.job_id === j.id).length,
+      sheets: new Set(lines.map((l) => l.daywork_id)).size,
+      standing: lines.filter((l) => l.kind === "standing").reduce((a, l) => a + l.hours, 0),
+      extra: lines.filter((l) => l.kind === "extra").reduce((a, l) => a + l.hours, 0),
+      issues: issues.length,
+      open_issues: issues.filter((i) => i.status === "open" || i.status === "in_progress").length,
+      gangs: [...new Set([...lines.map((l) => l.company), ...d.handovers.filter((h) => h.job_id === j.id).map((h) => h.company)])],
+    };
+  });
+  const busy = (c: QsJobCard) => c.handovers + c.sheets + c.issues > 0;
+  return cards.filter((c) => c.status === "live" || busy(c)).sort((a, b) => Number(busy(b)) - Number(busy(a)) || b.job_number.localeCompare(a.job_number));
 }

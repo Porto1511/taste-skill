@@ -114,6 +114,10 @@ test.describe("office workflows", () => {
     await signIn(page, "pete@msw.example");
     await page.getByRole("link", { name: "QS check" }).click();
     await page.getByRole("link", { name: "This month" }).click();
+    await expect(page.getByText(/Jobs · click one/)).toBeVisible();
+    await page.getByRole("link", { name: /MSW-2611/ }).filter({ hasText: "British Museum" }).click();
+    await expect(page.getByRole("link", { name: "← All jobs" })).toBeVisible();
+    await expect(page.getByText(/Daywork by gang/)).toBeVisible();
     await expect(page.getByRole("heading", { name: "Derby Decking" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "SOS" })).toBeVisible();
     await expect(page.getByText(/Sign-offs \(handovers\)/)).toBeVisible();
