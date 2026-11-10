@@ -32,7 +32,7 @@ export default async function OfficeTimesheetsPage({ searchParams }: { searchPar
       </div>
       <Card className="overflow-x-auto">
         <table className="w-full min-w-[900px] text-[13px]">
-          <thead className="border-b border-line text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
+          <thead className="border-b border-line text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">
             <tr>
               <th className="px-4 py-2.5 text-left">Operative</th>
               {days.map((d) => <th key={d} className="px-2 py-2.5 text-center">{new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`))}</th>)}
@@ -55,15 +55,15 @@ export default async function OfficeTimesheetsPage({ searchParams }: { searchPar
                           <Link href={`/office/timesheets/${entries[0].id}`} className={cn("block rounded-lg px-1.5 py-1.5 ring-1",
                             r.status === "approved" ? "bg-ok-soft ring-ok/20" : r.status === "query" ? "bg-danger-soft ring-danger/30" : "bg-card ring-line hover:ring-ink/30")}>
                             <span className="tabular block font-semibold">{fmtMinutes(r.site)}</span>
-                            <span className="tabular block text-[11px] text-muted">{r.driving ? `${fmtMinutes(r.driving)} drv` : ""}</span>
-                            <span className="block truncate font-mono text-[10px] text-subtle">{r.jobs.join(" + ")}</span>
-                            {r.premium && <span className="mt-0.5 inline-block rounded bg-signal px-1 text-[10px] font-bold text-ink">Premium</span>}
+                            <span className="tabular block text-[12px] text-muted">{r.driving ? `${fmtMinutes(r.driving)} drv` : ""}</span>
+                            <span className="block truncate font-mono text-[12px] text-subtle">{r.jobs.join(" + ")}</span>
+                            {r.premium && <span className="mt-0.5 inline-block rounded bg-signal px-1 text-[12px] font-bold text-ink">Premium</span>}
                           </Link>
                         ) : <span className="text-subtle">·</span>}
                       </td>
                     );
                   })}
-                  <td className="tabular px-4 py-2.5 text-right"><span className="font-semibold">{fmtMinutes(site)}</span><span className="block text-[11px] text-muted">{fmtMinutes(drive)} driving</span></td>
+                  <td className="tabular px-4 py-2.5 text-right"><span className="font-semibold">{fmtMinutes(site)}</span><span className="block text-[12px] text-muted">{fmtMinutes(drive)} driving</span></td>
                 </tr>
               );
             })}

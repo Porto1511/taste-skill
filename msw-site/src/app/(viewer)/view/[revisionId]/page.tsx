@@ -30,10 +30,10 @@ export default async function RevisionViewerPage({ params }: Props) {
         tone={tone}
         details={
           <dl className="grid gap-3 text-sm">
-            <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">Status</dt><dd className="font-semibold">{labels.revisionStatus[rev.status]}</dd></div>
-            <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">Uploaded</dt><dd>{formatDate(rev.uploaded_at)}</dd></div>
-            {rev.change_note && <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">Change note</dt><dd>{rev.change_note}</dd></div>}
-            <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">Job</dt><dd>{rev.job_number} · {rev.job_name}</dd></div>
+            <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">Status</dt><dd className="font-semibold">{labels.revisionStatus[rev.status]}</dd></div>
+            <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">Uploaded</dt><dd>{formatDate(rev.uploaded_at)}</dd></div>
+            {rev.change_note && <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">Change note</dt><dd>{rev.change_note}</dd></div>}
+            <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">Job</dt><dd>{rev.job_number} · {rev.job_name}</dd></div>
           </dl>
         }
       />

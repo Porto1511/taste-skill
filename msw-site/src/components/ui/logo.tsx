@@ -28,7 +28,7 @@ export function Logo({ className, tone = "light", sub }: { className?: string; t
       </span>
       <span className="leading-none">
         <span className={cn("block text-[17px] font-semibold tracking-tight", tone === "light" ? "text-white" : "text-ink")}>Site</span>
-        {sub && <span className={cn("mt-1 block text-[11px] font-medium uppercase tracking-[0.12em]", tone === "light" ? "text-white/55" : "text-muted")}>{sub}</span>}
+        {sub && <span className={cn("mt-1 block text-[12px] font-medium uppercase tracking-[0.12em]", tone === "light" ? "text-white/55" : "text-muted")}>{sub}</span>}
       </span>
     </span>
   );

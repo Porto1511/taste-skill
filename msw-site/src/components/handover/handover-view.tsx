@@ -36,7 +36,7 @@ export function HandoverView({ h }: { h: HandoverDetail }) {
       {!Object.keys(h.details ?? {}).length && h.scope && <p className="rounded-2xl border border-line bg-card p-4 text-[14px]">{h.scope}</p>}
 
       <div className="rounded-2xl border border-line bg-card p-4">
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold">
+        <div className="grid grid-cols-7 gap-1 text-center text-[12px] font-bold">
           {DAYS.map((d) => (
             <div key={d.id} className={h.days_worked?.includes(d.id) ? "rounded-lg bg-ink py-1.5 text-white" : "rounded-lg bg-paper py-1.5 text-subtle"}>
               {d.short}<span className="block text-[13px]">{h.days_worked?.includes(d.id) ? "✓" : " "}</span>

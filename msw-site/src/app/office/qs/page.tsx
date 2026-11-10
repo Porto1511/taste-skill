@@ -116,7 +116,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
                       <li key={s.daywork_id}>
                         <details className="group">
                           <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 hover:bg-paper">
-                            <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", s.kind === "standing" ? "bg-warn-soft text-warn" : "bg-info-soft text-info")}>{s.kind === "standing" ? "Standing time" : "Extra work"}</span>
+                            <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-bold", s.kind === "standing" ? "bg-warn-soft text-warn" : "bg-info-soft text-info")}>{s.kind === "standing" ? "Standing time" : "Extra work"}</span>
                             <span className="font-mono text-[13px]">{s.job_number}</span>
                             <span className="text-[14px]">W/C {formatShortDate(s.week_commencing)}</span>
                             <span className="text-[13px] text-muted">{people.size} {people.size === 1 ? "person" : "people"} · signed by {s.client_name}</span>
@@ -162,7 +162,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
                 <span className="font-mono text-[13px]">{i.job_number}</span>
                 <span className="font-medium">{i.title}</span>
                 <span className="text-muted">{labels.category[i.category] ?? i.category} · {i.author_name} ({i.company})</span>
-                <span className={cn("ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold", i.status === "open" || i.status === "in_progress" ? "bg-warn-soft text-warn" : "bg-ok-soft text-ok")}>{labels.reportStatus[i.status] ?? i.status}</span>
+                <span className={cn("ml-auto rounded-full px-2 py-0.5 text-[12px] font-bold", i.status === "open" || i.status === "in_progress" ? "bg-warn-soft text-warn" : "bg-ok-soft text-ok")}>{labels.reportStatus[i.status] ?? i.status}</span>
               </Link>
             ))}
           </Card>
@@ -211,7 +211,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "wa
 function Mini({ label, value, tone }: { label: string; value: string; tone?: "warn" | "info" }) {
   return (
     <div className="rounded-lg bg-paper px-1 py-2">
-      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">{label}</p>
+      <p className="text-[12px] font-semibold uppercase tracking-wide text-muted">{label}</p>
       <p className={cn("tabular text-[15px] font-semibold", tone === "warn" && "text-warn", tone === "info" && "text-info")}>{value}</p>
     </div>
   );

@@ -15,8 +15,8 @@ export function DemoStrip() {
   if (!config.isDemo) return null;
   const line = LINES[Math.floor(requestNow() / 864e5) % LINES.length]; // a new one each day
   return (
-    <div className="bg-signal px-4 py-1 text-center text-[11.5px] font-semibold text-ink">
+    <aside aria-label="About this demo" className="bg-signal px-4 py-1 text-center text-[12px] font-semibold text-ink">
       {line} <span className="whitespace-nowrap font-normal opacity-70">· practice data, names made up</span>
-    </div>
+    </aside>
   );
 }

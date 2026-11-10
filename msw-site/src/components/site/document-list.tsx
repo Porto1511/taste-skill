@@ -41,7 +41,7 @@ export function DocumentList({ jobId, documents, areas, kind, now }: {
               onClick={() => setFilter(f.id)}
               aria-pressed={filter === f.id}
               className={cn(
-                "h-10 shrink-0 rounded-full border px-4 text-[14px] font-semibold transition-colors",
+                "h-11 shrink-0 rounded-full border px-4 text-[14px] font-semibold transition-colors",
                 filter === f.id ? "border-ink bg-ink text-white" : "border-line-strong bg-card text-ink hover:border-ink/40",
               )}
             >
@@ -63,7 +63,7 @@ export function DocumentList({ jobId, documents, areas, kind, now }: {
                   <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span className="font-mono text-[13px] font-semibold">{d.doc_number}</span>
                     <span className="rounded-md bg-ok-soft px-1.5 py-px font-mono text-[12px] font-bold text-ok">Rev {d.revision}</span>
-                    {fresh && <span className="rounded-md bg-signal px-1.5 py-px text-[11px] font-bold uppercase tracking-wide text-ink">Updated</span>}
+                    {fresh && <span className="rounded-md bg-signal px-1.5 py-px text-[12px] font-bold uppercase tracking-wide text-ink">Updated</span>}
                   </span>
                   <span className="mt-0.5 block text-[15px] font-medium leading-snug">{d.title}</span>
                   <span className="mt-0.5 block text-[13px] text-muted">

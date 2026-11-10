@@ -22,7 +22,7 @@ export function JobTabs({ tabs }: { tabs: JobTab[] }) {
         <div role="tablist" className="grid grid-flow-col auto-cols-fr gap-0.5 rounded-xl bg-ink/[0.06] p-1">
           {tabs.map((t) => (
             <button key={t.id} role="tab" type="button" aria-selected={active === t.id} onClick={() => select(t.id)}
-              className={cn("flex h-10 min-w-0 items-center justify-center whitespace-nowrap rounded-lg px-1 text-[13.5px] font-semibold transition-colors",
+              className={cn("flex h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg px-1 text-[13.5px] font-semibold transition-colors",
                 active === t.id ? "bg-card text-ink shadow-[var(--shadow-card)]" : "text-muted")}>
               {t.label}
             </button>

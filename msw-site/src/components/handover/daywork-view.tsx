@@ -17,7 +17,7 @@ export function DayworkView({ d }: { d: DayworkDetail }) {
       </div>
       <div className="overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[480px] text-[13px]">
-          <thead className="border-b border-line text-[11px] font-bold uppercase text-muted">
+          <thead className="border-b border-line text-[12px] font-bold uppercase text-muted">
             <tr><th className="px-3 py-2 text-left">Name</th>{DAYS.map((x) => <th key={x.id} className="px-1 py-2">{x.short}</th>)}<th className="px-3 py-2 text-right">Total</th></tr>
           </thead>
           <tbody className="divide-y divide-line">

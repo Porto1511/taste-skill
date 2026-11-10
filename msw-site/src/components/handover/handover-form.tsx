@@ -139,7 +139,7 @@ export function HandoverForm({ jobId, jobName, areas, defaultClient, mswName }: 
       <ol className="grid grid-cols-3 gap-1.5 text-[12.5px] font-semibold">
         {steps.map((s, i) => (
           <li key={s} className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-2", step === i + 1 ? "bg-ink text-white" : "bg-ink/[0.06] text-muted")}>
-            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[11px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-signal text-ink" : "bg-ink/10")}>
+            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[12px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-signal text-ink" : "bg-ink/10")}>
               {step > i + 1 ? <Check className="size-3" weight="bold" /> : i + 1}
             </span>
             {s}
@@ -307,7 +307,7 @@ function Summary({ title, trades, details, days }: {
       <p className="text-[17px] font-semibold leading-snug">{title}</p>
       {trades.map((t) => (
         <div key={t.id} className="border-t border-line pt-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">{t.title}</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">{t.title}</p>
           <dl className="mt-1 grid gap-1 text-[14px]">
             {t.fields.map((f) => details[t.id]?.[f.key] ? <div key={f.key}><dt className="inline text-muted">{f.label}: </dt><dd className="inline font-medium">{details[t.id][f.key]}</dd></div> : null)}
             {details[t.id]?.notes && <div className="rounded-lg bg-warn-soft p-2 text-[13px] text-[#6b3300]"><span className="font-semibold">Notes: </span>{details[t.id].notes}</div>}

@@ -8,7 +8,7 @@ export function PageHeader({ title, eyebrow, description, actions, back }: {
   return (
     <div className="mb-6">
       {back && (
-        <Link href={back.href} className="-ml-1 mb-2 inline-flex items-center gap-1 rounded-lg px-1 py-1 text-sm font-medium text-muted hover:text-ink">
+        <Link href={back.href} className="-ml-1 mb-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-1 py-1 text-sm font-medium text-muted hover:text-ink">
           <CaretLeft className="size-4" weight="bold" /> {back.label}
         </Link>
       )}

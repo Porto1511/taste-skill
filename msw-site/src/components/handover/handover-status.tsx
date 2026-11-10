@@ -14,7 +14,7 @@ export function HandoverStatus({ areas, handovers }: {
     handovers.some((h) => (h.area_id === area || h.area_id === null) && h.scopes.includes(trade));
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-card">
-      <div className="grid grid-cols-[1fr_repeat(3,4rem)] border-b border-line bg-paper/60 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+      <div className="grid grid-cols-[1fr_repeat(3,4rem)] border-b border-line bg-paper/60 px-4 py-2 text-[12px] font-bold uppercase tracking-[0.08em] text-muted">
         <span>Handed over</span>
         {HANDOVER_TRADES.map((t) => <span key={t.id} className="text-center">{t.label}</span>)}
       </div>
@@ -41,9 +41,9 @@ export function TradeChips({ scopes, className }: { scopes: string[]; className?
   return (
     <span className={cn("inline-flex flex-wrap gap-1", className)}>
       {scopes.length === 3
-        ? <span className="rounded-md bg-signal px-1.5 py-px text-[11px] font-bold text-ink">Full handover</span>
+        ? <span className="rounded-md bg-signal px-1.5 py-px text-[12px] font-bold text-ink">Full handover</span>
         : HANDOVER_TRADES.filter((t) => scopes.includes(t.id)).map((t) => (
-            <span key={t.id} className="rounded-md bg-ink px-1.5 py-px text-[11px] font-bold text-white">{t.label}</span>
+            <span key={t.id} className="rounded-md bg-ink px-1.5 py-px text-[12px] font-bold text-white">{t.label}</span>
           ))}
     </span>
   );

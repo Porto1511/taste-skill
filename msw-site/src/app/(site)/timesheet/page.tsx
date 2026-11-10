@@ -41,7 +41,7 @@ export default async function TimesheetPage({ searchParams }: { searchParams: Pr
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
         {[["On site", total.site], ["Driving", total.drive], ["Travel", total.travel]].map(([l, m]) => (
           <div key={l as string} className="rounded-2xl border border-line bg-card py-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">{l}</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">{l}</p>
             <p className="tabular text-[19px] font-semibold">{fmtMinutes(m as number)}</p>
           </div>
         ))}
@@ -73,7 +73,7 @@ export default async function TimesheetPage({ searchParams }: { searchParams: Pr
                 <span className="flex-1 text-[14px] text-subtle">{future ? "" : "Nothing logged"}</span>
               )}
               {r ? (
-                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold uppercase", statusChip[r.status!])}>{r.status === "submitted" ? "Sent" : r.status}</span>
+                <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-bold uppercase", statusChip[r.status!])}>{r.status === "submitted" ? "Sent" : r.status}</span>
               ) : !future ? (
                 <span className="grid size-9 place-items-center rounded-full bg-signal text-ink"><Plus className="size-5" weight="bold" /></span>
               ) : null}
@@ -81,7 +81,7 @@ export default async function TimesheetPage({ searchParams }: { searchParams: Pr
           );
           return (
             <li key={d}>
-              {future ? <div className="flex min-h-16 items-center gap-3 px-3 py-2 opacity-40">{inner}</div>
+              {future ? <div className="flex min-h-16 items-center gap-3 px-3 py-2 opacity-60">{inner}</div>
                 : <Link href={`/timesheet/${d}`} className="flex min-h-16 items-center gap-3 px-3 py-2 active:bg-paper">{inner}</Link>}
             </li>
           );

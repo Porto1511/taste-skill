@@ -112,7 +112,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
       <ol className="grid grid-cols-3 gap-1.5 text-[12.5px] font-semibold">
         {["Details", "MSW signs", "Client signs"].map((s, i) => (
           <li key={s} className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-2", step === i + 1 ? "bg-ink text-white" : "bg-ink/[0.06] text-muted")}>
-            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[11px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-signal text-ink" : "bg-ink/10")}>
+            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[12px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-signal text-ink" : "bg-ink/10")}>
               {step > i + 1 ? <Check className="size-3" weight="bold" /> : i + 1}
             </span>
             {s}
@@ -137,7 +137,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                   {DAYS.map((d) => (
-                    <label key={d.id} className="grid gap-0.5 text-center text-[11px] font-bold text-muted">
+                    <label key={d.id} className="grid gap-0.5 text-center text-[12px] font-bold text-muted">
                       {d.short}
                       <input inputMode="decimal" value={w.hours[d.id]} onChange={(e) => setWorker(i, { hours: { ...w.hours, [d.id]: e.target.value.replace(/[^\d.]/g, "") } })}
                         aria-label={`${w.name || `Person ${i + 1}`} hours ${d.label}`} placeholder="–"
@@ -241,7 +241,7 @@ export function DayworkForm({ jobId, week, me, myHours, defaultClient }: {
 function DayworkSummary({ workers, description, complete, kind }: { workers: Worker[]; description: string; complete: string; kind: string }) {
   return (
     <div className="grid gap-2 rounded-2xl border border-line bg-card p-4 text-[14px]">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Daywork sheet · {kind === "standing" ? "Standing time" : "Extra work"}</p>
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">Daywork sheet · {kind === "standing" ? "Standing time" : "Extra work"}</p>
       {workers.map((w, i) => (
         <p key={i} className="flex justify-between gap-2"><span><span className="font-semibold">{w.name}</span> <span className="text-muted">{w.trade}</span></span>
           <span className="tabular font-bold">{total(w)}h</span></p>

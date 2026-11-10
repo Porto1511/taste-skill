@@ -43,11 +43,11 @@ export default async function SiteDocumentPage({ params }: Props) {
         downloadHref={`${file}?download=1`}
         details={
           <dl className="grid gap-3 text-sm">
-            <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">Status</dt><dd className="font-semibold text-ok">Approved for use — current revision</dd></div>
-            <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">Approved</dt><dd>{formatDate(current.approved_at)}</dd></div>
-            {current.change_note && <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">What changed</dt><dd>{current.change_note}</dd></div>}
-            <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">Applies to</dt><dd>{areas.length ? areas.map((a) => a.name).join(", ") : "Whole job"}</dd></div>
-            <div><dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-subtle">File</dt><dd>{formatBytes(current.file_size)}</dd></div>
+            <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">Status</dt><dd className="font-semibold text-ok">Approved for use — current revision</dd></div>
+            <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">Approved</dt><dd>{formatDate(current.approved_at)}</dd></div>
+            {current.change_note && <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">What changed</dt><dd>{current.change_note}</dd></div>}
+            <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">Applies to</dt><dd>{areas.length ? areas.map((a) => a.name).join(", ") : "Whole job"}</dd></div>
+            <div><dt className="text-[12px] font-bold uppercase tracking-[0.08em] text-subtle">File</dt><dd>{formatBytes(current.file_size)}</dd></div>
             {doc.kind === "rams" && (
               <p className="rounded-lg bg-warn-soft p-2.5 text-[13px] text-[#6b3300]">Reference copy only. Site briefing and hard-copy signatures are still required.</p>
             )}

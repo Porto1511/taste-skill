@@ -14,13 +14,13 @@ export function JobCard({ job, staffView }: { job: MyJob; staffView?: boolean })
         <div className="flex items-center gap-2">
           <span className="font-mono text-[12px] font-semibold text-muted">{job.job_number}</span>
           {job.recent_updates > 0 && (
-            <span className="rounded-md bg-signal px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-ink">
+            <span className="rounded-md bg-signal px-1.5 py-px text-[12px] font-bold uppercase tracking-wide text-ink">
               {job.recent_updates} new drawing{job.recent_updates > 1 ? "s" : ""}
             </span>
           )}
           {job.unread > 0 && <span className="size-2 rounded-full bg-danger" aria-label={`${job.unread} unread`} />}
         </div>
-        <h3 className="mt-0.5 text-[17px] font-semibold leading-snug">{job.name}</h3>
+        <h2 className="mt-0.5 text-[17px] font-semibold leading-snug">{job.name}</h2>
         <p className="mt-0.5 truncate text-[13px] text-muted">{job.site_address}{job.postcode ? `, ${job.postcode}` : ""}</p>
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           {areas.map((a) => (

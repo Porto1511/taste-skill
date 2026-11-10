@@ -25,7 +25,7 @@ export function NotificationList({ items, now }: { items: NotificationRow[]; now
         <p className="text-sm text-muted">{unread ? `${unread} unread` : "All caught up"}</p>
         {unread > 0 && (
           <form action={markAllReadAction}>
-            <button className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold hover:bg-ink/5"><Checks className="size-4" /> Mark all read</button>
+            <button className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold hover:bg-ink/5"><Checks className="size-4" /> Mark all read</button>
           </form>
         )}
       </div>

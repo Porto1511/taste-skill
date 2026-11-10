@@ -12,7 +12,7 @@ export default async function OfficeLayout({ children }: { children: React.React
   const counts = await countActiveReports(viewer);
   return (
     <div className="min-h-[100dvh] lg:grid lg:grid-cols-[256px_1fr]">
-      <aside className="sticky top-0 z-30 bg-ink text-white lg:flex lg:h-[100dvh] lg:flex-col">
+      <aside aria-label="Office menu" className="sticky top-0 z-30 bg-ink text-white lg:flex lg:h-[100dvh] lg:flex-col">
         <div className="flex h-16 items-center justify-between px-5 lg:h-20">
           <Link href="/office"><Logo sub="Office" /></Link>
           <div className="lg:hidden"><UserMenu viewer={viewer} /></div>
@@ -22,7 +22,7 @@ export default async function OfficeLayout({ children }: { children: React.React
           <UserMenu viewer={viewer} align="up" />
           <div className="min-w-0 leading-tight">
             <p className="truncate text-sm font-semibold">{viewer.fullName}</p>
-            <p className="truncate text-[12px] text-white/50">{labels.role[viewer.role]}</p>
+            <p className="truncate text-[12px] text-white/70">{labels.role[viewer.role]}</p>
           </div>
         </div>
       </aside>

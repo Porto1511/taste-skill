@@ -48,7 +48,7 @@ function Tile({ href, icon, label, sub, tone = "light" }: { href: string; icon: 
     <>
       {icon}
       <span className="text-[12.5px] font-bold leading-tight">{label}</span>
-      {sub && <span className={cn("max-w-full truncate text-[10.5px] font-medium", tone === "dark" ? "text-white/60" : "text-muted")}>{sub}</span>}
+      {sub && <span className={cn("max-w-full truncate text-[12px] font-medium", tone === "dark" ? "text-white/60" : "text-muted")}>{sub}</span>}
     </>
   );
   return external
@@ -79,16 +79,16 @@ export default async function SiteJobPage({ params }: Props) {
 
   return (
     <div>
-      <Link href="/jobs" className="-ml-1 mb-2 inline-flex items-center gap-0.5 text-[13px] font-semibold text-muted"><CaretLeft className="size-4" weight="bold" /> Your jobs</Link>
+      <Link href="/jobs" className="-ml-1 mb-1 inline-flex min-h-11 items-center gap-0.5 pr-3 text-[13px] font-semibold text-muted"><CaretLeft className="size-4" weight="bold" /> Your jobs</Link>
 
       <header className="rounded-2xl bg-ink p-4 text-white">
         <p className="font-mono text-[12px] text-white/55">{job.job_number}{job.main_contractor ? ` · ${job.main_contractor.replace(/ \(fictional\)$/, "")}` : ""}</p>
         <h1 className="mt-1 text-[21px] font-semibold leading-tight tracking-tight">{job.name}</h1>
-        <a href={mapsHref(job.site_address, job.postcode)} target="_blank" rel="noopener noreferrer" className="mt-1.5 flex items-start gap-1.5 text-[13px] text-white/70">
+        <a href={mapsHref(job.site_address, job.postcode)} target="_blank" rel="noopener noreferrer" className="mt-1 flex min-h-11 items-center gap-1.5 text-[13px] text-white/80">
           <MapPin className="mt-0.5 size-4 shrink-0" />{job.site_address}{job.postcode ? `, ${job.postcode}` : ""}
         </a>
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/45">{isManager ? "Access" : "Your area"}</span>
+          <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/70">{isManager ? "Access" : "Your area"}</span>
           {areaChips.map((a) => <span key={a} className="rounded-md bg-signal px-2 py-0.5 text-[12.5px] font-bold text-ink">{a}</span>)}
         </div>
         {(attendance || assignment?.note) && (
@@ -104,7 +104,7 @@ export default async function SiteJobPage({ params }: Props) {
           : <Tile href="#info" icon={<Phone />} label="No phone" />}
         <Tile href={mapsHref(job.site_address, job.postcode)} icon={<NavigationArrow weight="fill" />} label="Directions" sub={job.postcode ?? undefined} />
         <Tile href={`/jobs/${job.id}/report?kind=issue`} icon={<WarningOctagon weight="fill" />} label="Report issue" tone="signal" />
-        <Tile href={`/jobs/${job.id}/handover`} icon={<Signature weight="bold" />} label="Handover" sub="Get it signed" />
+        <Tile href={`/jobs/${job.id}/handover`} icon={<Signature weight="bold" />} label="Handover" sub="Sign off" />
       </div>
 
       {job.induction_url && (
@@ -140,7 +140,7 @@ export default async function SiteJobPage({ params }: Props) {
             content: (
               <>
                 {job.site_instructions && (
-                  <Section title="Site instructions" action={<span className="text-[11px] text-subtle">Updated {relativeTime(job.updated_at, now)}</span>}>
+                  <Section title="Site instructions" action={<span className="text-[12px] text-subtle">Updated {relativeTime(job.updated_at, now)}</span>}>
                     <div className="whitespace-pre-line rounded-2xl border border-line bg-card p-4 text-[15px] leading-relaxed shadow-[var(--shadow-card)]">{job.site_instructions}</div>
                   </Section>
                 )}
@@ -263,7 +263,7 @@ function Contact({ icon, name, role, phone }: { icon: React.ReactNode; name: str
     <div className="flex items-center gap-3 px-4 py-3">
       <span className="text-muted [&_svg]:size-6">{icon}</span>
       <span className="min-w-0 flex-1"><span className="block font-semibold">{name}</span>{role && <span className="block text-[12.5px] text-muted">{role}</span>}</span>
-      {phone && <a href={telHref(phone)} className="flex h-10 items-center gap-1.5 rounded-xl bg-ink px-3 text-[13px] font-semibold text-white"><Phone className="size-4" weight="fill" /> Call</a>}
+      {phone && <a href={telHref(phone)} className="flex h-11 items-center gap-1.5 rounded-xl bg-ink px-3 text-[13px] font-semibold text-white"><Phone className="size-4" weight="fill" /> Call</a>}
     </div>
   );
 }

@@ -150,7 +150,7 @@ export function TimesheetForm({ date, sheet, jobs, last, readOnly, previous }: {
 
         <div className="grid grid-cols-3 gap-2 rounded-2xl bg-ink p-3 text-center text-white">
           {[["Travel there", totals.there], ["On site", totals.site], ["Travel back", totals.back]].map(([l, m]) => (
-            <div key={l as string}><p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-white/50">{l}</p><p className="tabular text-[19px] font-semibold">{fmtMinutes(m as number)}</p></div>
+            <div key={l as string}><p className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/70">{l}</p><p className="tabular text-[19px] font-semibold">{fmtMinutes(m as number)}</p></div>
           ))}
         </div>
 

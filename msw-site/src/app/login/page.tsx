@@ -38,21 +38,21 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <DeckPattern />
         <Logo sub="MSW UK Ltd" className="relative" />
         <div className="relative max-w-md">
-          <h1 className="text-5xl font-semibold leading-[1.02] tracking-tight">
+          <p className="text-5xl font-semibold leading-[1.02] tracking-tight">
             The right drawing.<br />
             <span className="text-signal">The right people.</span>
-          </h1>
+          </p>
           <p className="mt-5 text-lg leading-relaxed text-white/65">
             Approved drawings, RAMS and site information for every MSW job — with reporting straight back to the office.
           </p>
         </div>
-        <p className="relative text-sm text-white/40">Safety netting · Metal decking · Shear studs · Edge trims · Concrete</p>
+        <p className="relative text-sm text-white/65">Safety netting · Metal decking · Shear studs · Edge trims · Concrete</p>
       </section>
 
       <section className="flex flex-col px-5 pb-10 pt-8 sm:px-10 lg:justify-center lg:px-16">
         <div className="mx-auto w-full max-w-[420px]">
           <div className="mb-8 lg:hidden"><Logo tone="dark" sub="MSW UK Ltd" /></div>
-          <h2 className="text-[28px] font-semibold tracking-tight">Sign in</h2>
+          <h1 className="text-[28px] font-semibold tracking-tight">Sign in</h1>
           <p className="mt-1 text-muted">Use the email address MSW has registered for you.</p>
           <div className="mt-7 grid gap-4">
             {error && <Alert>{error}</Alert>}
@@ -66,13 +66,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <div className="mt-10 rounded-[var(--radius-card)] border border-line bg-card p-4 shadow-[var(--shadow-card)]">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold">Demonstration accounts</p>
-                <span className="rounded-full bg-signal-soft px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-signal-ink">Demo mode</span>
+                <span className="rounded-full bg-signal-soft px-2 py-0.5 text-[12px] font-bold uppercase tracking-wider text-signal-ink">Demo mode</span>
               </div>
               <p className="mt-1 text-[13px] text-muted">Fictional data. Tap a person to sign in as them (password for all: <code className="font-mono text-ink">SiteDemo!2026</code>).</p>
               <div className="mt-3 grid gap-4">
                 {personas.map((g) => (
                   <div key={g.group}>
-                    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-subtle">{g.group}</p>
+                    <p className="mb-1.5 text-[12px] font-bold uppercase tracking-[0.1em] text-subtle">{g.group}</p>
                     <div className="grid gap-1.5">
                       {g.people.map((p) => {
                         const u = demoUsers.find((x) => x.key === p.key)!;

@@ -58,7 +58,7 @@ export default async function TimesheetDayPage({ params, searchParams }: {
 
       <div className="mb-3 grid grid-cols-3 gap-2 rounded-2xl bg-ink p-3 text-center text-white">
         {[["On site", day.site], ["Driving", day.driving], ["Travel", day.travel]].map(([l, m]) => (
-          <div key={l as string}><p className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/50">{l}</p><p className="tabular text-[20px] font-semibold">{fmtMinutes(m as number)}</p></div>
+          <div key={l as string}><p className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/70">{l}</p><p className="tabular text-[20px] font-semibold">{fmtMinutes(m as number)}</p></div>
         ))}
       </div>
 
@@ -85,7 +85,7 @@ export default async function TimesheetDayPage({ params, searchParams }: {
                       {e.travel_back_start && <span>Left site {e.travel_back_start}{e.travel_back_end ? ` · got back ${e.travel_back_end}` : " · on to next job"}</span>}
                     </div>
                   </div>
-                  <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold uppercase",
+                  <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-bold uppercase",
                     e.status === "approved" ? "bg-ok-soft text-ok" : e.status === "query" ? "bg-danger text-white" : "bg-ink/[0.07] text-muted")}>
                     {e.status === "submitted" ? "Sent" : e.status}
                   </span>

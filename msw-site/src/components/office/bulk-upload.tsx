@@ -110,7 +110,7 @@ export function BulkUpload({ jobId, areas, existing }: { jobId: string; areas: {
                   <div className="flex items-center gap-2 text-[13px]">
                     <FilePdf className="size-4 shrink-0 text-danger" />
                     <span className="min-w-0 flex-1 truncate text-muted">{r.file.name}</span>
-                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold", ex ? "bg-info-soft text-info" : "bg-ink/[0.06]")}>
+                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[12px] font-bold", ex ? "bg-info-soft text-info" : "bg-ink/[0.06]")}>
                       {ex ? `New revision · was ${ex.latest ?? "—"}` : "New document"}
                     </span>
                     {r.state === "done" ? <CheckCircle className="size-5 text-ok" weight="fill" aria-label="Uploaded" />

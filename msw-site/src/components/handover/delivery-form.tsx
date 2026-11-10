@@ -68,7 +68,7 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
 
   const summary = (
     <div className="grid gap-2 rounded-2xl border border-line bg-card p-4 text-[14px]">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Delivery note · {job.number}</p>
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">Delivery note · {job.number}</p>
       <p className="font-semibold">{job.name}</p>
       <p className="text-[13px] text-muted">{job.address}</p>
       <ul className="grid gap-1 border-t border-line pt-2">
@@ -84,7 +84,7 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
       <ol className="grid grid-cols-3 gap-1.5 text-[12.5px] font-semibold">
         {["Delivery", "Driver signs", "Receiver signs"].map((s, i) => (
           <li key={s} className={cn("flex items-center gap-1.5 rounded-xl px-2.5 py-2", step === i + 1 ? "bg-ink text-white" : "bg-ink/[0.06] text-muted")}>
-            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[11px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-signal text-ink" : "bg-ink/10")}>
+            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full text-[12px]", step > i + 1 ? "bg-ok text-white" : step === i + 1 ? "bg-signal text-ink" : "bg-ink/10")}>
               {step > i + 1 ? <Check className="size-3" weight="bold" /> : i + 1}
             </span>
             {s}
