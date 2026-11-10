@@ -130,14 +130,14 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
         {data.deliveries.length ? (
           <Card className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-[13.5px]">
-              <thead><tr className="border-b border-line text-left text-muted"><th className="px-4 py-2 font-semibold">Date</th><th className="font-semibold">Job</th><th className="font-semibold">What</th><th className="font-semibold">Delivered by</th><th className="font-semibold">Received by</th></tr></thead>
+              <thead><tr className="border-b border-line text-left text-muted"><th className="px-4 py-2 font-semibold">Date</th><th className="pr-4 font-semibold">Job</th><th className="pr-4 font-semibold">What</th><th className="pr-4 font-semibold">Delivered by</th><th className="pr-4 font-semibold">Received by</th></tr></thead>
               <tbody>
                 {data.deliveries.map((d) => (
                   <tr key={d.id} className="border-b border-line last:border-0 align-top">
                     <td className="px-4 py-2 whitespace-nowrap"><Link href={`/office/deliveries/${d.id}`} className="underline">{formatDateTime(d.signed_at)}</Link></td>
-                    <td className="py-2 font-mono">{d.job_number}</td>
-                    <td className="py-2">{d.items.map((i, n) => <span key={n} className="block">{i.quantity ? `${i.quantity} × ` : ""}{i.description}</span>)}{d.notes && <span className="block text-warn">Note: {d.notes}</span>}</td>
-                    <td className="py-2">{d.delivered_by}{d.vehicle_reg ? ` · ${d.vehicle_reg}` : ""}<span className="block text-muted">{d.company}</span></td>
+                    <td className="py-2 pr-4 font-mono whitespace-nowrap">{d.job_number}</td>
+                    <td className="py-2 pr-4">{d.items.map((i, n) => <span key={n} className="block">{i.quantity ? `${i.quantity} × ` : ""}{i.description}</span>)}{d.notes && <span className="block text-warn">Note: {d.notes}</span>}</td>
+                    <td className="py-2 pr-4">{d.delivered_by}{d.vehicle_reg ? ` · ${d.vehicle_reg}` : ""}<span className="block text-muted">{d.company}</span></td>
                     <td className="py-2 pr-4">{d.receiver_name}</td>
                   </tr>
                 ))}
