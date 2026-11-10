@@ -10,16 +10,20 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 
-  /* Industrial neutrals: cool concrete greys, near-black steel. */
-  --color-ink: #111214;
-  --color-ink-2: #1c1e22;
-  --color-ink-3: #2a2d33;
-  --color-paper: #f2f3f5;
-  --color-card: #ffffff;
-  --color-line: #e3e5e9;
-  --color-line-strong: #cdd1d8;
-  --color-muted: #4a4f57;
-  --color-subtle: #626873;
+  /* Frosted glass over a soft light field. Text stays near-black for daylight. */
+  --color-ink: #0d0f12;
+  --color-ink-2: #1a1d22;
+  --color-ink-3: #2a2e35;
+  --color-paper: rgb(15 23 42 / 0.035);
+  --color-card: rgb(255 255 255 / 0.74);
+  --color-line: rgb(15 23 42 / 0.08);
+  --color-line-strong: rgb(15 23 42 / 0.16);
+  --color-muted: #464b54;
+  --color-subtle: #5d636e;
+
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
 
   /* MSW red: brand, primary actions, current location. */
   --color-brand: #d31112;
@@ -40,9 +44,10 @@
   --color-info: #175cd3;
   --color-info-soft: #e5efff;
 
-  --radius-card: 12px;
-  --shadow-card: 0 1px 2px rgba(17, 18, 20, 0.06), 0 0 0 1px rgba(17, 18, 20, 0.02);
-  --shadow-lift: 0 12px 32px -14px rgba(17, 18, 20, 0.35);
+  --radius-card: 1.5rem;
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(15 23 42 / 0.04), 0 18px 40px -24px rgb(15 23 42 / 0.28);
+  --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 2px 4px rgb(15 23 42 / 0.05), 0 28px 60px -28px rgb(15 23 42 / 0.4);
+  --ease-out-soft: cubic-bezier(0.32, 0.72, 0, 1);
 
   --animate-rise: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-shimmer: shimmer 1.4s linear infinite;
@@ -62,7 +67,7 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    background: var(--color-paper);
+    background: #eef0f4;
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
@@ -71,6 +76,19 @@
     outline: 3px solid var(--color-brand);
     outline-offset: 2px;
     border-radius: 6px;
+  }
+  /* The light behind the glass: fixed, so it never repaints on scroll. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(42rem 32rem at 100% -10%, rgb(211 17 18 / 0.13), transparent 60%),
+      radial-gradient(36rem 30rem at -10% 110%, rgb(255 184 28 / 0.14), transparent 60%),
+      radial-gradient(48rem 36rem at 50% 45%, rgb(120 150 190 / 0.16), transparent 70%),
+      linear-gradient(180deg, #f5f6f9 0%, #eceef3 100%);
   }
   ::selection { background: var(--color-brand-soft); }
   h1, h2, h3 { letter-spacing: -0.015em; }
@@ -81,7 +99,7 @@
 
 @layer components {
   .skeleton {
-    background: linear-gradient(90deg, #e6e8ec 0%, #f4f5f7 40%, #e6e8ec 80%);
+    background: linear-gradient(90deg, rgb(15 23 42 / 0.05) 0%, rgb(15 23 42 / 0.02) 40%, rgb(15 23 42 / 0.05) 80%);
     background-size: 800px 100%;
     animation: var(--animate-shimmer);
     border-radius: 8px;
@@ -93,14 +111,26 @@
   .stagger > *:nth-child(5) { animation-delay: 160ms; }
   .stagger > *:nth-child(n + 6) { animation-delay: 200ms; }
   .tabular { font-variant-numeric: tabular-nums; }
-  /* Thin diagonal hazard stripe used as an accent (decorative). */
-  .hazard {
-    background: repeating-linear-gradient(-45deg, var(--color-signal) 0 10px, var(--color-ink) 10px 20px);
+  /* Dark glass: menus, headers, hero panels. */
+  .glass-dark {
+    background: linear-gradient(160deg, rgb(28 31 37 / 0.92), rgb(10 11 14 / 0.94));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 30px 60px -30px rgb(0 0 0 / 0.55);
+    border: 1px solid rgb(255 255 255 / 0.06);
   }
-  /* Faint engineering grid on dark panels (decorative). */
-  .grid-texture {
-    background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 24px 24px;
+  /* Light glass for floating bars (blur only on fixed/sticky elements). */
+  .glass-bar {
+    background: rgb(255 255 255 / 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    backdrop-filter: blur(20px) saturate(170%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 1px rgb(15 23 42 / 0.06), 0 16px 40px -20px rgb(15 23 42 / 0.35);
   }
+  .glass-bar-dark {
+    background: rgb(13 15 18 / 0.78);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 16px 40px -20px rgb(0 0 0 / 0.5);
+  }
+  /* Glow orb used behind dark glass. */
+  .orb { position: absolute; border-radius: 9999px; filter: blur(60px); pointer-events: none; }
   .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 }

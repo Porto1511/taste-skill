@@ -26,15 +26,16 @@ export default async function OfficeDashboard() {
   ].filter(Boolean).join(" · ");
   return (
     <div>
-      <section className="grid-texture relative mb-6 overflow-hidden rounded-2xl bg-ink px-6 py-6 text-white sm:px-8 sm:py-7">
-        <div className="pointer-events-none absolute -right-10 -top-16 size-64 rounded-full bg-brand/25 blur-3xl" aria-hidden />
+      <section className="glass-dark relative mb-6 overflow-hidden rounded-[2rem] px-6 py-7 text-white sm:px-9 sm:py-9">
+        <span className="orb -right-10 -top-24 size-80 bg-brand/40" aria-hidden />
+        <span className="orb -bottom-28 left-1/3 size-72 bg-signal/15" aria-hidden />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/70">
+            <p className="w-fit rounded-full bg-white/[0.08] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.16em] text-white/80 ring-1 ring-white/10">
               {new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" }).format(new Date(now))}
             </p>
-            <h1 className="mt-1 text-[30px] font-bold leading-tight tracking-tight sm:text-[34px]">Good to see you, {viewer.fullName.split(" ")[0]}</h1>
-            <p className="mt-1 text-[15px] text-white/75">{summary}</p>
+            <h1 className="mt-4 text-[32px] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-[44px]">Good to see you, {viewer.fullName.split(" ")[0]}</h1>
+            <p className="mt-2 text-[16px] text-white/75">{summary}</p>
           </div>
           <ButtonLink href="/office/jobs/new" variant="primary" size="lg"><Plus className="size-5" weight="bold" /> New job</ButtonLink>
         </div>

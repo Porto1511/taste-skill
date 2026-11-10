@@ -34,13 +34,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="grid min-h-[100dvh] lg:grid-cols-[1.05fr_1fr]">
-      <section className="relative hidden overflow-hidden bg-ink text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <section className="glass-dark relative m-3 hidden overflow-hidden rounded-[2rem] text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
         <DeckPattern />
-        <div className="hazard absolute inset-x-0 top-0 h-1.5" aria-hidden />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-brand/25 blur-3xl" aria-hidden />
+        <span className="orb -bottom-32 -left-24 size-[28rem] bg-brand/35" aria-hidden />
+        <span className="orb -right-24 top-10 size-80 bg-signal/10" aria-hidden />
         <Logo sub="MSW UK Ltd" className="relative" />
         <div className="relative max-w-md">
-          <p className="text-5xl font-semibold leading-[1.02] tracking-tight">
+          <p className="text-[56px] font-semibold leading-[1] tracking-[-0.04em]">
             The right drawing.<br />
             <span className="text-brand">The right people.</span>
           </p>
@@ -52,9 +52,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </section>
 
       <section className="flex flex-col pb-10 lg:justify-center lg:px-16">
-        <div className="relative mb-6 overflow-hidden bg-ink px-5 pb-7 pt-8 text-white sm:px-10 lg:hidden">
+        <div className="glass-dark relative m-3 mb-6 overflow-hidden rounded-[1.75rem] px-5 pb-7 pt-7 text-white sm:px-10 lg:hidden">
           <DeckPattern />
-          <div className="hazard absolute inset-x-0 top-0 h-1" aria-hidden />
+          <span className="orb -right-16 -top-16 size-56 bg-brand/45" aria-hidden />
           <Logo sub="MSW UK Ltd" className="relative" />
           <p className="relative mt-6 text-[26px] font-bold leading-tight tracking-tight">The right drawing.<br /><span className="text-brand">The right people.</span></p>
         </div>
@@ -72,10 +72,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           {config.isDemo && (
             <div className="mt-10 rounded-[var(--radius-card)] border border-line bg-card p-4 shadow-[var(--shadow-card)]">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold">Demonstration accounts</p>
-                <span className="rounded-full bg-signal-soft px-2 py-0.5 text-[12px] font-bold uppercase tracking-wider text-signal-ink">Demo mode</span>
+                <p className="text-sm font-semibold">Quick sign-in</p>
+                <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[12px] font-semibold text-brand-2">Try it as anyone</span>
               </div>
-              <p className="mt-1 text-[13px] text-muted">Fictional data. Tap a person to sign in as them (password for all: <code className="font-mono text-ink">SiteDemo!2026</code>).</p>
+              <p className="mt-1 text-[13px] text-muted">Tap a person to sign in as them (password for all: <code className="font-mono text-ink">SiteDemo!2026</code>).</p>
               <div className="mt-3 grid gap-4">
                 {personas.map((g) => (
                   <div key={g.group}>

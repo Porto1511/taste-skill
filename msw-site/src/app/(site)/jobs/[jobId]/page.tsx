@@ -81,8 +81,9 @@ export default async function SiteJobPage({ params }: Props) {
     <div>
       <Link href="/jobs" className="-ml-1 mb-1 inline-flex min-h-11 items-center gap-0.5 pr-3 text-[13px] font-semibold text-muted"><CaretLeft className="size-4" weight="bold" /> Your jobs</Link>
 
-      <header className="grid-texture relative overflow-hidden rounded-2xl bg-ink p-5 text-white shadow-[var(--shadow-lift)]">
-        <span className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-brand/30 blur-3xl" aria-hidden />
+      <header className="glass-dark relative overflow-hidden rounded-[1.75rem] p-5 text-white">
+        <span className="orb -right-14 -top-16 size-56 bg-brand/45" aria-hidden />
+        <span className="orb -bottom-20 -left-10 size-40 bg-signal/15" aria-hidden />
         <p className="relative font-mono text-[12px] text-white/70">{job.job_number}{job.main_contractor ? ` · ${job.main_contractor.replace(/ \(fictional\)$/, "")}` : ""}</p>
         <h1 className="relative mt-1 text-[23px] font-bold leading-tight tracking-tight">{job.name}</h1>
         <a href={mapsHref(job.site_address, job.postcode)} target="_blank" rel="noopener noreferrer" className="relative mt-1 flex min-h-11 items-center gap-1.5 text-[13px] text-white/85 underline-offset-2 hover:underline">

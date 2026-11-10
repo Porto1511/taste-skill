@@ -59,7 +59,7 @@ export function InvitePersonForm({ companies, defaultCompanyId, demo }: { compan
       </div>
       <Alert tone="info">
         New accounts can&apos;t see any job until you allocate them on a job&apos;s People &amp; access tab.
-        {demo ? " Demo mode: no email is sent — a temporary password is shown instead." : " They will receive an invitation email from Supabase Auth to set their password."}
+        {demo ? " Email isn't set up yet, so a temporary password is shown instead — pass it on yourself." : " They will receive an invitation email from Supabase Auth to set their password."}
       </Alert>
       <SubmitButton className="justify-self-start" pendingText="Creating…">{demo ? "Create account" : "Send invitation"}</SubmitButton>
     </form>
