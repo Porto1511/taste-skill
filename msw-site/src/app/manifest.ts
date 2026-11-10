@@ -4,11 +4,11 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "MSW Site",
     short_name: "MSW Site",
-    description: "Drawings, RAMS and site reporting for MSW UK Ltd.",
+    description: "Drawings, RAMS, sign-offs and timesheets for MSW UK Ltd.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f4f2ee",
-    theme_color: "#17150f",
+    background_color: "#eef0f4",
+    theme_color: "#0d0f12",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
