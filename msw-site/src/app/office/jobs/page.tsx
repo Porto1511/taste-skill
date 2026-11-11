@@ -23,7 +23,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   return (
     <div>
       <PageHeader title="Jobs" description="Every MSW job, its people, documents and open issues."
-        actions={<ButtonLink href="/office/jobs/new" variant="primary"><Plus className="size-5" weight="bold" /> New job</ButtonLink>} />
+        actions={viewer.isAdmin ? <ButtonLink href="/office/jobs/new" variant="primary"><Plus className="size-5" weight="bold" /> New job</ButtonLink> : undefined} />
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <nav className="flex gap-1 overflow-x-auto rounded-xl bg-ink/[0.05] p-1" aria-label="Filter by status">
           {tabs.map((t) => (

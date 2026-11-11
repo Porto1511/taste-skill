@@ -37,7 +37,7 @@ export default async function OfficeDashboard() {
             <h1 className="mt-4 text-[32px] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-[44px]">Good to see you, {viewer.fullName.split(" ")[0]}</h1>
             <p className="mt-2 text-[16px] text-white/75">{summary}</p>
           </div>
-          <ButtonLink href="/office/jobs/new" variant="primary" size="lg"><Plus className="size-5" weight="bold" /> New job</ButtonLink>
+          {viewer.isAdmin && <ButtonLink href="/office/jobs/new" variant="primary" size="lg"><Plus className="size-5" weight="bold" /> New job</ButtonLink>}
         </div>
       </section>
 

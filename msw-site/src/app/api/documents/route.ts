@@ -8,6 +8,7 @@ export async function POST(request: Request) {
   const viewer = await getViewer();
   if (!viewer) return Response.json({ error: "Your session has expired. Sign in again." }, { status: 401 });
   if (!viewer.isStaff) return Response.json({ error: "Not found" }, { status: 404 });
+  if (!viewer.isAdmin) return Response.json({ error: "Only an MSW administrator can upload drawings and RAMS." }, { status: 403 });
 
   const form = await request.formData();
   const parsed = documentInput.safeParse({

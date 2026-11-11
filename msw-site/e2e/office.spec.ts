@@ -53,7 +53,7 @@ test.describe("office workflows", () => {
   });
 
   test("approving a draft drawing issues it to site and supersedes the previous revision", async ({ page }) => {
-    await signIn(page, "alan.stokoe@msw.example");
+    await signIn(page, "damian.pendleton@msw.example");
     await page.goto(`/office/jobs/${BM}/documents/${demoId("doc:bm-dk3")}`);
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Approve for use" }).click();
@@ -134,6 +134,23 @@ test.describe("office workflows", () => {
     await signIn(page, "john.smith@derbydecking.example");
     expect((await page.request.get("/office/qs")).status()).toBe(404);
     expect((await page.request.get(href!)).status()).toBe(404);
+  });
+
+  test("only the administrator sees upload and delete; deleting a drawing removes it", async ({ page }) => {
+    await signIn(page, "alan.stokoe@msw.example");
+    await page.goto(`/office/jobs/${BM}/documents`);
+    await expect(page.getByText("Only an MSW administrator can upload or delete drawings and RAMS.")).toBeVisible();
+    await expect(page.getByRole("link", { name: /New job/ })).toHaveCount(0);
+    await page.goto(`/office/jobs/${BM}/documents/${demoId("doc:bm-dk4")}`);
+    await expect(page.getByRole("button", { name: "Delete drawing" })).toHaveCount(0);
+    await signOut(page);
+
+    await signIn(page, "damian.pendleton@msw.example");
+    await page.goto(`/office/jobs/${BM}/documents/${demoId("doc:bm-dk4")}`);
+    page.once("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: "Delete drawing" }).click();
+    await expect(page.getByText("Drawing deleted")).toBeVisible();
+    await expect(page.getByRole("link").filter({ hasText: "MSW-2611-DK-104" })).toHaveCount(0);
   });
 
   test.describe("on a phone", () => {

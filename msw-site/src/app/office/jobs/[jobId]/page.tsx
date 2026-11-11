@@ -17,7 +17,12 @@ export default async function JobOverview({ params, searchParams }: { params: Pr
     <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
       <div className="order-2 xl:order-1">
         {created && <Alert tone="ok" className="mb-4" title="Job created">Next: add floors or phases on the right, upload drawings, then allocate people.</Alert>}
-        <JobForm job={data.job} staff={data.staff} />
+        {viewer.isAdmin ? <JobForm job={data.job} staff={data.staff} /> : (
+          <fieldset disabled className="grid gap-3">
+            <p className="text-[14px] text-muted">Only an MSW administrator can change job details.</p>
+            <JobForm job={data.job} staff={data.staff} />
+          </fieldset>
+        )}
       </div>
       <aside className="order-1 grid content-start gap-6 xl:order-2">
         <div className="grid grid-cols-2 gap-3">
@@ -28,7 +33,7 @@ export default async function JobOverview({ params, searchParams }: { params: Pr
         </div>
         <section>
           <SectionTitle>Floors, phases &amp; areas</SectionTitle>
-          <Card className="p-4"><AreasManager jobId={jobId} areas={data.areas} /></Card>
+          <Card className="p-4">{viewer.isAdmin ? <AreasManager jobId={jobId} areas={data.areas} /> : <fieldset disabled><AreasManager jobId={jobId} areas={data.areas} /></fieldset>}</Card>
         </section>
       </aside>
     </div>

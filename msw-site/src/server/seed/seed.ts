@@ -560,3 +560,9 @@ export async function patchDemoTimesheets(driver: Driver) {
       [userId("luke"), sat, jobId("riverside")]),
   );
 }
+
+/** Damian is the only administrator (uploads drawings, creates jobs). Idempotent. */
+export async function patchDemoRoles(driver: Driver) {
+  await runAsSystem(driver, (tx) =>
+    tx.query("update public.profiles set role = 'office' where id = $1 and role = 'admin'", [userId("richard")]));
+}

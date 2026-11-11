@@ -38,6 +38,8 @@ export const config = (() => {
   return {
     mode,
     isDemo: mode === "demo",
+    /** One-tap "Try it as someone else" sign-in. Set MSW_QUICK_SIGNIN=off before real drawings go in. */
+    quickSignIn: mode === "demo" && env("MSW_QUICK_SIGNIN") !== "off",
     supabaseUrl,
     supabaseAnonKey,
     serviceRoleKey,

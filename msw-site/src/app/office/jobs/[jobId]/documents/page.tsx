@@ -6,17 +6,20 @@ import { getOfficeJob, listOfficeDocuments, type OfficeDocument } from "@/server
 import { Card, EmptyState, SectionTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BulkUpload } from "@/components/office/bulk-upload";
+import { Alert } from "@/components/ui/form";
 import { formatDate } from "@/lib/format";
 
-export default async function JobDocumentsPage({ params }: { params: Promise<{ jobId: string }> }) {
+export default async function JobDocumentsPage({ params, searchParams }: { params: Promise<{ jobId: string }>; searchParams: Promise<{ deleted?: string }> }) {
   const viewer = await requireStaff();
   const { jobId } = await params;
+  const { deleted } = await searchParams;
   const [job, docs] = await Promise.all([getOfficeJob(viewer, jobId), listOfficeDocuments(viewer, jobId)]);
   if (!job) notFound();
   const areas = job.areas.map((a) => ({ id: a.id, name: a.name }));
   return (
     <div className="grid gap-6">
-      <section>
+      {deleted && <Alert tone="ok" title="Drawing deleted">It has been removed for everyone, and the deletion is recorded in the job&apos;s activity.</Alert>}
+      {viewer.isAdmin ? <section>
         <SectionTitle>Upload</SectionTitle>
         <Card className="p-5">
           <BulkUpload jobId={jobId} areas={areas} existing={docs.map((d) => ({
@@ -24,7 +27,7 @@ export default async function JobDocumentsPage({ params }: { params: Promise<{ j
             latest: d.revisions[0]?.revision ?? null, areas: d.areas.length ? d.areas.map((a) => a.name).join(", ") : "Whole job",
           }))} />
         </Card>
-      </section>
+      </section> : <Card className="p-4 text-[14px] text-muted">Only an MSW administrator can upload or delete drawings and RAMS.</Card>}
       <div className="grid content-start gap-6">
         {(["drawing", "rams"] as const).map((kind) => {
           const list = docs.filter((d) => d.kind === kind);

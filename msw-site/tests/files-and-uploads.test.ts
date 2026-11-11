@@ -127,10 +127,10 @@ describe("report uploads", () => {
 });
 
 describe("document uploads", () => {
-  it("office uploads a new revision as draft; it stays hidden from site until approved", async () => {
-    const { revisionId } = await addRevision(viewer("sam", "office"), { documentId: ids.doc("bm-dk2"), revision: "C02", changeNote: "Bay sizes", approve: false }, { name: "dk102.pdf", bytes: minimalPdf });
+  it("the administrator uploads a new revision as draft; it stays hidden from site until approved", async () => {
+    const { revisionId } = await addRevision(viewer("claire", "admin"), { documentId: ids.doc("bm-dk2"), revision: "C02", changeNote: "Bay sizes", approve: false }, { name: "dk102.pdf", bytes: minimalPdf });
     expect((await serveRevision(ids.user("john"), revisionId, false)).status).toBe(404);
-    await asUser(db, "sam").query("select public.approve_revision($1)", [revisionId]);
+    await asUser(db, "claire").query("select public.approve_revision($1)", [revisionId]);
     expect((await serveRevision(ids.user("john"), revisionId, false)).status).toBe(200);
     expect((await serveRevision(ids.user("john"), ids.rev("bm-dk2", "C01"), false)).status).toBe(404);
     const notes = await asUser(db, "john").query<{ title: string }>("select title from notifications where title like '%DK-102%'");
@@ -152,7 +152,7 @@ describe("document uploads", () => {
       addRevision(viewer("john"), { documentId: ids.doc("bm-dk1"), revision: "X1", changeNote: null, approve: false }, { name: "a.pdf", bytes: minimalPdf }),
     ).rejects.toThrow();
     await expect(
-      addRevision(viewer("sam", "office"), { documentId: ids.doc("bm-dk1"), revision: "C03", changeNote: null, approve: false }, { name: "a.pdf", bytes: Buffer.from("MZ executable") }),
+      addRevision(viewer("claire", "admin"), { documentId: ids.doc("bm-dk1"), revision: "C03", changeNote: null, approve: false }, { name: "a.pdf", bytes: Buffer.from("MZ executable") }),
     ).rejects.toThrow(/not a PDF/);
   });
 });

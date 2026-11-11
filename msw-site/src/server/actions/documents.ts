@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireStaff } from "../auth/viewer";
+import { requireAdmin, requireStaff } from "../auth/viewer";
 import { withUser } from "../db";
 import { attempt, str, strs } from "./helpers";
 import type { ActionState } from "@/lib/action-state";
@@ -11,7 +11,7 @@ import type { ActionState } from "@/lib/action-state";
 const id = z.string().uuid();
 
 export async function approveRevisionAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const revisionId = id.parse(str(f, "revisionId"));
   return attempt("revisions.approve", async () => {
     await withUser(viewer.id, (tx) => tx.query("select public.approve_revision($1)", [revisionId]));
@@ -21,7 +21,7 @@ export async function approveRevisionAction(_p: ActionState, f: FormData): Promi
 }
 
 export async function withdrawRevisionAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const revisionId = id.parse(str(f, "revisionId"));
   return attempt("revisions.withdraw", async () => {
     await withUser(viewer.id, (tx) => tx.query("select public.withdraw_revision($1)", [revisionId]));
@@ -30,22 +30,44 @@ export async function withdrawRevisionAction(_p: ActionState, f: FormData): Prom
   });
 }
 
-export async function deleteDraftAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+/** Delete one revision that is not the one on site (drafts, superseded, withdrawn). */
+export async function deleteRevisionAction(_p: ActionState, f: FormData): Promise<ActionState> {
+  const viewer = await requireAdmin();
   const revisionId = id.parse(str(f, "revisionId"));
   return attempt("revisions.delete", async () => {
     const path = await withUser(viewer.id, async (tx) =>
       (await tx.query<{ storage_path: string }>(
-        "delete from document_revisions where id = $1 and status = 'draft' returning storage_path",
+        "delete from document_revisions where id = $1 and status <> 'approved' returning storage_path",
         [revisionId],
       )).rows[0]?.storage_path,
     );
-    if (!path) return { error: "Only draft revisions can be deleted." };
+    if (!path) return { error: "The revision on site can't be deleted on its own — withdraw it first, or delete the whole drawing." };
     const { getFileStore } = await import("../storage");
     await getFileStore().remove([path]).catch(() => {});
     refresh();
-    return { ok: true, message: "Draft deleted.", nonce: Date.now() };
+    return { ok: true, message: "Revision deleted.", nonce: Date.now() };
   });
+}
+
+/** Delete a drawing or RAMS completely: every revision and its files. Recorded in the job history. */
+export async function deleteDocumentAction(_p: ActionState, f: FormData): Promise<ActionState> {
+  const viewer = await requireAdmin();
+  const documentId = id.parse(str(f, "documentId"));
+  let jobId: string | null = null;
+  const res = await attempt("documents.delete", async () => {
+    const out = await withUser(viewer.id, async (tx) => {
+      const paths = (await tx.query<{ storage_path: string }>("select storage_path from document_revisions where document_id = $1", [documentId])).rows.map((r) => r.storage_path);
+      const doc = (await tx.query<{ job_id: string }>("delete from documents where id = $1 returning job_id", [documentId])).rows[0];
+      return doc ? { jobId: doc.job_id, paths } : null;
+    });
+    if (!out) return { error: "Drawing not found, or you don't have permission to delete it." };
+    const { getFileStore } = await import("../storage");
+    await getFileStore().remove(out.paths).catch(() => {});
+    jobId = out.jobId;
+    return { ok: true };
+  });
+  if (res.error || !jobId) return res;
+  redirect(`/office/jobs/${jobId}/documents?deleted=1`);
 }
 
 const docSchema = z.object({
@@ -57,7 +79,7 @@ const docSchema = z.object({
 });
 
 export async function updateDocumentAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const parsed = docSchema.safeParse({
     documentId: str(f, "documentId"), docNumber: str(f, "docNumber"), title: str(f, "title"),
     description: str(f, "description"), areaIds: strs(f, "areaIds"),

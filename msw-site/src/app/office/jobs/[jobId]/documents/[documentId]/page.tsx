@@ -5,7 +5,7 @@ import { requireStaff } from "@/server/auth/viewer";
 import { getOfficeDocument } from "@/server/queries/office";
 import { Card, SectionTitle } from "@/components/ui/card";
 import { Badge, RevisionStatusBadge } from "@/components/ui/badge";
-import { RevisionActions } from "@/components/office/revision-actions";
+import { DeleteDocumentButton, RevisionActions } from "@/components/office/revision-actions";
 import { nextRevision } from "@/lib/drawing-name";
 import { DocumentUploadForm } from "@/components/office/document-upload-form";
 import { DocumentDetailsForm } from "@/components/office/document-details-form";
@@ -31,7 +31,10 @@ export default async function OfficeDocumentPage({ params }: { params: Promise<{
           <h2 className="text-2xl font-semibold tracking-tight">{doc.title}</h2>
           <p className="text-sm text-muted">{doc.areas.length ? `Applies to ${doc.areas.map((a) => a.name).join(", ")}` : "Applies to the whole job"}</p>
         </div>
-        {current ? <Badge tone="ok" dot className="text-sm">Rev {current.revision} is current on site</Badge> : <Badge tone="danger" dot className="text-sm">No revision issued to site</Badge>}
+        <div className="flex flex-wrap items-center gap-3">
+          {current ? <Badge tone="ok" dot className="text-sm">Rev {current.revision} is current on site</Badge> : <Badge tone="danger" dot className="text-sm">No revision issued to site</Badge>}
+          {viewer.isAdmin && <DeleteDocumentButton documentId={doc.id} label={doc.doc_number} />}
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
@@ -55,7 +58,7 @@ export default async function OfficeDocumentPage({ params }: { params: Promise<{
                       {r.withdrawn_at && ` · Withdrawn ${formatDate(r.withdrawn_at)}`}
                     </p>
                   </div>
-                  <RevisionActions revisionId={r.id} status={r.status} hasCurrent={Boolean(current)} />
+                  <RevisionActions revisionId={r.id} status={r.status} hasCurrent={Boolean(current)} canEdit={viewer.isAdmin} />
                 </div>
               ))}
             </Card>
@@ -86,7 +89,7 @@ export default async function OfficeDocumentPage({ params }: { params: Promise<{
             </section>
           )}
         </div>
-        <aside className="grid content-start gap-6">
+        {viewer.isAdmin ? <aside className="grid content-start gap-6">
           <section>
             <SectionTitle>Upload new revision</SectionTitle>
             <Card className="p-5"><DocumentUploadForm jobId={jobId} areas={[]} documentId={doc.id} suggestedRevision={nextRevision(doc.revisions[0]?.revision)} /></Card>
@@ -95,7 +98,9 @@ export default async function OfficeDocumentPage({ params }: { params: Promise<{
             <SectionTitle>Details &amp; areas</SectionTitle>
             <Card className="p-5"><DocumentDetailsForm doc={doc} jobAreas={jobAreas} /></Card>
           </section>
-        </aside>
+        </aside> : (
+          <aside><Card className="p-5 text-[14px] text-muted">Only an MSW administrator can upload, issue or delete drawings.</Card></aside>
+        )}
       </div>
     </div>
   );

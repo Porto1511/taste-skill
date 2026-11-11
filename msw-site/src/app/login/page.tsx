@@ -61,7 +61,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               </p>
             </div>
 
-            {config.isDemo && (
+            {config.quickSignIn && (
               <details className="group mt-8 rounded-[1.25rem] bg-card ring-1 ring-line shadow-[var(--shadow-card)]">
                 <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 text-[14px] font-semibold text-ink">
                   <span className="flex items-center gap-2"><UsersThree className="size-5 text-muted" /> Try it as someone else</span>

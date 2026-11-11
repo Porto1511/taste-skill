@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { requireStaff } from "../auth/viewer";
+import { requireAdmin } from "../auth/viewer";
 import { withUser } from "../db";
 import { fieldErrors, jobInput } from "../validation";
 import { attempt, str } from "./helpers";
@@ -29,7 +29,7 @@ function values(j: z.infer<typeof jobInput>) {
 }
 
 export async function createJobAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const parsed = readJob(f);
   if (!parsed.success) return { error: "Check the highlighted fields.", fieldErrors: fieldErrors(parsed.error) };
   let id = "";
@@ -49,7 +49,7 @@ export async function createJobAction(_p: ActionState, f: FormData): Promise<Act
 }
 
 export async function updateJobAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const jobId = z.string().uuid().parse(str(f, "jobId"));
   const parsed = readJob(f);
   if (!parsed.success) return { error: "Check the highlighted fields.", fieldErrors: fieldErrors(parsed.error) };
@@ -72,7 +72,7 @@ const areaSchema = z.object({
 });
 
 export async function addAreaAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const parsed = areaSchema.safeParse({ jobId: str(f, "jobId"), name: str(f, "name"), kind: str(f, "kind") ?? "floor" });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   return attempt("areas.add", async () => {
@@ -89,7 +89,7 @@ export async function addAreaAction(_p: ActionState, f: FormData): Promise<Actio
 }
 
 export async function renameAreaAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const id = z.string().uuid().parse(str(f, "areaId"));
   const name = z.string().trim().min(1).max(80).safeParse(str(f, "name"));
   if (!name.success) return { error: "Enter a name." };
@@ -101,7 +101,7 @@ export async function renameAreaAction(_p: ActionState, f: FormData): Promise<Ac
 }
 
 export async function deleteAreaAction(_p: ActionState, f: FormData): Promise<ActionState> {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const id = z.string().uuid().parse(str(f, "areaId"));
   return attempt("areas.delete", async () => {
     const n = await withUser(viewer.id, async (tx) => (await tx.query("delete from job_areas where id = $1", [id])).rowCount);
@@ -112,7 +112,7 @@ export async function deleteAreaAction(_p: ActionState, f: FormData): Promise<Ac
 }
 
 export async function moveAreaAction(f: FormData) {
-  const viewer = await requireStaff();
+  const viewer = await requireAdmin();
   const id = z.string().uuid().parse(str(f, "areaId"));
   const dir = str(f, "dir") === "up" ? -1 : 1;
   await withUser(viewer.id, async (tx) => {

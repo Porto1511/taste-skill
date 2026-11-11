@@ -35,7 +35,7 @@ export async function signInAction(_prev: ActionState, form: FormData): Promise<
 
 /** Demo mode only: one-tap sign-in for the listed demonstration accounts. */
 export async function demoSignInAction(form: FormData) {
-  if (!config.isDemo) throw new Error("Demo sign-in is disabled");
+  if (!config.quickSignIn) redirect("/login?error=" + encodeURIComponent("Quick sign-in is switched off. Use your email and password."));
   const email = String(form.get("email") ?? "");
   if (!email.endsWith(".example")) throw new Error("Not a demo account");
   const result = await signIn(email, DEMO_PASSWORD);

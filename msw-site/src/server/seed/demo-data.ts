@@ -52,7 +52,7 @@ const emailDomain: Record<CompanyKey, string> = {
 
 export const demoUsers: DemoUser[] = [
   { key: "claire", name: "Damian Pendleton", company: "msw", role: "admin", title: "Contracts Manager", phone: "07700 900101" },
-  { key: "richard", name: "Richard Hale", company: "msw", role: "admin", title: "Operations Director", phone: "07700 900102" },
+  { key: "richard", name: "Richard Hale", company: "msw", role: "office", title: "Operations Director", phone: "07700 900102" },
   { key: "sam", name: "Alan Stokoe", company: "msw", role: "office", title: "Office", phone: "07700 900103" },
   { key: "pete", name: "Pete", company: "msw", role: "office", title: "Quantity Surveyor", phone: "07700 900107" },
   { key: "gareth", name: "Gareth Evans", company: "msw", role: "operative", title: "Safety Netting Supervisor", phone: "07700 900104" },

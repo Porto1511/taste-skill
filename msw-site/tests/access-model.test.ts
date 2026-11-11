@@ -144,7 +144,7 @@ describe("document approval status", () => {
   });
 
   it("approving a new revision supersedes the old one and notifies only users who can see it", async () => {
-    await asUser(db, "sam").query("select public.approve_revision($1)", [ids.rev("bm-dk3", "C02")]);
+    await asUser(db, "claire").query("select public.approve_revision($1)", [ids.rev("bm-dk3", "C02")]);
     const statuses = await system(db)<{ revision: string; status: string }>(
       "select revision, status from document_revisions where document_id = $1 order by revision",
       [ids.doc("bm-dk3")],
@@ -172,6 +172,30 @@ describe("document approval status", () => {
         [ids.job("bm")],
       ),
     ).rejects.toMatchObject({ code: "42501" });
+  });
+});
+
+describe("only the administrator manages jobs and drawings", () => {
+  it("office (non-admin) staff can't create jobs, upload, approve, withdraw or delete drawings", async () => {
+    const sam = asUser(db, "sam");
+    await expect(sam.query("insert into jobs (job_number, name, site_address) values ('X-9', 'Fake job', 'Somewhere')")).rejects.toMatchObject({ code: "42501" });
+    await expect(sam.query("update jobs set name = 'Renamed' where id = $1 returning id", [ids.job("bm")])).resolves.toHaveLength(0);
+    await expect(sam.query("insert into documents (job_id, kind, doc_number, title) values ($1, 'drawing', 'X-2', 'Fake')", [ids.job("bm")])).rejects.toMatchObject({ code: "42501" });
+    await expect(sam.query("select public.approve_revision($1)", [ids.rev("bm-dk4", "P01")])).rejects.toMatchObject({ code: "42501" });
+    await expect(sam.query("select public.withdraw_revision($1)", [ids.rev("bm-dk1", "C02")])).rejects.toMatchObject({ code: "42501" });
+    await expect(sam.query("delete from documents where id = $1 returning id", [ids.doc("bm-dk1")])).resolves.toHaveLength(0);
+    await expect(sam.query("delete from document_revisions where id = $1 returning id", [ids.rev("bm-dk1", "C01")])).resolves.toHaveLength(0);
+  });
+
+  it("the administrator can delete an old revision (not the one on site) and a whole drawing; both are logged", async () => {
+    const claire = asUser(db, "claire");
+    expect(await claire.query("delete from document_revisions where id = $1 returning id", [ids.rev("bm-dk1", "C02")])).toHaveLength(0); // on site
+    expect(await claire.query("delete from document_revisions where id = $1 returning id", [ids.rev("bm-dk1", "C01")])).toHaveLength(1); // superseded
+    expect(await claire.query("delete from documents where id = $1 returning id", [ids.doc("bm-dk1")])).toHaveLength(1);
+    expect(await system(db)("select 1 from document_revisions where document_id = $1", [ids.doc("bm-dk1")])).toHaveLength(0);
+    const log = await system(db)<{ action: string }>("select action from activity_log where entity_id = $1 order by created_at", [ids.doc("bm-dk1")]);
+    expect(log.map((l) => l.action)).toEqual(expect.arrayContaining(["revision.deleted", "document.deleted"]));
+    expect(await asUser(db, "john").query("select id from documents where id = $1", [ids.doc("bm-dk1")])).toHaveLength(0);
   });
 });
 
