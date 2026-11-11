@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { SquaresFour, Buildings, WarningCircle, UsersThree, ClockCounterClockwise, Bell, Signature, ClockClockwise, Timer, Truck, ListChecks } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 
-export function OfficeNav({ openReports, urgent, unread }: { openReports: number; urgent: number; unread: number }) {
+/** `vertical`: always a stacked list (the phone drop-down). Otherwise the desktop side rail. */
+export function OfficeNav({ openReports, urgent, unread, vertical = false }: { openReports: number; urgent: number; unread: number; vertical?: boolean }) {
   const path = usePathname();
   const groups = [
     { title: "Overview", items: [
@@ -27,16 +28,16 @@ export function OfficeNav({ openReports, urgent, unread }: { openReports: number
     ] },
   ];
   return (
-    <nav aria-label="Office" className="flex gap-1 overflow-x-auto px-3 pb-3 lg:block lg:overflow-visible lg:pb-0">
+    <nav aria-label="Office" className={cn("block px-3", vertical ? "pb-1" : "pb-0")}>
       {groups.map((g) => (
-        <div key={g.title} className="contents lg:mb-5 lg:block">
-          <p className="hidden px-4 pb-1.5 text-[12px] font-medium uppercase tracking-[0.16em] text-white/70 lg:block">{g.title}</p>
+        <div key={g.title} className="mb-4 block last:mb-0">
+          <p className="px-4 pb-1.5 text-[12px] font-medium uppercase tracking-[0.16em] text-white/70">{g.title}</p>
           {g.items.map(({ href, label, icon: Icon, exact, count, alert }) => {
             const active = exact ? path === href : path === href || path.startsWith(`${href}/`);
             return (
               <Link key={href} href={href} aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex shrink-0 items-center gap-3 rounded-full px-3.5 py-2.5 text-[15px] font-medium transition-[background-color,color] duration-300 ease-[var(--ease-out-soft)] lg:my-0.5",
+                  "relative my-0.5 flex min-h-11 items-center gap-3 rounded-full px-3.5 py-2.5 text-[15px] font-medium transition-[background-color,color] duration-300 ease-[var(--ease-out-soft)]",
                   active ? "bg-white/[0.1] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.1)]" : "text-white/75 hover:bg-white/[0.05] hover:text-white",
                 )}>
                 <Icon className={cn("size-5", active ? "text-white" : "text-white/60")} weight={active ? "fill" : "light"} />

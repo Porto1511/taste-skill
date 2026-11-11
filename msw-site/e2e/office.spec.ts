@@ -135,4 +135,18 @@ test.describe("office workflows", () => {
     expect((await page.request.get("/office/qs")).status()).toBe(404);
     expect((await page.request.get(href!)).status()).toBe(404);
   });
+
+  test.describe("on a phone", () => {
+    test.use({ viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true });
+    test("the office menu is a drop-down with every page and a working Sign out", async ({ page }) => {
+      await signIn(page, "pete@msw.example");
+      await page.getByRole("button", { name: /Menu/ }).click();
+      await page.getByRole("link", { name: "QS check" }).click();
+      await expect(page).toHaveURL(/\/office\/qs/);
+      await expect(page.locator("#office-menu")).toHaveCount(0); // closes after navigating
+      await page.getByRole("button", { name: /Menu/ }).click();
+      await page.getByRole("button", { name: "Sign out" }).click();
+      await expect(page).toHaveURL(/\/login/);
+    });
+  });
 });

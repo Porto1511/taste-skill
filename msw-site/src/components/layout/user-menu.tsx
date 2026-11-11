@@ -20,7 +20,7 @@ export function UserMenu({ viewer, tone = "dark", align = "right", showSwitch = 
       <div
         className={cn(
           "absolute z-40 w-64 rounded-2xl border border-line bg-card p-2 text-ink shadow-[var(--shadow-lift)]",
-          align === "right" ? "right-0 top-12" : "bottom-12 left-0",
+          align === "right" ? "right-0 top-12" : "bottom-14 -left-1",
         )}
       >
         <div className="px-3 py-2">
