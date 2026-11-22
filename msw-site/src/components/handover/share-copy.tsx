@@ -7,6 +7,21 @@ import { PaperPlaneTilt, DownloadSimple } from "@phosphor-icons/react";
  * Send the signed PDF to the client from the phone (email, WhatsApp…) using
  * the phone's share sheet.  Automatic email from the server is a later setup.
  */
+/** Send a PDF from this device: the share sheet on phones; on a computer, download it and open an email to `email`. */
+export async function sendPdf(url: string, fileName: string, title: string, email?: string | null) {
+  const blob = await (await fetch(url)).blob();
+  const file = new File([blob], fileName, { type: "application/pdf" });
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title, text: `${title}${email ? ` — for ${email}` : ""}` });
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+  if (email) window.location.href = `mailto:${email}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent("Please find the attached.")}`;
+}
+
 export function ShareCopy({ url, fileName, title, email, who = "client" }: { url: string; fileName: string; title: string; email?: string | null; who?: string }) {
   const [state, setState] = useState<"idle" | "busy" | "error">("idle");
   async function share() {

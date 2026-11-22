@@ -84,7 +84,7 @@ export async function getDaywork(viewer: Viewer, id: string): Promise<DayworkDet
 // Delivery notes
 // ---------------------------------------------------------------------------
 export interface DeliverySummary {
-  id: string; job_id: string; job_number: string; job_name: string; delivered_by: string; vehicle_reg: string | null;
+  id: string; job_id: string | null; job_number: string; job_name: string | null; delivered_by: string; vehicle_reg: string | null;
   receiver_name: string; receiver_company: string; captured_by_name: string; captured_by_company: string; signed_at: string;
   item_count: number; first_item: string | null; receiver_email: string | null; receiver_position: string | null;
 }

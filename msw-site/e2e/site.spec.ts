@@ -162,13 +162,19 @@ test.describe("operative mobile experience", () => {
     await expect(page.getByText("Mark Jones")).toBeVisible();
   });
 
-  test("deliveries are for MSW's own lads: any live job from the Deliveries button; subcontractors don't get them", async ({ page }) => {
+  test("deliveries are for MSW's own lads: job typed in from the Deliveries button; subcontractors don't get them", async ({ page }) => {
     await signIn(page, "chris.dawson@msw.example"); // MSW, not allocated to the British Museum job
     await page.getByRole("link", { name: "Deliveries" }).click();
     await page.getByRole("link", { name: /New delivery/ }).click();
-    await expect(page.getByRole("heading", { name: "Which job?" })).toBeVisible();
-    await page.getByRole("link", { name: /British Museum/ }).click();
-    await expect(page.getByText("What's been delivered?")).toBeVisible();
+    // Typed in, not picked: a job number we know fills in the address…
+    await page.getByLabel("Job number").fill("MSW-2611");
+    await expect(page.getByLabel("Delivery address")).toHaveValue(/Great Russell Street/);
+    // …and one we don't is fine too.
+    await page.getByLabel("Job number").fill("NEW-0101");
+    await page.getByLabel("Delivery address").fill("Plot 4, Station Road, Derby");
+    await page.getByLabel("Item 1").fill("Edge trim 150 mm x 3 m");
+    await page.getByRole("button", { name: /Next: driver signs/ }).click();
+    await expect(page.getByText("NEW-0101").first()).toBeVisible();
     await signOut(page);
 
     await signIn(page, "john.smith@derbydecking.example");

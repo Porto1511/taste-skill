@@ -11,10 +11,21 @@ type Item = { description: string; quantity: string };
 type Receiver = { name: string; position: string; company: string; email: string };
 export const DELIVERY_DECLARATION = "I confirm the goods listed above have been received, subject to any notes recorded.";
 
-export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
-  jobId: string; job: { number: string; name: string; address: string }; me: { name: string }; defaultReceiver: Receiver;
+type Job = { jobId: string | null; number: string; name: string; address: string };
+export type KnownJob = { id: string; job_number: string; name: string; address: string; main_contractor: string | null; site_contact_name: string | null };
+
+/** Delivery note. The job is typed in (it may not be set up yet); a known job number fills in the rest. */
+export function DeliveryForm({ defaultJob, knownJobs, me, defaultReceiver }: {
+  defaultJob: Job; knownJobs: KnownJob[]; me: { name: string }; defaultReceiver: Receiver;
 }) {
   const router = useRouter();
+  const [job, setJob] = useState<Job>(defaultJob);
+  const onJobNumber = (number: string) => {
+    const known = knownJobs.find((k) => k.job_number.toLowerCase() === number.trim().toLowerCase());
+    if (!known) return setJob((j) => ({ ...j, number, jobId: null }));
+    setJob({ jobId: known.id, number: known.job_number, name: known.name, address: known.address });
+    setReceiver((r) => ({ ...r, name: r.name || known.site_contact_name || "", company: r.company || (known.main_contractor ?? "").replace(/ \(fictional\)$/, "") }));
+  };
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [items, setItems] = useState<Item[]>([{ description: "", quantity: "" }]);
   const [deliveredBy, setDeliveredBy] = useState(me.name);
@@ -42,7 +53,10 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
     const sig = await receiverPad.current.toBlob();
     if (!sig || !driverSig) return setError("A signature could not be captured. Please try again.");
     const fd = new FormData();
-    fd.set("jobId", jobId);
+    if (job.jobId) fd.set("jobId", job.jobId);
+    fd.set("jobNumber", job.number);
+    fd.set("jobName", job.name);
+    fd.set("jobAddress", job.address);
     fd.set("items", JSON.stringify(filled));
     fd.set("deliveredBy", deliveredBy);
     fd.set("vehicleReg", vehicleReg);
@@ -69,7 +83,7 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
   const summary = (
     <div className="grid gap-2 rounded-2xl border border-line bg-card p-4 text-[14px]">
       <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-muted">Delivery note · {job.number}</p>
-      <p className="font-semibold">{job.name}</p>
+      {job.name && <p className="font-semibold">{job.name}</p>}
       <p className="text-[13px] text-muted">{job.address}</p>
       <ul className="grid gap-1 border-t border-line pt-2">
         {filled.map((it, i) => <li key={i} className="flex justify-between gap-3"><span>{it.description}</span><span className="tabular font-semibold">{it.quantity}</span></li>)}
@@ -94,10 +108,17 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
 
       {step === 1 && (
         <>
-          <div className="rounded-2xl border border-line bg-card p-4 text-[14px]">
-            <p className="font-mono text-[12px] text-muted">{job.number}</p>
-            <p className="font-semibold">{job.name}</p>
-            <p className="text-[13px] text-muted">{job.address}</p>
+          <div className="grid gap-3 rounded-2xl bg-card p-4 shadow-[var(--shadow-card)] ring-1 ring-line">
+            <Field label="Job number" htmlFor="jobNumber" hint={job.jobId ? "Matched to a job we already have — details filled in." : undefined}>
+              <Input id="jobNumber" value={job.number} onChange={(e) => onJobNumber(e.target.value)} list="known-jobs" autoComplete="off" className="font-mono uppercase" maxLength={40} placeholder="e.g. MSW-2611" />
+              <datalist id="known-jobs">{knownJobs.map((k) => <option key={k.id} value={k.job_number}>{k.name}</option>)}</datalist>
+            </Field>
+            <Field label="Site / job name" htmlFor="jobName" optional>
+              <Input id="jobName" value={job.name} onChange={(e) => setJob({ ...job, name: e.target.value })} maxLength={160} />
+            </Field>
+            <Field label="Delivery address" htmlFor="jobAddress">
+              <Textarea id="jobAddress" rows={2} className="min-h-0" value={job.address} onChange={(e) => setJob({ ...job, address: e.target.value })} maxLength={300} />
+            </Field>
           </div>
           <div className="grid gap-2">
             <p className="text-sm font-semibold">What&apos;s been delivered?</p>
@@ -124,6 +145,8 @@ export function DeliveryForm({ jobId, job, me, defaultReceiver }: {
           </Field>
           {error && <Alert>{error}</Alert>}
           <button type="button" onClick={() => {
+            if (!job.number.trim()) return setError("Enter the job number.");
+            if (job.address.trim().length < 3) return setError("Enter the delivery address.");
             if (!filled.length) return setError("Add what's been delivered.");
             if (deliveredBy.trim().length < 2) return setError("Who delivered it?");
             goTo(2);

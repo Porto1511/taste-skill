@@ -178,7 +178,10 @@ export { DAYWORK_DECLARATION };
 // Delivery notes
 // ---------------------------------------------------------------------------
 export const deliveryInput = z.object({
-  jobId: z.string().uuid(),
+  jobId: z.string().optional().transform((v) => (v ? v : null)).pipe(z.string().uuid().nullable()),
+  jobNumber: z.string().trim().min(1, "Enter the job number").max(40),
+  jobName: optText(160),
+  jobAddress: z.string().trim().min(3, "Enter the delivery address").max(300),
   items: z.array(z.object({
     description: z.string().trim().min(1, "Say what was delivered").max(300),
     quantity: z.string().trim().max(40).default(""),
@@ -199,21 +202,23 @@ export async function createDelivery(viewer: Viewer, input: z.infer<typeof deliv
   return withCleanup((track) =>
     withUser(viewer.id, async (tx) => {
       const id = randomUUID();
-      const receiverPath = storagePaths.signature(input.jobId, randomUUID());
-      const driverPath = storagePaths.signature(input.jobId, randomUUID());
+      const receiverPath = storagePaths.deliverySignature(id, randomUUID());
+      const driverPath = storagePaths.deliverySignature(id, randomUUID());
       await tx.query(
-        `insert into deliveries (id, job_id, items, delivered_by, vehicle_reg, notes, receiver_name, receiver_position, receiver_company,
-           receiver_email, receiver_signature_path, driver_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id)
-         values ($1,$2,$3::jsonb,$4,$5,$6,$7,$8,$9,$10,$11,$12, auth.uid(), '-', '-', (select company_id from profiles where id = auth.uid()))`,
-        [id, input.jobId, JSON.stringify(input.items), input.deliveredBy, input.vehicleReg, input.notes, input.receiverName,
-          input.receiverPosition, input.receiverCompany, input.receiverEmail, receiverPath, driverPath],
+        `insert into deliveries (id, job_id, job_number, job_name, job_address, items, delivered_by, vehicle_reg, notes, receiver_name, receiver_position,
+           receiver_company, receiver_email, receiver_signature_path, driver_signature_path, captured_by, captured_by_name, captured_by_company, captured_by_company_id)
+         values ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,$10,$11,$12,$13,$14,$15, auth.uid(), '-', '-', (select company_id from profiles where id = auth.uid()))`,
+        [id, input.jobId, input.jobNumber, input.jobName, input.jobAddress, JSON.stringify(input.items), input.deliveredBy, input.vehicleReg,
+          input.notes, input.receiverName, input.receiverPosition, input.receiverCompany, input.receiverEmail, receiverPath, driverPath],
       );
+      // Read back separately: RETURNING is checked before the new row is visible to the read policy.
+      const { rows: [saved] } = await tx.query<{ job_id: string | null }>("select job_id from deliveries where id = $1", [id]);
       await store.put(receiverPath, receiverSig, "image/png");
       track(receiverPath);
       await store.put(driverPath, driverSig, "image/png");
       track(driverPath);
-      log.info("delivery.signed", { deliveryId: id, jobId: input.jobId, userId: viewer.id });
-      return { id, jobId: input.jobId };
+      log.info("delivery.signed", { deliveryId: id, jobId: saved.job_id, userId: viewer.id });
+      return { id, jobId: saved.job_id };
     }),
   );
 }

@@ -153,6 +153,27 @@ test.describe("office workflows", () => {
     await expect(page.getByRole("link").filter({ hasText: "MSW-2611-DK-104" })).toHaveCount(0);
   });
 
+  test("certificates: the office uploads for a subcontractor; that subcontractor sees only their own", async ({ page }) => {
+    const pdf = Buffer.from("%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
+    await signIn(page, "damian.pendleton@msw.example");
+    await page.getByRole("link", { name: "Certificates" }).click();
+    const sos = page.locator("section").filter({ has: page.getByRole("heading", { name: /^SOS/ }) });
+    await sos.getByPlaceholder(/Name, e\.g\./).fill("SOS net certificates 2026");
+    await sos.getByLabel("Choose a PDF for SOS").setInputFiles({ name: "sos-nets.pdf", mimeType: "application/pdf", buffer: pdf });
+    await sos.getByRole("button", { name: "Upload" }).click();
+    await expect(sos.getByText("SOS net certificates 2026")).toBeVisible();
+    await signOut(page);
+
+    await signIn(page, "liam.turner@sos.example");
+    await page.goto("/certificates");
+    await expect(page.getByText("SOS net certificates 2026")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Derby Decking/ })).toHaveCount(0);
+    await signOut(page);
+    await signIn(page, "john.smith@derbydecking.example");
+    await page.goto("/certificates");
+    await expect(page.getByText("SOS net certificates 2026")).toHaveCount(0);
+  });
+
   test.describe("on a phone", () => {
     test.use({ viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true });
     test("the office menu is a drop-down with every page and a working Sign out", async ({ page }) => {
@@ -164,6 +185,16 @@ test.describe("office workflows", () => {
       await page.getByRole("button", { name: /Menu/ }).click();
       await page.getByRole("button", { name: "Sign out" }).click();
       await expect(page).toHaveURL(/\/login/);
+    });
+
+    test("a job's sections are a drop-down and the Sign-offs page fits the screen", async ({ page }) => {
+      await signIn(page, "damian.pendleton@msw.example");
+      await page.goto(`/office/jobs/${BM}`);
+      await page.getByText("Section:").click();
+      await page.getByRole("link", { name: "Sign-offs" }).click();
+      await expect(page).toHaveURL(/\/handovers$/);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow).toBeLessThanOrEqual(1);
     });
   });
 });

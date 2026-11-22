@@ -24,6 +24,10 @@ export default async function AccountPage() {
         </dl>
         <p className="mt-4 text-[13px] text-muted">Your details and job access are managed by the MSW office.</p>
       </Card>
+      <Link href="/certificates" className="flex min-h-14 items-center justify-between rounded-[var(--radius-card)] bg-card px-4 font-semibold shadow-[var(--shadow-card)] ring-1 ring-line">
+        <span>Company certificates<span className="block text-[13px] font-normal text-muted">Upload certs, print or send them to a client</span></span>
+        <span aria-hidden>→</span>
+      </Link>
       <section>
         <SectionTitle>Change password</SectionTitle>
         <Card className="p-4"><PasswordForm needsCurrent={config.mode === "demo"} /></Card>

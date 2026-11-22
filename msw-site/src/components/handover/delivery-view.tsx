@@ -9,7 +9,7 @@ export function DeliveryView({ d }: { d: DeliveryDetail }) {
       <div className="rounded-2xl border border-line bg-card p-4 shadow-[var(--shadow-card)]">
         <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-ok">Delivery note · signed by the receiver</p>
         <h1 className="mt-1 text-[20px] font-semibold leading-snug">{d.item_count} item{d.item_count === 1 ? "" : "s"} delivered to {d.job_number}</h1>
-        <p className="mt-1 text-[13px] text-muted">{d.job_name} · {d.site_address}{d.postcode ? `, ${d.postcode}` : ""}</p>
+        <p className="mt-1 text-[13px] text-muted">{d.job_name ? `${d.job_name} · ` : ""}{d.site_address}{d.postcode ? `, ${d.postcode}` : ""}</p>
         <div className="mt-4"><ShareCopy url={pdf} fileName={`MSW_delivery_${d.job_number}_${d.signed_at.slice(0, 10)}.pdf`} title={`MSW delivery note — ${d.job_number}`} email={d.receiver_email} who="receiver" /></div>
       </div>
       <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card">

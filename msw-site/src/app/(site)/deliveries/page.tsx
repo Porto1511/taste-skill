@@ -33,7 +33,7 @@ export default async function DeliveriesPage() {
                 <span className="grid size-11 shrink-0 place-items-center rounded-full bg-info-soft text-info"><Truck className="size-5" weight="bold" /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-mono text-[12px] text-muted">{d.job_number}</span>
-                  <span className="block truncate font-semibold">{d.job_name}</span>
+                  <span className="block truncate font-semibold">{d.job_name ?? "Delivery"}</span>
                   <span className="block truncate text-[13px] text-muted">{d.first_item}{d.item_count > 1 ? ` + ${d.item_count - 1} more` : ""} · {formatDateTime(d.signed_at)}</span>
                 </span>
                 <CaretRight className="size-4 text-muted" weight="bold" />

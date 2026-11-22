@@ -233,8 +233,8 @@ describe("daywork sheets and delivery notes", () => {
     mswName: "Mark Jones", description: "Standing time waiting for crane", materials: null, workComplete: true,
     clientName: "Martin Doyle", clientCompany: "Kingsgate Construction Ltd", clientPosition: null, clientEmail: null,
   });
-  const delivery = (job = ids.job("bm")) => ({
-    jobId: job, items: [{ description: "Deck sheets MD60", quantity: "40" }], deliveredBy: "Mark Jones", vehicleReg: "MS21 NET", notes: null,
+  const delivery = (job: string | null = ids.job("bm"), jobNumber = "MSW-2611", jobAddress = "Great Russell Street, London") => ({
+    jobId: job, jobNumber, jobName: null, jobAddress, items: [{ description: "Deck sheets MD60", quantity: "40" }], deliveredBy: "Mark Jones", vehicleReg: "MS21 NET", notes: null,
     receiverName: "Martin Doyle", receiverCompany: "Kingsgate Construction Ltd", receiverPosition: null, receiverEmail: null,
   });
   const two = async () => ({ name: "a.png", bytes: await signature() });
@@ -258,7 +258,14 @@ describe("daywork sheets and delivery notes", () => {
     expect(await asUser(db, "chris").query("select id from documents where job_id = $1", [ids.job("bm")])).toHaveLength(0);
     // Subcontractors (even on the job) can't raise one; nor to a job that isn't live.
     await expect(createDelivery(viewer("mark"), delivery(), { receiver: await two(), driver: await two() })).rejects.toMatchObject({ code: "42501" });
-    await expect(createDelivery(msw("gareth"), delivery(ids.job("wharf")), { receiver: await two(), driver: await two() })).rejects.toMatchObject({ code: "42501" });
+    // A job that isn't in the system yet: typed in, still recorded.
+    const typed = await createDelivery(msw("chris"), delivery(null, "NEW-0099", "Plot 4, Station Road, Derby DE1 2AB"), { receiver: await two(), driver: await two() });
+    const [t] = await system(db)<{ job_id: string | null; job_number: string; job_address: string }>("select job_id, job_number, job_address from deliveries where id = $1", [typed.id]);
+    expect(t).toEqual({ job_id: null, job_number: "NEW-0099", job_address: "Plot 4, Station Road, Derby DE1 2AB" });
+    // A typed number that matches a job we have gets linked to it.
+    const matched = await createDelivery(msw("chris"), delivery(null, "msw-2611", "Site gate B"), { receiver: await two(), driver: await two() });
+    const [m] = await system(db)<{ job_id: string; job_address: string }>("select job_id, job_address from deliveries where id = $1", [matched.id]);
+    expect(m).toEqual({ job_id: ids.job("bm"), job_address: "Site gate B" });
     const options = await asUser(db, "chris").query<{ job_number: string }>("select job_number from app.delivery_jobs()");
     expect(options.length).toBeGreaterThan(0);
     expect(await asUser(db, "mark").query("select * from app.delivery_jobs()")).toHaveLength(0);
@@ -280,7 +287,7 @@ describe("daywork sheets and delivery notes", () => {
     expect(await seen("liam", "dayworks")).toBe(1); // their own standing-time sheet
     expect(await seen("ryan", "dayworks")).toBe(0); // same gang, not the person who raised it
     expect(await seen("gareth", "deliveries")).toBe(2); // the demo one and the one raised above
-    expect(await seen("chris", "deliveries")).toBe(1);
+    expect(await seen("chris", "deliveries")).toBe(3);
   });
 
   it("cannot be edited or deleted once signed", async () => {

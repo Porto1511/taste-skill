@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   let items: unknown = [];
   try { items = JSON.parse(String(form.get("items") ?? "[]")); } catch { /* validated below */ }
   const parsed = deliveryInput.safeParse({
-    jobId: form.get("jobId"), items, deliveredBy: form.get("deliveredBy"), vehicleReg: form.get("vehicleReg") || undefined,
+    jobId: form.get("jobId") || undefined, jobNumber: form.get("jobNumber"), jobName: form.get("jobName") || undefined, jobAddress: form.get("jobAddress"), items, deliveredBy: form.get("deliveredBy"), vehicleReg: form.get("vehicleReg") || undefined,
     notes: form.get("notes") || undefined, receiverName: form.get("receiverName"), receiverCompany: form.get("receiverCompany"),
     receiverPosition: form.get("receiverPosition") || undefined, receiverEmail: form.get("receiverEmail") || undefined,
   });

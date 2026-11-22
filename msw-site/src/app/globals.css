@@ -110,6 +110,8 @@
   .stagger > *:nth-child(4) { animation-delay: 120ms; }
   .stagger > *:nth-child(5) { animation-delay: 160ms; }
   .stagger > *:nth-child(n + 6) { animation-delay: 200ms; }
+  /* Grid columns shrink to the screen instead of growing to their widest line (stops pages spilling sideways on phones). */
+  .grid > * { min-width: 0; }
   .tabular { font-variant-numeric: tabular-nums; }
   /* Dark glass: menus, headers, hero panels. */
   .glass-dark {

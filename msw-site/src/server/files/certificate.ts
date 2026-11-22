@@ -293,7 +293,7 @@ export async function buildDeliveryNote(d: DeliveryDetail, signatures: { receive
   const p = pdf.addPage([W, H]);
   letterhead(p, f);
   let y = refTable(p, f, "DELIVERY NOTE", [
-    ["Our Ref No:", d.job_number], ["Contract Title", d.job_name],
+    ["Our Ref No:", d.job_number], ["Contract Title", d.job_name ?? ""],
     ["Delivery Address", `${d.site_address}${d.postcode ? `, ${d.postcode}` : ""}`], ["Customer", d.main_contractor?.replace(/ \(fictional\)$/, "") ?? d.receiver_company],
   ]) - 22;
   const fullW = W - 2 * M;
