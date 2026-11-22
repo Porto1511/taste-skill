@@ -16,9 +16,9 @@ export async function GET(request: Request) {
   if (!viewer?.isStaff) return notFound();
   const f = parseQsParams(Object.fromEntries(new URL(request.url).searchParams), londonToday());
   const d = await qsSummary(viewer, f);
-  const lines = [["Record", "Date", "Job", "Company", "Type", "Name / item", "Trade / quantity", "Hours", "Signed / received by", "Sheet W/C"].join(",")];
+  const lines = [["Record", "Date", "Job", "Company", "Reason / type", "Name / item", "Trade / quantity", "Hours", "Signed / received by", "Sheet W/C"].join(",")];
   for (const l of d.daywork) {
-    lines.push(["Daywork", l.day, l.job_number, l.company, l.kind === "standing" ? "Standing time" : "Extra work", l.person, l.trade, l.hours, l.client_name, l.week_commencing].map(csv).join(","));
+    lines.push(["Daywork", l.day, l.job_number, l.company, l.description, l.person, l.trade, l.hours, l.client_name, l.week_commencing].map(csv).join(","));
   }
   for (const h of d.handovers) {
     lines.push(["Handover", h.signed_at.slice(0, 10), h.job_number, h.company, h.scopes.join(" + "), h.title, "", "", h.signer_name, ""].map(csv).join(","));

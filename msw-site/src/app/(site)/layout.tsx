@@ -22,7 +22,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       </header>
       <DemoStrip />
       <main className="mx-auto max-w-2xl px-4 pt-5">{children}</main>
-      <BottomNav unread={viewer.unreadNotifications} timesheet={viewer.keepsTimesheet} />
+      <BottomNav unread={viewer.unreadNotifications} timesheet={viewer.keepsTimesheet} deliveries={viewer.isMswEmployee} />
     </div>
   );
 }

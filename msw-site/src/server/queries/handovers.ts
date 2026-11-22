@@ -49,7 +49,7 @@ export async function getHandover(viewer: Viewer, id: string): Promise<HandoverD
 // ---------------------------------------------------------------------------
 export interface DayworkSummary {
   id: string; job_id: string; job_number: string; job_name: string; week_commencing: string; description: string;
-  kind: "standing" | "extra"; work_complete: boolean; client_name: string; client_company: string; captured_by_name: string; captured_by_company: string;
+  work_complete: boolean; client_name: string; client_company: string; captured_by_name: string; captured_by_company: string;
   signed_at: string; total_hours: number; people: number;
 }
 export interface DayworkDetail extends DayworkSummary {
@@ -58,7 +58,7 @@ export interface DayworkDetail extends DayworkSummary {
   client_signature_path: string; msw_signature_path: string; msw_signer_name: string | null; main_contractor: string | null; site_address: string;
 }
 
-const dwSummary = `select d.id, d.job_id, j.job_number, j.name as job_name, d.week_commencing, d.kind, d.description, d.work_complete,
+const dwSummary = `select d.id, d.job_id, j.job_number, j.name as job_name, d.week_commencing, d.description, d.work_complete,
   d.client_name, d.client_company, d.captured_by_name, d.captured_by_company, d.signed_at,
   coalesce((select sum((h.value)::numeric) from jsonb_array_elements(d.workers) w, jsonb_each_text(w->'hours') h), 0)::float as total_hours,
   jsonb_array_length(d.workers) as people
@@ -93,10 +93,12 @@ export interface DeliveryDetail extends DeliverySummary {
   receiver_signature_path: string; driver_signature_path: string; site_address: string; postcode: string | null; main_contractor: string | null;
 }
 
-const dlSummary = `select d.id, d.job_id, j.job_number, j.name as job_name, d.delivered_by, d.vehicle_reg, d.receiver_name, d.receiver_company,
+// Job number/name/address come from the delivery itself, so the MSW driver who raised it can
+// see it without access to the job; main contractor only shows where the viewer can see the job.
+const dlSummary = `select d.id, d.job_id, d.job_number, d.job_name, d.delivered_by, d.vehicle_reg, d.receiver_name, d.receiver_company,
   d.captured_by_name, d.captured_by_company, d.signed_at, jsonb_array_length(d.items) as item_count, d.items->0->>'description' as first_item,
   d.receiver_email, d.receiver_position
-  from deliveries d join jobs j on j.id = d.job_id`;
+  from deliveries d`;
 
 export async function listDeliveries(viewer: Viewer, jobId?: string) {
   return withUser(viewer.id, async (tx) =>
@@ -107,8 +109,15 @@ export async function listDeliveries(viewer: Viewer, jobId?: string) {
 export async function getDelivery(viewer: Viewer, id: string): Promise<DeliveryDetail | null> {
   return withUser(viewer.id, async (tx) =>
     (await tx.query<DeliveryDetail>(
-      `select s.*, d.items, d.notes, d.receiver_signature_path, d.driver_signature_path, j.site_address, j.postcode, j.main_contractor
-       from (${dlSummary} where d.id = $1) s join deliveries d on d.id = s.id join jobs j on j.id = s.job_id`, [id],
+      `select s.*, d.items, d.notes, d.receiver_signature_path, d.driver_signature_path, d.job_address as site_address, null::text as postcode, j.main_contractor
+       from (${dlSummary} where d.id = $1) s join deliveries d on d.id = s.id left join jobs j on j.id = s.job_id`, [id],
     )).rows[0] ?? null,
   );
+}
+
+export interface DeliveryJob { id: string; job_number: string; name: string; site_address: string; postcode: string | null; main_contractor: string | null; site_contact_name: string | null }
+
+/** Live jobs an MSW driver can book a delivery to (names and addresses only; empty for anyone else). */
+export async function listDeliveryJobs(viewer: Viewer) {
+  return withUser(viewer.id, async (tx) => (await tx.query<DeliveryJob>("select * from app.delivery_jobs()")).rows);
 }

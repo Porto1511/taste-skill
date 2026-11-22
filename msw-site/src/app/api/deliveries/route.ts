@@ -7,6 +7,7 @@ export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Forbidden" }, { status: 403 });
   const viewer = await getViewer();
   if (!viewer) return Response.json({ error: "Your session has expired. Sign in again." }, { status: 401 });
+  if (!viewer.isMswEmployee) return Response.json({ error: "Delivery notes are recorded by MSW staff only." }, { status: 403 });
   const form = await request.formData();
   let items: unknown = [];
   try { items = JSON.parse(String(form.get("items") ?? "[]")); } catch { /* validated below */ }
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
   if (!receiver || !driver) return Response.json({ error: "Both signatures are needed: driver and receiver." }, { status: 422 });
   try {
     const res = await createDelivery(viewer, parsed.data, { receiver, driver });
-    return Response.json({ id: res.id, href: `/jobs/${res.jobId}/delivery/${res.id}` }, { status: 201 });
+    return Response.json({ id: res.id, href: `/deliveries/${res.id}` }, { status: 201 });
   } catch (err) {
     return jsonError(err, "api.deliveries.create");
   }

@@ -17,25 +17,23 @@ const v = (key: string, isStaff = false): Viewer => ({
 const ALL = { from: "2000-01-01", to: "2100-01-01" };
 
 describe("QS check", () => {
-  it("totals daywork per company, split into standing time and extra work", async () => {
+  it("totals daywork hours per company", async () => {
     const d = await qsSummary(v("claire", true), ALL);
     const byCo = Object.fromEntries(groupDaywork(d.daywork).map((c) => [c.company, c]));
-    expect(byCo["SOS"]).toMatchObject({ standing: 6, extra: 0 });
-    expect(byCo["Derby Decking"]).toMatchObject({ standing: 0, extra: 7 });
+    expect(byCo["SOS"].hours).toBe(6);
+    expect(byCo["Derby Decking"].hours).toBe(7);
+    expect(d.daywork.every((l) => l.description.length > 0)).toBe(true); // the reason travels with every line
     expect(d.handovers.map((h) => h.title)).toContain("Level 2 — deck & studs handover");
     expect(d.issues.length).toBeGreaterThan(0);
-    expect(d).not.toHaveProperty("travel"); // driving is Alan's (timesheets), not the QS's
   });
 
   it("counts daywork hours on the day they were worked", async () => {
-    const [sheet] = await system(db)<{ week_commencing: string }>("select week_commencing::text from dayworks where kind = 'extra'");
+    const [sheet] = await system(db)<{ week_commencing: string }>("select week_commencing::text from dayworks where description like 'Extra edge trim%'");
     const mon = sheet.week_commencing;
     const tue = new Date(`${mon}T12:00:00Z`); tue.setUTCDate(tue.getUTCDate() + 1);
-    const tueIso = tue.toISOString().slice(0, 10);
-    const onlyMon = groupDaywork((await qsSummary(v("claire", true), { from: mon, to: mon })).daywork).find((c) => c.extra > 0);
-    const onlyTue = groupDaywork((await qsSummary(v("claire", true), { from: tueIso, to: tueIso })).daywork).find((c) => c.extra > 0);
-    expect(onlyMon?.extra).toBe(4);
-    expect(onlyTue?.extra).toBe(3);
+    const derby = async (from: string, to: string) => groupDaywork((await qsSummary(v("claire", true), { from, to })).daywork).find((c) => c.company === "Derby Decking");
+    expect((await derby(mon, mon))?.hours).toBe(4);
+    expect((await derby(tue.toISOString().slice(0, 10), tue.toISOString().slice(0, 10)))?.hours).toBe(3);
   });
 
   it("filters by company and job", async () => {
@@ -53,10 +51,6 @@ describe("QS check", () => {
     expect(new Set(paul.issues.map((i) => i.author_name))).toEqual(new Set(["Paul Brown"])); // only his own
     const liam = await qsSummary(v("liam"), ALL);
     expect(new Set(liam.daywork.map((l) => l.company))).toEqual(new Set(["SOS"]));
-  });
-
-  it("daywork must be standing time or extra work", async () => {
-    await expect(system(db)("update dayworks set kind = 'other'")).rejects.toMatchObject({ code: "23514" });
   });
 
   it("date presets and parameters", () => {

@@ -230,7 +230,7 @@ describe("daywork sheets and delivery notes", () => {
   const hours = (tue: number) => ({ mon: 0, tue, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 });
   const daywork = (job = ids.job("bm")) => ({
     jobId: job, weekCommencing: "2026-11-02", workers: [{ name: "Mark Jones", trade: "Decker", hours: hours(2) }],
-    kind: "standing" as const, mswName: "Mark Jones", description: "Standing time waiting for crane", materials: null, workComplete: true,
+    mswName: "Mark Jones", description: "Standing time waiting for crane", materials: null, workComplete: true,
     clientName: "Martin Doyle", clientCompany: "Kingsgate Construction Ltd", clientPosition: null, clientEmail: null,
   });
   const delivery = (job = ids.job("bm")) => ({
@@ -239,14 +239,29 @@ describe("daywork sheets and delivery notes", () => {
   });
   const two = async () => ({ name: "a.png", bytes: await signature() });
 
-  it("anyone on the job can raise them; nobody off the job can", async () => {
+  it("daywork: anyone on the job can raise one, nobody off the job can", async () => {
     const dw = await createDaywork(viewer("mark"), daywork(), { client: await two(), msw: await two() });
-    const dl = await createDelivery(viewer("mark"), delivery(), { receiver: await two(), driver: await two() });
-    const [row] = await system(db)<{ captured_by_name: string }>("select captured_by_name from dayworks where id = $1", [dw.id]);
-    expect(row.captured_by_name).toBe("Mark Jones");
-    expect(dl.id).toBeTruthy();
+    const [row] = await system(db)<{ captured_by_name: string; kind: string | null }>("select captured_by_name, kind from dayworks where id = $1", [dw.id]);
+    expect(row).toEqual({ captured_by_name: "Mark Jones", kind: null }); // one plain daywork sheet
     await expect(createDaywork(viewer("paul"), daywork(), { client: await two(), msw: await two() })).rejects.toMatchObject({ code: "42501" });
-    await expect(createDelivery(viewer("paul"), delivery(), { receiver: await two(), driver: await two() })).rejects.toMatchObject({ code: "42501" });
+  });
+
+  it("deliveries: only MSW's own people, to any live job (allocated or not); never subcontractors", async () => {
+    const msw = (k: string): Viewer => ({ ...viewer(k), isMswEmployee: true, keepsTimesheet: true });
+    const dl = await createDelivery(msw("gareth"), delivery(), { receiver: await two(), driver: await two() }); // allocated to BM
+    const unallocated = await createDelivery(msw("chris"), delivery(), { receiver: await two(), driver: await two() }); // not on BM
+    const [snap] = await system(db)<{ job_number: string; job_name: string }>("select job_number, job_name from deliveries where id = $1", [unallocated.id]);
+    expect(snap).toEqual({ job_number: "MSW-2611", job_name: "British Museum — Western Range Extension" });
+    expect(dl.id).toBeTruthy();
+    // Chris can see his own delivery but still not the job's drawings.
+    expect(await asUser(db, "chris").query("select id from deliveries where id = $1", [unallocated.id])).toHaveLength(1);
+    expect(await asUser(db, "chris").query("select id from documents where job_id = $1", [ids.job("bm")])).toHaveLength(0);
+    // Subcontractors (even on the job) can't raise one; nor to a job that isn't live.
+    await expect(createDelivery(viewer("mark"), delivery(), { receiver: await two(), driver: await two() })).rejects.toMatchObject({ code: "42501" });
+    await expect(createDelivery(msw("gareth"), delivery(ids.job("wharf")), { receiver: await two(), driver: await two() })).rejects.toMatchObject({ code: "42501" });
+    const options = await asUser(db, "chris").query<{ job_number: string }>("select job_number from app.delivery_jobs()");
+    expect(options.length).toBeGreaterThan(0);
+    expect(await asUser(db, "mark").query("select * from app.delivery_jobs()")).toHaveLength(0);
     const office = await asUser(db, "claire").query<{ kind: string }>("select kind from notifications where kind in ('daywork.signed','delivery.signed')");
     expect(new Set(office.map((n) => n.kind))).toEqual(new Set(["daywork.signed", "delivery.signed"]));
   });
@@ -256,14 +271,16 @@ describe("daywork sheets and delivery notes", () => {
     for (const table of ["dayworks", "deliveries"]) {
       expect(await seen("claire", table)).toBeGreaterThanOrEqual(2);
       expect(await seen("paul", table)).toBe(0);
-      // Derby Decking's manager has the report grant: sees Derby Decking's (Mark's) sheet, never SOS's or MSW's.
-      const names = (await asUser(db, "dave").query<{ captured_by_name: string }>(`select captured_by_name from ${table}`)).map((r) => r.captured_by_name);
-      expect(names.sort()).toEqual(table === "dayworks" ? ["John Smith", "Mark Jones"] : ["Mark Jones"]); // Derby Decking staff only
     }
+    // Derby Decking's manager has the report grant: sees Derby Decking's daywork, never SOS's; no deliveries (MSW only).
+    const names = (await asUser(db, "dave").query<{ captured_by_name: string }>("select captured_by_name from dayworks")).map((r) => r.captured_by_name);
+    expect(names.sort()).toEqual(["John Smith", "Mark Jones"]);
+    expect(await seen("dave", "deliveries")).toBe(0);
     expect(await seen("sarah", "dayworks")).toBe(0); // SOS manager without the report grant on this job
     expect(await seen("liam", "dayworks")).toBe(1); // their own standing-time sheet
     expect(await seen("ryan", "dayworks")).toBe(0); // same gang, not the person who raised it
-    expect(await seen("gareth", "deliveries")).toBe(1);
+    expect(await seen("gareth", "deliveries")).toBe(2); // the demo one and the one raised above
+    expect(await seen("chris", "deliveries")).toBe(1);
   });
 
   it("cannot be edited or deleted once signed", async () => {

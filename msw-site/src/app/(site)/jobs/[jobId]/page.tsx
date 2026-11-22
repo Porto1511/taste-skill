@@ -178,7 +178,9 @@ export default async function SiteJobPage({ params }: Props) {
                   <Link href={`/jobs/${job.id}/report?kind=progress`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><TrendUp className="size-5" weight="bold" /> Progress update</Link>
                   <Link href={`/jobs/${job.id}/report?kind=photo`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Camera className="size-5" /> Upload photos</Link>
                   <Link href={`/jobs/${job.id}/daywork`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Timer className="size-5" /> Daywork sheet</Link>
-                  <Link href={`/jobs/${job.id}/delivery`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Truck className="size-5" /> Delivery note</Link>
+                  {viewer.isMswEmployee
+                    ? <Link href={`/deliveries/new?job=${job.id}`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Truck className="size-5" /> Delivery note</Link>
+                    : <span aria-hidden />}
                 </div>
                 <Section title={isManager ? "Your company's reports" : "Your reports"}>
                   {mine.length
@@ -212,7 +214,7 @@ export default async function SiteJobPage({ params }: Props) {
                   <Section title="Delivery notes">
                     <div className={listCls}>
                       {deliveries.map((d) => (
-                        <Link key={d.id} href={`/jobs/${job.id}/delivery/${d.id}`} className="flex items-center gap-3 px-4 py-3">
+                        <Link key={d.id} href={`/deliveries/${d.id}`} className="flex items-center gap-3 px-4 py-3">
                           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-info-soft text-info"><Truck className="size-5" weight="bold" /></span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-semibold leading-snug">{d.first_item}{d.item_count > 1 ? ` + ${d.item_count - 1} more` : ""}</span>

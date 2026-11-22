@@ -4,14 +4,14 @@ import type { Viewer } from "../auth/viewer";
 
 /**
  * QS check: what was signed off on site for a date range — handovers, daywork
- * hours (standing time / extra work) and site issues — to check against
+ * hours and site issues — to check against
  * subcontractor invoices.  Hours and counts only, no rates.
  * Runs as the signed-in user, so database policies still apply.
  */
 export interface QsFilter { from: string; to: string; jobId?: string; companyId?: string }
 
 export interface DayworkLine {
-  daywork_id: string; kind: "standing" | "extra"; job_id: string; job_number: string; job_name: string;
+  daywork_id: string; description: string; job_id: string; job_number: string; job_name: string;
   company_id: string; company: string; week_commencing: string; client_name: string; signed_at: string;
   person: string; trade: string; day: string; hours: number;
 }
@@ -28,7 +28,7 @@ export async function qsSummary(viewer: Viewer, f: QsFilter) {
   return withUser(viewer.id, async (tx) => {
     const args = [f.from, f.to, f.jobId ?? null, f.companyId ?? null];
     const daywork = (await tx.query<DayworkLine>(
-      `select d.id as daywork_id, d.kind, d.job_id, j.job_number, j.name as job_name, d.captured_by_company_id as company_id,
+      `select d.id as daywork_id, d.description, d.job_id, j.job_number, j.name as job_name, d.captured_by_company_id as company_id,
               d.captured_by_company as company, d.week_commencing::text, d.client_name, d.signed_at,
               w->>'name' as person, coalesce(w->>'trade', '') as trade, (d.week_commencing + (o.n - 1)::int)::text as day,
               (w->'hours'->>o.day)::float as hours
@@ -74,12 +74,12 @@ export async function qsFilterOptions(viewer: Viewer) {
   }));
 }
 
-/** Daywork grouped by company, then by sheet, with standing / extra totals. */
+/** Daywork grouped by company, then by sheet, with total hours. */
 export function groupDaywork(lines: DayworkLine[]) {
-  const companies = new Map<string, { company: string; standing: number; extra: number; sheets: Map<string, { line: DayworkLine; hours: number; people: Set<string> }> }>();
+  const companies = new Map<string, { company: string; hours: number; sheets: Map<string, { line: DayworkLine; hours: number; people: Set<string> }> }>();
   for (const l of lines) {
-    const c = companies.get(l.company_id) ?? { company: l.company, standing: 0, extra: 0, sheets: new Map() };
-    c[l.kind] += l.hours;
+    const c = companies.get(l.company_id) ?? { company: l.company, hours: 0, sheets: new Map() };
+    c.hours += l.hours;
     const s = c.sheets.get(l.daywork_id) ?? { line: l, hours: 0, people: new Set<string>() };
     s.hours += l.hours; s.people.add(l.person);
     c.sheets.set(l.daywork_id, s);
@@ -90,7 +90,7 @@ export function groupDaywork(lines: DayworkLine[]) {
 
 export interface QsJobCard {
   id: string; job_number: string; name: string; status: string; main_contractor: string | null;
-  handovers: number; sheets: number; standing: number; extra: number; issues: number; open_issues: number; gangs: string[];
+  handovers: number; sheets: number; hours: number; issues: number; open_issues: number; gangs: string[];
 }
 
 /** One card per job: live jobs always, others only when something was recorded in the dates. */
@@ -105,8 +105,7 @@ export function jobCards(
       ...j,
       handovers: d.handovers.filter((h) => h.job_id === j.id).length,
       sheets: new Set(lines.map((l) => l.daywork_id)).size,
-      standing: lines.filter((l) => l.kind === "standing").reduce((a, l) => a + l.hours, 0),
-      extra: lines.filter((l) => l.kind === "extra").reduce((a, l) => a + l.hours, 0),
+      hours: lines.reduce((a, l) => a + l.hours, 0),
       issues: issues.length,
       open_issues: issues.filter((i) => i.status === "open" || i.status === "in_progress").length,
       gangs: [...new Set([...lines.map((l) => l.company), ...d.handovers.filter((h) => h.job_id === j.id).map((h) => h.company)])],

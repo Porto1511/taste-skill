@@ -123,12 +123,12 @@ test.describe("office workflows", () => {
     await expect(page.getByText(/Sign-offs \(handovers\)/)).toBeVisible();
     await expect(page.getByText(/Site issues ·/)).toBeVisible();
     await expect(page.getByText("MSW driving")).toHaveCount(0); // driving is for timesheet sign-off, not the QS
-    await page.locator("summary").filter({ hasText: "Extra work" }).first().click();
+    await page.locator("summary").filter({ hasText: "Extra edge trim" }).first().click();
     await expect(page.getByRole("cell", { name: "John Smith" })).toBeVisible();
     const href = await page.getByRole("link", { name: /Export CSV/ }).getAttribute("href");
     const res = await page.request.get(href!);
     expect(res.headers()["content-type"]).toContain("text/csv");
-    expect(await res.text()).toContain("Extra work");
+    expect(await res.text()).toContain("Extra edge trim");
     // Not for site users.
     await signOut(page);
     await signIn(page, "john.smith@derbydecking.example");

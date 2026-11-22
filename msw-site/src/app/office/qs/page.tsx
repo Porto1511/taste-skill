@@ -26,8 +26,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
   const companies = groupDaywork(data.daywork);
   const job = f.jobId ? opts.jobs.find((j) => j.id === f.jobId) : undefined;
   const cards = job ? [] : jobCards(opts.jobs, data);
-  const standing = companies.reduce((s, c) => s + c.standing, 0);
-  const extra = companies.reduce((s, c) => s + c.extra, 0);
+  const totalHours = companies.reduce((s, c) => s + c.hours, 0);
   const sheets = companies.reduce((s, c) => s + c.sheets.length, 0);
   const openIssues = data.issues.filter((i) => i.status === "open" || i.status === "in_progress").length;
   const qs = (o: Partial<Params>) => {
@@ -39,7 +38,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
   return (
     <div className="grid gap-6">
       <PageHeader title="QS check"
-        description="What was signed off on site for the dates below — handovers, daywork (standing time and extra work) and site issues — to check against subcontractor invoices. Hours and counts only."
+        description="What was signed off on site for the dates below — handovers, daywork and site issues — to check against subcontractor invoices. Hours and counts only."
         actions={<ButtonLink href={`/api/qs/export?${qs({})}`} external><DownloadSimple className="size-5" /> Export CSV</ButtonLink>} />
 
       <Card className="grid gap-3 p-4">
@@ -73,11 +72,10 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
       )}
       {job ? (
         <>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Stat label="Handovers signed" value={String(data.handovers.length)} />
         <Stat label="Daywork sheets" value={String(sheets)} />
-        <Stat label="Standing time" value={hrs(standing)} tone="warn" />
-        <Stat label="Extra work" value={hrs(extra)} tone="info" />
+        <Stat label="Daywork hours" value={hrs(totalHours)} />
         <Stat label="Site issues" value={String(data.issues.length)} />
         <Stat label="Issues still open" value={String(openIssues)} tone={openIssues ? "warn" : undefined} />
       </div>
@@ -106,7 +104,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
               <Card key={c.id} className="overflow-hidden">
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line px-4 py-3">
                   <h3 className="text-[16px] font-semibold">{c.company}</h3>
-                  <p className="text-[14px]"><span className="font-semibold text-warn">Standing {hrs(c.standing)}</span> · <span className="font-semibold text-info">Extra {hrs(c.extra)}</span> · Total <span className="tabular font-bold">{hrs(c.standing + c.extra)}</span></p>
+                  <p className="text-[14px]">{c.sheets.length} sheet{c.sheets.length === 1 ? "" : "s"} · <span className="tabular font-bold">{hrs(c.hours)}</span></p>
                 </div>
                 <ul className="divide-y divide-line">
                   {c.sheets.map(({ line: s, hours, people }) => {
@@ -116,7 +114,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
                       <li key={s.daywork_id}>
                         <details className="group">
                           <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 hover:bg-paper">
-                            <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-bold", s.kind === "standing" ? "bg-warn-soft text-warn" : "bg-info-soft text-info")}>{s.kind === "standing" ? "Standing time" : "Extra work"}</span>
+                            <span className="w-full truncate font-semibold sm:w-auto sm:max-w-[40ch]">{s.description}</span>
                             <span className="font-mono text-[13px]">{s.job_number}</span>
                             <span className="text-[14px]">W/C {formatShortDate(s.week_commencing)}</span>
                             <span className="text-[13px] text-muted">{people.size} {people.size === 1 ? "person" : "people"} · signed by {s.client_name}</span>
@@ -184,8 +182,8 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <Mini label="Sign-offs" value={String(c.handovers)} />
-                  <Mini label="Standing" value={hrs(c.standing)} tone={c.standing ? "warn" : undefined} />
-                  <Mini label="Extra" value={hrs(c.extra)} tone={c.extra ? "info" : undefined} />
+                  <Mini label="Daywork" value={String(c.sheets)} />
+                  <Mini label="Hours" value={hrs(c.hours)} />
                   <Mini label="Issues" value={c.open_issues ? `${c.issues} (${c.open_issues} open)` : String(c.issues)} tone={c.open_issues ? "warn" : undefined} />
                 </div>
               </Link>

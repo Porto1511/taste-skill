@@ -21,7 +21,7 @@ export default async function DayworkPage({ params }: { params: Promise<{ jobId:
   return (
     <div>
       <PageHeader back={{ href: `/jobs/${jobId}#reports`, label: data.job.name }} title="Daywork sheet"
-        description="For standing time or extra work that needs signing up. Hours and materials only." />
+        description="For anything on site that needs signing off as daywork: the reason, who and the hours." />
       <DayworkForm jobId={jobId} week={mondayOf(londonToday())} myHours={{}}
         me={{ name: viewer.fullName, trade: viewer.jobTitle ?? "" }}
         defaultClient={{

@@ -148,8 +148,7 @@ test.describe("operative mobile experience", () => {
     await page.getByRole("button", { name: /Next: MSW signs/ }).click();
     await expect(page.getByText("Enter the hours for Mark Jones, or clear their name.")).toBeVisible();
     await page.getByLabel("Mark Jones hours Tuesday").fill("3");
-    await page.getByRole("button", { name: "Standing time", exact: true }).click();
-    await page.getByLabel("Description of work").fill("Waiting for the crane");
+    await page.getByLabel(/What.s it for/).fill("Waiting for the crane");
     await page.getByRole("button", { name: "yes", exact: true }).click();
     await page.getByRole("button", { name: /Next: MSW signs/ }).click();
     await draw(page, 0);
@@ -161,6 +160,23 @@ test.describe("operative mobile experience", () => {
     await page.getByRole("button", { name: "Sign & submit" }).click();
     await expect(page.getByText(/Signed — the MSW copy is saved/)).toBeVisible();
     await expect(page.getByText("Mark Jones")).toBeVisible();
+  });
+
+  test("deliveries are for MSW's own lads: any live job from the Deliveries button; subcontractors don't get them", async ({ page }) => {
+    await signIn(page, "chris.dawson@msw.example"); // MSW, not allocated to the British Museum job
+    await page.getByRole("link", { name: "Deliveries" }).click();
+    await page.getByRole("link", { name: /New delivery/ }).click();
+    await expect(page.getByRole("heading", { name: "Which job?" })).toBeVisible();
+    await page.getByRole("link", { name: /British Museum/ }).click();
+    await expect(page.getByText("What's been delivered?")).toBeVisible();
+    await signOut(page);
+
+    await signIn(page, "john.smith@derbydecking.example");
+    await expect(page.getByRole("link", { name: "Deliveries" })).toHaveCount(0);
+    await page.goto(`/jobs/${BM}#reports`);
+    await expect(page.getByRole("link", { name: "Daywork sheet" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Delivery note" })).toHaveCount(0);
+    expect((await page.request.get("/deliveries/new")).status()).toBe(404);
   });
 
   test("an MSW operative logs today's timesheet; subcontractors have no timesheet", async ({ page }) => {
