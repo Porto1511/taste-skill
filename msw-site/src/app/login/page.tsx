@@ -19,6 +19,9 @@ const personas: { group: string; people: { key: string; hint: string }[] }[] = [
     { key: "sam", hint: "Office · documents & reports" },
     { key: "pete", hint: "QS · checks hours & deliveries against invoices" },
   ] },
+  { group: "MSW's own lads", people: [
+    { key: "ian", hint: "Netting, decking & studs · deliveries · site visits" },
+  ] },
   { group: "British Museum gangs", people: [
     { key: "john", hint: "Derby Decking · Levels 1–2" },
     { key: "liam", hint: "SOS · Levels 3–4" },

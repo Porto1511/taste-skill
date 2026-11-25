@@ -5,7 +5,7 @@ import { getFileStore } from "@/server/storage";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const viewer = await getViewer();
-  if (!viewer?.isStaff) return notFound();
+  if (!viewer?.canSiteVisit) return notFound();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return notFound();
   const row = await withUser(viewer.id, async (tx) =>

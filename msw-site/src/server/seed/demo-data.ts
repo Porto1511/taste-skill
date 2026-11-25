@@ -58,6 +58,7 @@ export const demoUsers: DemoUser[] = [
   { key: "gareth", name: "Gareth Evans", company: "msw", role: "operative", title: "Safety Netting Supervisor", phone: "07700 900104" },
   { key: "luke", name: "Luke Bennett", company: "msw", role: "operative", title: "Safety Netting Operative", phone: "07700 900105" },
   { key: "chris", name: "Chris Dawson", company: "msw", role: "operative", title: "Shear Stud Welder", phone: "07700 900106" },
+  { key: "ian", name: "Ian Spencer", company: "msw", role: "operative", title: "Netting, Decking & Studs", phone: "07700 900108" },
   { key: "dave", name: "Dave Clarke", company: "abc", role: "manager", title: "Director", phone: "07700 900301" },
   { key: "john", name: "John Smith", company: "abc", role: "operative", title: "Gang Leader", phone: "07700 900311" },
   { key: "mark", name: "Mark Jones", company: "abc", role: "operative", title: "Netting & Deck Operative", phone: "07700 900312" },
@@ -377,6 +378,7 @@ export const demoGrants: DemoGrant[] = [
   { job: "bm", users: ["kieran"], areas: ["l3", "l4"], note: "Gang B", fromDays: -20, toDays: 40, daysAgo: 21, revokeDaysAgo: 5 },
   { job: "bm", users: ["tom"], areas: ["l1"], note: "Following on Level 1", fromDays: -10, toDays: 10, daysAgo: 12 },
   { job: "bm", users: ["gareth"], allAreas: true, note: "MSW supervisor", daysAgo: 38 },
+  { job: "bm", users: ["ian"], allAreas: true, note: "MSW — netting, decking & studs", daysAgo: 2 },
   // Derby Decking's director: job-wide information plus Derby Decking's own reports on THIS job only.
   { job: "bm", users: ["dave"], areas: [], note: "Derby Decking director — report visibility", daysAgo: 25, managerReports: true },
 

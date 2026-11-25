@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { HardHat, Phone } from "@phosphor-icons/react/dist/ssr";
+import { Binoculars, HardHat, Phone } from "@phosphor-icons/react/dist/ssr";
 import { requireViewer } from "@/server/auth/viewer";
 import { listMyJobs } from "@/server/queries/site";
 import { JobCard } from "@/components/site/job-card";
@@ -24,6 +24,9 @@ export default async function MyJobsPage() {
       <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-muted">{greeting}, {viewer.fullName.split(" ")[0]} · {today}</p>
       <h1 className="text-[28px] font-bold tracking-tight">Your jobs</h1>
       <p className="mb-4 text-[15px] text-muted">{jobs.length ? `You're on ${jobs.length} live job${jobs.length === 1 ? "" : "s"}. Tap one for drawings, RAMS and sign-offs.` : "Nothing allocated to you yet."}</p>
+      {viewer.canSiteVisit && !viewer.isStaff && (
+        <ButtonLink href="/site-visits" variant="dark" className="mb-4 w-full"><Binoculars className="size-5" /> Site visits</ButtonLink>
+      )}
       {viewer.isStaff && (
         <p className="mb-3 rounded-xl bg-info-soft px-3 py-2 text-[13px] text-[#123f8f]">Office view: every live job is listed. Operatives see only the jobs they&apos;re allocated to.</p>
       )}

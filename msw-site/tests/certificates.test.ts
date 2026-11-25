@@ -14,7 +14,7 @@ beforeAll(async () => { ({ driver: db, store } = await createSeededDb()); setDri
 
 const v = (key: string, isStaff = false): Viewer => ({
   id: ids.user(key), fullName: key, email: "", role: isStaff ? "admin" : "operative", jobTitle: null, companyId: "", companyName: "",
-  isMswEmployee: isStaff, isStaff, isAdmin: isStaff, keepsTimesheet: false, unreadNotifications: 0,
+  isMswEmployee: isStaff, isStaff, isAdmin: isStaff, keepsTimesheet: false, canSiteVisit: false, unreadNotifications: 0,
 });
 const pdf = Buffer.from("%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
 const company = async (name: string) => (await system(db)<{ id: string }>("select id from companies where name = $1", [name]))[0].id;

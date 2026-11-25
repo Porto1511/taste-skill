@@ -185,6 +185,22 @@ test.describe("operative mobile experience", () => {
     expect((await page.request.get("/deliveries/new")).status()).toBe(404);
   });
 
+  test("Ian (MSW lad with site visits) has timesheet, deliveries and site visits on his phone", async ({ page }) => {
+    await signIn(page, "ian.spencer@msw.example");
+    await expect(page.getByRole("link", { name: "Timesheet" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Deliveries" })).toBeVisible();
+    await expect(page.getByText("British Museum").first()).toBeVisible();
+    await page.getByRole("link", { name: "Site visits" }).click();
+    await page.getByRole("link", { name: /New site visit/ }).click();
+    await page.getByLabel("Job number").fill("MSW-2611");
+    await expect(page.getByLabel("Site address")).toHaveValue(/Great Russell Street/);
+    await page.getByRole("group", { name: "Ready to start?" }).getByRole("button", { name: "Not yet" }).click();
+    await page.getByRole("button", { name: "Save site visit" }).click();
+    await expect(page).toHaveURL(/\/site-visits\/[0-9a-f-]{36}$/);
+    await expect(page.getByText(/by Ian Spencer/)).toBeVisible();
+    expect((await page.request.get("/office")).status()).toBe(404); // still not an office login
+  });
+
   test("an MSW operative logs today's timesheet; subcontractors have no timesheet", async ({ page }) => {
     await signIn(page, "gareth.evans@msw.example");
     await page.getByRole("link", { name: "Timesheet" }).click();

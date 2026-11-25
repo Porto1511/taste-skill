@@ -19,6 +19,8 @@ export interface Viewer {
   isAdmin: boolean;
   /** MSW's own operatives keep a daily timesheet. */
   keepsTimesheet: boolean;
+  /** Office staff, or an MSW lad given site visits. */
+  canSiteVisit: boolean;
   unreadNotifications: number;
 }
 
@@ -29,9 +31,9 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   return withUser(userId, async (tx) => {
     const { rows } = await tx.query<{
       id: string; full_name: string; email: string; role: Role; job_title: string | null;
-      company_id: string; company_name: string; is_msw: boolean; unread: number;
+      company_id: string; company_name: string; is_msw: boolean; site_visits: boolean; unread: number;
     }>(
-      `select p.id, p.full_name, p.email, p.role, p.job_title, p.company_id, c.name as company_name, c.is_msw,
+      `select p.id, p.full_name, p.email, p.role, p.job_title, p.company_id, c.name as company_name, c.is_msw, p.site_visits,
               (select count(*)::int from public.notifications n where n.user_id = p.id and n.read_at is null) as unread
        from public.profiles p
        join public.companies c on c.id = p.company_id
@@ -52,6 +54,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       isStaff: r.role === "admin" || r.role === "office",
       isAdmin: r.role === "admin",
       keepsTimesheet: r.is_msw && r.role === "operative",
+      canSiteVisit: r.role === "admin" || r.role === "office" || (r.is_msw && r.site_visits),
       unreadNotifications: r.unread,
     };
   });

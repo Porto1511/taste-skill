@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Forbidden" }, { status: 403 });
   const viewer = await getViewer();
   if (!viewer) return Response.json({ error: "Your session has expired. Sign in again." }, { status: 401 });
-  if (!viewer.isStaff) return Response.json({ error: "Not found" }, { status: 404 });
+  if (!viewer.canSiteVisit) return Response.json({ error: "Not found" }, { status: 404 });
   const form = await request.formData();
   let raw: unknown = {};
   try { raw = JSON.parse(String(form.get("visit") ?? "{}")); } catch { /* validated below */ }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   }
   try {
     const { id } = await createSiteVisit(viewer, parsed.data, photos);
-    return Response.json({ id, href: `/office/site-visits/${id}` }, { status: 201 });
+    return Response.json({ id, href: `${viewer.isStaff ? "/office" : ""}/site-visits/${id}` }, { status: 201 });
   } catch (err) {
     return jsonError(err, "api.site_visits.create");
   }

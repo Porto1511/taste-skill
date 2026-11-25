@@ -157,8 +157,8 @@ describe("document approval status", () => {
       `select p.full_name from notifications n join profiles p on p.id = n.user_id
        where n.kind = 'document.updated' and n.title like '%DK-103 now rev C02%' order by p.full_name`,
     );
-    // Level 3 users (Gang B + supervisor) — not Gang A, not Kieran (revoked), not the approver.
-    expect(notified.map((n) => n.full_name)).toEqual(["Gareth Evans", "Liam Turner", "Ryan Hughes"]);
+    // Level 3 users (Gang B + MSW's lads on all areas) — not Gang A, not Kieran (revoked), not the approver.
+    expect(notified.map((n) => n.full_name)).toEqual(["Gareth Evans", "Ian Spencer", "Liam Turner", "Ryan Hughes"]);
   });
 
   it("operatives cannot approve, upload or alter documents", async () => {

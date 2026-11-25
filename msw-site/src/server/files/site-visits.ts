@@ -42,7 +42,7 @@ export const siteVisitInput = z.object({
 export type SiteVisitInput = z.infer<typeof siteVisitInput>;
 
 export async function createSiteVisit(viewer: Viewer, input: SiteVisitInput, photos: { bytes: Buffer; caption: string | null }[]) {
-  if (!viewer.isStaff) throw new UserError("Site visits are for the MSW office.", 403);
+  if (!viewer.canSiteVisit) throw new UserError("Site visits are for the MSW office.", 403);
   if (photos.length > 30) throw new UserError("Attach up to 30 photos.");
   const processed: (Awaited<ReturnType<typeof processPhoto>> & { caption: string | null })[] = [];
   for (const [i, p] of photos.entries()) processed.push({ ...(await processPhoto(p.bytes, `Photo ${i + 1}`)), caption: p.caption });

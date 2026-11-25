@@ -24,7 +24,7 @@ export async function createHostedDemoDriver(): Promise<Driver> {
   await driver.transaction(async (lock) => {
     await lock.query("select pg_advisory_xact_lock(7311)");
     const ran = await migrateLocal(driver);
-    const [{ seedOrRebuildDemo }, { localAuthUserFactory }, { createDbStore }, { DEMO_PASSWORD }, { seedExtras, patchDemoTimesheets, patchDemoHandovers, patchDemoRoles }] = await Promise.all([
+    const [{ seedOrRebuildDemo }, { localAuthUserFactory }, { createDbStore }, { DEMO_PASSWORD }, { seedExtras, patchDemoTimesheets, patchDemoHandovers, patchDemoRoles, patchDemoIan }] = await Promise.all([
       import("../seed/rebuild"), import("../seed/local-auth"), import("../storage/db-store"), import("../seed/demo-data"), import("../seed/seed"),
     ]);
     const store = createDbStore(driver);
@@ -35,6 +35,7 @@ export async function createHostedDemoDriver(): Promise<Driver> {
       await patchDemoTimesheets(driver);
       await patchDemoHandovers(driver, store);
       await patchDemoRoles(driver);
+      await patchDemoIan(driver, localAuthUserFactory(driver), DEMO_PASSWORD);
     } else {
       log.info(`demo.${outcome}`, { ms: Date.now() - started });
     }

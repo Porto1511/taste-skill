@@ -16,7 +16,7 @@ beforeAll(async () => { ({ driver: db, store } = await createSeededDb()); setDri
 
 const v = (key: string, role: Viewer["role"]): Viewer => ({
   id: ids.user(key), fullName: key, email: "", role, jobTitle: null, companyId: "", companyName: "",
-  isMswEmployee: role !== "operative", isStaff: role === "admin" || role === "office", isAdmin: role === "admin", keepsTimesheet: false, unreadNotifications: 0,
+  isMswEmployee: role !== "operative", isStaff: role === "admin" || role === "office", isAdmin: role === "admin", keepsTimesheet: false, canSiteVisit: role === "admin" || role === "office", unreadNotifications: 0,
 });
 const visit = (jobNumber: string) => siteVisitInput.parse({
   jobNumber, jobName: "", siteAddress: "Plot 4, Station Road, Derby", visitDate: "2026-11-24", visitType: "pre_start",
@@ -67,5 +67,17 @@ describe("site visits", () => {
     await deleteSiteVisit(staff, first.id);
     expect(store.files.size).toBe(before - 1);
     expect(await getSiteVisit(staff, first.id)).toBeNull();
+  });
+
+  it("an MSW lad given site visits (Ian) can record and see them; other lads can't", async () => {
+    const ian: Viewer = { ...v("ian", "operative"), isMswEmployee: true, keepsTimesheet: true, canSiteVisit: true };
+    const { id } = await createSiteVisit(ian, visit("MSW-2611"), []);
+    expect((await asUser(db, "ian").query("select id from site_visits where id = $1", [id]))).toHaveLength(1);
+    expect(await asUser(db, "gareth").query("select id from site_visits")).toHaveLength(0);
+    await expect(asUser(db, "gareth").query(
+      "insert into site_visits (job_number, site_address, visit_date, visit_type, ready, visited_by, visited_by_name) values ('X', 'Somewhere', '2026-11-24', 'progress', 'no', $1, 'x')",
+      [ids.user("gareth")])).rejects.toMatchObject({ code: "42501" });
+    const [row] = await system(db)<{ visited_by_name: string }>("select visited_by_name from site_visits where id = $1", [id]);
+    expect(row.visited_by_name).toBe("Ian Spencer");
   });
 });

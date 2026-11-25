@@ -354,6 +354,7 @@ export async function seedExtras(driver: Driver, store: FileStore) {
     );
   }
   await patchDemoHandovers(driver, store);
+  await runAsSystem(driver, (tx) => tx.query("update public.profiles set site_visits = true where id = $1", [userId("ian")]));
 }
 
 const L2_TITLE = "Level 2 — deck & studs handover";
@@ -565,4 +566,23 @@ export async function patchDemoTimesheets(driver: Driver) {
 export async function patchDemoRoles(driver: Driver) {
   await runAsSystem(driver, (tx) =>
     tx.query("update public.profiles set role = 'office' where id = $1 and role = 'admin'", [userId("richard")]));
+}
+
+/** Ian Spencer (MSW): net, deck & studs, deliveries and site visits. Creates him on an older demo; idempotent. */
+export async function patchDemoIan(driver: Driver, createAuthUser: CreateAuthUser, password: string) {
+  const ian = demoUsers.find((u) => u.key === "ian")!;
+  const exists = await driver.query("select 1 from public.profiles where id = $1", [userId("ian")]);
+  if (!exists.rowCount) {
+    await createAuthUser({ id: userId("ian"), email: demoEmail(ian), password });
+    await runAsSystem(driver, async (tx) => {
+      await tx.query(
+        `insert into public.profiles (id, company_id, full_name, email, phone, job_title, role, active, invited_at, created_at)
+         values ($1, $2, $3, $4, $5, $6, 'operative', true, now(), now())`,
+        [userId("ian"), companyId("msw"), ian.name, demoEmail(ian), ian.phone, ian.title]);
+    });
+    await runAsSystem(driver, (tx) =>
+      tx.query("select public.grant_job_access($1, $2::uuid[], true, '{}'::uuid[], null, null, $3, false)",
+        [jobId("bm"), [userId("ian")], "MSW — netting, decking & studs"]), { actorId: userId("claire") });
+  }
+  await runAsSystem(driver, (tx) => tx.query("update public.profiles set site_visits = true where id = $1", [userId("ian")]));
 }

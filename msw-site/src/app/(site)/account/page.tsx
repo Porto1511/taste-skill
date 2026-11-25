@@ -24,6 +24,12 @@ export default async function AccountPage() {
         </dl>
         <p className="mt-4 text-[13px] text-muted">Your details and job access are managed by the MSW office.</p>
       </Card>
+      {viewer.canSiteVisit && !viewer.isStaff && (
+        <Link href="/site-visits" className="flex min-h-14 items-center justify-between rounded-[var(--radius-card)] bg-card px-4 font-semibold shadow-[var(--shadow-card)] ring-1 ring-line">
+          <span>Site visits<span className="block text-[13px] font-normal text-muted">Record what&apos;s ready, blockers and photos</span></span>
+          <span aria-hidden>→</span>
+        </Link>
+      )}
       <Link href="/certificates" className="flex min-h-14 items-center justify-between rounded-[var(--radius-card)] bg-card px-4 font-semibold shadow-[var(--shadow-card)] ring-1 ring-line">
         <span>Company certificates<span className="block text-[13px] font-normal text-muted">Upload certs, print or send them to a client</span></span>
         <span aria-hidden>→</span>

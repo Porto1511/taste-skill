@@ -25,7 +25,7 @@ beforeAll(async () => {
 
 const viewer = (key: string): Viewer => ({
   id: ids.user(key), fullName: key, email: "", role: "operative", jobTitle: null, companyId: "", companyName: "",
-  isMswEmployee: false, isStaff: false, isAdmin: false, keepsTimesheet: false, unreadNotifications: 0,
+  isMswEmployee: false, isStaff: false, isAdmin: false, keepsTimesheet: false, canSiteVisit: false, unreadNotifications: 0,
 });
 const jobs = async (key: string) =>
   (await asUser(db, key).query<{ job_number: string }>("select job_number from jobs order by 1")).map((r) => r.job_number);
