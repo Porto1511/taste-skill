@@ -9,14 +9,14 @@ export async function compressImage(file: File): Promise<Blob> {
       i.onerror = reject;
       i.src = url;
     });
-    const max = 2000;
+    const max = 1600; // keeps each photo around 300–500 KB so several fit in one upload (the host caps a request at ~6 MB)
     const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(img.naturalWidth * scale);
     canvas.height = Math.round(img.naturalHeight * scale);
     canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.82));
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.8));
     return blob && blob.size < file.size ? blob : file;
   } catch {
     return file; // the server validates and re-encodes anyway

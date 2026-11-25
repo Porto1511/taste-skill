@@ -10,7 +10,7 @@ async function requireSiteVisits() {
   return viewer;
 }
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ photosFailed?: string }> }) {
   const viewer = await requireSiteVisits();
-  return <SiteVisitDetailView viewer={viewer} base="/site-visits" id={(await params).id} />;
+  return <SiteVisitDetailView viewer={viewer} base="/site-visits" id={(await params).id} photosFailed={Number((await searchParams).photosFailed) || 0} />;
 }

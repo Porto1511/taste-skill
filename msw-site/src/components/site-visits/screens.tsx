@@ -60,7 +60,7 @@ export async function NewSiteVisit({ viewer, base, job }: { viewer: Viewer; base
   );
 }
 
-export async function SiteVisitDetailView({ viewer, base, id }: { viewer: Viewer; base: string; id: string }) {
+export async function SiteVisitDetailView({ viewer, base, id, photosFailed = 0 }: { viewer: Viewer; base: string; id: string; photosFailed?: number }) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const v = await getSiteVisit(viewer, id);
   if (!v) notFound();
@@ -73,6 +73,11 @@ export async function SiteVisitDetailView({ viewer, base, id }: { viewer: Viewer
         description={<>{v.site_address} · {formatDate(v.visit_date)} · {labelOf(VISIT_TYPES, v.visit_type)} by {v.visited_by_name}{v.met_name ? ` · met ${v.met_name}${v.met_phone ? ` (${v.met_phone})` : ""}` : ""}{v.job_id && viewer.isStaff && <> · <Link href={`/office/jobs/${v.job_id}`} className="underline">open job</Link></>}</>} />
 
       <div className="grid gap-6">
+        {photosFailed > 0 && (
+          <p role="alert" className="rounded-xl border border-warn/40 bg-warn-soft px-4 py-3 text-warn text-[15px]">
+            The visit is saved, but {photosFailed === 1 ? "1 photo" : `${photosFailed} photos`} didn&apos;t upload (poor signal?). Everything else is here.
+          </p>
+        )}
         <Card className="grid gap-3 p-5 sm:grid-cols-[1fr_280px]">
           <div className="grid gap-1 text-[15px]">
             {v.conditions && <p><span className="font-semibold">Ready if: </span>{v.conditions}</p>}

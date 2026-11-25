@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Camera, Images, Plus, Trash, X } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
+import { compressImage } from "@/lib/compress-image";
 import { Alert, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { buttonClass } from "@/components/ui/button";
 import {
@@ -12,7 +13,7 @@ import {
 } from "@/lib/site-visit";
 
 export interface KnownJob { id: string; job_number: string; name: string; address: string; areas: string[] }
-type Photo = { key: string; file: File; url: string; caption: string };
+type Photo = { key: string; file: Blob; url: string; caption: string };
 
 function Chips<T extends string>({ options, value, onChange, label, size = "md" }: {
   options: readonly { id: T; label: string }[]; value: T | null; onChange: (v: T | null) => void; label: string; size?: "sm" | "md";
@@ -55,6 +56,7 @@ export function SiteVisitForm({ knownJobs, today, defaultJobId }: { knownJobs: K
   const [actions, setActions] = useState<VisitAction[]>([]);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const camera = useRef<HTMLInputElement>(null);
   const gallery = useRef<HTMLInputElement>(null);
@@ -67,9 +69,14 @@ export function SiteVisitForm({ knownJobs, today, defaultJobId }: { knownJobs: K
   };
   const setItem = (key: string, patch: Partial<{ answer: Answer | null; note: string }>) =>
     setChecklist((c) => ({ ...c, [key]: { answer: c[key]?.answer ?? null, note: c[key]?.note ?? "", ...patch } }));
-  const addPhotos = (list: FileList | null) => {
+  // Photos are shrunk on the phone (≈300–500 KB each) before they are sent.
+  const addPhotos = async (list: FileList | null) => {
     if (!list) return;
-    const added = Array.from(list).slice(0, 30 - photos.length).map((file, i) => ({ key: `${Date.now()}-${i}`, file, url: URL.createObjectURL(file), caption: "" }));
+    const files = Array.from(list).slice(0, 30 - photos.length);
+    const added = await Promise.all(files.map(async (f, i) => {
+      const file = await compressImage(f);
+      return { key: `${Date.now()}-${i}`, file, url: URL.createObjectURL(file), caption: "" };
+    }));
     setPhotos((p) => [...p, ...added]);
   };
 
@@ -87,16 +94,28 @@ export function SiteVisitForm({ knownJobs, today, defaultJobId }: { knownJobs: K
       ready, conditions: ready === "conditional" ? outcome.conditions : "", proposedStart: outcome.proposedStart,
       menNeeded: outcome.men, plantNeeded: outcome.plant, actions: actions.filter((a) => a.what.trim().length >= 2), notes,
     };
+    // 1. Save the visit itself (small), 2. then send the photos one at a time.
     const fd = new FormData();
     fd.set("visit", JSON.stringify(visit));
-    for (const p of photos) { fd.append("photos", p.file); fd.append("captions", p.caption); }
     setBusy(true);
+    setProgress("Saving…");
     const res = await fetch("/api/site-visits", { method: "POST", body: fd }).catch(() => null);
-    if (!res) { setBusy(false); return setError("No connection — nothing saved yet. Try again when you've got signal."); }
+    if (!res) { setBusy(false); setProgress(null); return setError("No connection — nothing saved yet. Try again when you've got signal."); }
     const body = await res.json().catch(() => ({}));
-    if (res.status === 201 && body.href) { router.push(body.href); return; }
-    setBusy(false);
-    setError(body.error ?? "The site visit could not be saved.");
+    if (res.status !== 201 || !body.href) {
+      setBusy(false); setProgress(null);
+      return setError(body.error ?? `The site visit could not be saved (error ${res.status}). Try again.`);
+    }
+    let failed = 0;
+    for (const [i, p] of photos.entries()) {
+      setProgress(`Uploading photo ${i + 1} of ${photos.length}…`);
+      const pf = new FormData();
+      pf.set("photo", p.file, `photo-${i + 1}.jpg`);
+      pf.set("caption", p.caption);
+      const r = await fetch(`/api/site-visits/${body.id}/photos`, { method: "POST", body: pf }).catch(() => null);
+      if (!r || r.status !== 201) failed++;
+    }
+    router.push(failed ? `${body.href}?photosFailed=${failed}` : body.href);
   }
 
   return (
@@ -215,7 +234,7 @@ export function SiteVisitForm({ knownJobs, today, defaultJobId }: { knownJobs: K
       <Card title="Notes"><Textarea aria-label="Notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={4000} /></Card>
 
       {error && <Alert>{error}</Alert>}
-      <button type="button" onClick={save} disabled={busy} className={buttonClass("primary", "xl", "w-full")}>{busy ? "Saving…" : "Save site visit"}</button>
+      <button type="button" onClick={save} disabled={busy} className={buttonClass("primary", "xl", "w-full")}>{busy ? progress ?? "Saving…" : "Save site visit"}</button>
     </div>
   );
 }

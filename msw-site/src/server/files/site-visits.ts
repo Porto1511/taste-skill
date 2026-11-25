@@ -76,6 +76,30 @@ export async function createSiteVisit(viewer: Viewer, input: SiteVisitInput, pho
   return { id };
 }
 
+/** Add one photo to a visit (photos go up one at a time so no single upload is too big). */
+export async function addVisitPhoto(viewer: Viewer, visitId: string, bytes: Buffer, caption: string | null) {
+  if (!viewer.canSiteVisit) throw new UserError("Site visits are for the MSW office.", 403);
+  const photo = await processPhoto(bytes, "The photo");
+  const store = getFileStore();
+  const photoId = randomUUID();
+  const path = storagePaths.visitPhoto(visitId, photoId);
+  await store.put(path, photo.data, "image/jpeg");
+  try {
+    await withUser(viewer.id, async (tx) => {
+      const { rowCount } = await tx.query("select 1 from site_visits where id = $1", [visitId]);
+      if (!rowCount) throw new UserError("Site visit not found.", 404);
+      const { rows: [{ n }] } = await tx.query<{ n: number }>("select count(*)::int n from site_visit_photos where visit_id = $1", [visitId]);
+      if (n >= 30) throw new UserError("A site visit can have up to 30 photos.");
+      await tx.query("insert into site_visit_photos (id, visit_id, storage_path, caption, file_size, width, height) values ($1,$2,$3,$4,$5,$6,$7)",
+        [photoId, visitId, path, caption, photo.data.length, photo.width, photo.height]);
+    });
+  } catch (err) {
+    await store.remove([path]).catch(() => {});
+    throw err;
+  }
+  return { id: photoId };
+}
+
 /** Mark a blocker cleared (or put it back). */
 export async function setBlockerCleared(viewer: Viewer, visitId: string, index: number, cleared: boolean) {
   const { rowCount } = await withUser(viewer.id, (tx) =>

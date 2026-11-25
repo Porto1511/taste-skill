@@ -200,12 +200,18 @@ test.describe("office workflows", () => {
       await page.getByLabel("Handrails / edge protection on note").fill("None on east side of Level 4");
       await page.getByRole("button", { name: "Add blocker" }).click();
       await page.getByLabel("Blocker 1", { exact: true }).fill("No handrails on Level 4 east side");
-      await page.getByLabel("Choose photos").setInputFiles({ name: "site.jpg", mimeType: "image/jpeg", buffer: await sharp({ create: { width: 400, height: 300, channels: 3, background: "#889" } }).jpeg().toBuffer() });
+      // Full-size phone photos (noisy 4000×3000, several MB each): together far over the host's ~6 MB request cap.
+      const big = await sharp({ create: { width: 4000, height: 3000, channels: 3, background: "#889", noise: { type: "gaussian", mean: 128, sigma: 60 } } }).jpeg({ quality: 95 }).toBuffer();
+      expect(big.length).toBeGreaterThan(3_000_000);
+      await page.getByLabel("Choose photos").setInputFiles([1, 2, 3, 4].map((n) => ({ name: `site-${n}.jpg`, mimeType: "image/jpeg", buffer: big })));
+      await expect(page.locator("img[src^='blob:']")).toHaveCount(4);
       await page.getByRole("group", { name: "Ready to start?" }).getByRole("button", { name: "Yes, if…" }).click();
       await page.getByLabel("Ready if…").fill("Handrails on Level 4");
       await page.getByRole("button", { name: "Save site visit" }).click();
       await expect(page.getByText("No handrails on Level 4 east side")).toBeVisible();
       await expect(page.getByText("Ready if:")).toBeVisible();
+      await expect(page.locator("img[src*='/api/files/visit-photos/']")).toHaveCount(4);
+      await expect(page.getByText(/didn.t upload/)).toHaveCount(0);
       await page.getByRole("button", { name: /as cleared/ }).click();
       await expect(page.getByRole("button", { name: /as not cleared/ })).toBeVisible();
       const report = await page.request.get(page.url().replace(/\/office\/site-visits\//, "/api/site-visits/") + "/report");
