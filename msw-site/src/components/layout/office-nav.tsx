@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SquaresFour, Buildings, WarningCircle, UsersThree, ClockCounterClockwise, Bell, Signature, ClockClockwise, Timer, Truck, ListChecks, Certificate } from "@phosphor-icons/react";
+import { SquaresFour, Buildings, WarningCircle, UsersThree, ClockCounterClockwise, Bell, Signature, ClockClockwise, Timer, Truck, ListChecks, Certificate, Binoculars } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 
 /** `vertical`: always a stacked list (the phone drop-down). Otherwise the desktop side rail. */
@@ -13,6 +13,7 @@ export function OfficeNav({ openReports, urgent, unread, vertical = false }: { o
       { href: "/office", label: "Dashboard", icon: SquaresFour, exact: true },
       { href: "/office/jobs", label: "Jobs", icon: Buildings },
       { href: "/office/reports", label: "Site reports", icon: WarningCircle, count: openReports, alert: urgent > 0 },
+      { href: "/office/site-visits", label: "Site visits", icon: Binoculars },
       { href: "/office/notifications", label: "Notifications", icon: Bell, count: unread },
     ] },
     { title: "Sign-offs", items: [

@@ -1,6 +1,8 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
 import type { DayworkDetail, DeliveryDetail, HandoverDetail } from "../queries/handovers";
+import type { SiteVisitDetail } from "../queries/site-visits";
+import { ANSWERS, AREA_STATUS, BLOCKER_OWNERS, BLOCKER_SEVERITY, CHECKLIST, READY_OUTCOMES, VISIT_TYPES, labelOf } from "@/lib/site-visit";
 import { COMPANY, MSW_LOGO_PATHS, MSW_LOGO_VIEWBOX } from "@/lib/company";
 import { DAYS, HANDOVER_TRADES, NOTES_FIELD, townFrom } from "@/lib/handover";
 
@@ -339,3 +341,79 @@ export async function buildDeliveryNote(d: DeliveryDetail, signatures: { receive
   footer(p, f, `Signed electronically on site via MSW Site, ${ukDateTime(d.signed_at)} (UK). Ref ${d.id.slice(0, 8)}. MSW copy and receiver copy are identical.`);
   return Buffer.from(await pdf.save());
 }
+
+/** Site visit report (office use): flows over as many pages as it needs, photos at the end. */
+export async function buildSiteVisitReport(v: SiteVisitDetail, photos: Buffer[]): Promise<Buffer> {
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(`${v.job_number} site visit — ${ukDate(v.visit_date)}`);
+  pdf.setAuthor(COMPANY.name);
+  const f: Fonts = { reg: await pdf.embedFont(StandardFonts.Helvetica), bold: await pdf.embedFont(StandardFonts.HelveticaBold) };
+  const fullW = W - 2 * M;
+  let p = pdf.addPage([W, H]);
+  letterhead(p, f);
+  let y = refTable(p, f, "SITE VISIT REPORT", [
+    ["Our Ref No:", v.job_number], ["Contract Title", v.job_name ?? ""], ["Site Address", v.site_address],
+    ["Visit", `${ukDate(v.visit_date)} · ${labelOf(VISIT_TYPES, v.visit_type)} · ${v.visited_by_name}`],
+  ]) - 10;
+  if (v.met_name || v.met_phone) { txt(p, `Met on site: ${[v.met_name, v.met_phone].filter(Boolean).join(", ")}`, M, y, 9.5, f.reg); y -= 16; }
+  const footerText = `MSW site visit report, ${ukDate(v.visit_date)}. Ref ${v.id.slice(0, 8)}. Internal — MSW office use.`;
+  const ensure = (space: number) => {
+    if (y - space > 40) return;
+    footer(p, f, footerText);
+    p = pdf.addPage([W, H]);
+    y = H - M;
+  };
+  const heading = (t: string) => { ensure(40); y -= 8; txt(p, t.toUpperCase(), M, y, 10.5, f.bold, red); y -= 16; };
+  const line = (label: string, value: string, note?: string) => {
+    const noteLines = note ? wrap(note, f.reg, 9, fullW - 300) : [];
+    ensure(16 + noteLines.length * 12);
+    txt(p, label, M, y, 9.5, f.reg);
+    txt(p, value, M + 230, y, 9.5, f.bold);
+    noteLines.forEach((l, i) => txt(p, l, M + 300, y - i * 12, 9, f.reg, grey));
+    y -= Math.max(16, noteLines.length * 12 + 4);
+    p.drawLine({ start: { x: M, y: y + 6 }, end: { x: M + fullW, y: y + 6 }, thickness: 0.3, color: rgb(0.85, 0.85, 0.85) });
+  };
+
+  heading(`Outcome: ${labelOf(READY_OUTCOMES, v.ready)}`);
+  if (v.conditions) { ensure(30); y = para(p, `Conditions: ${v.conditions}`, M, y, fullW, 9.5, f.reg) - 4; }
+  line("Proposed start", v.proposed_start ? ukDate(v.proposed_start) : "—");
+  line("Men needed", v.men_needed ?? "—");
+  line("Plant needed", v.plant_needed ?? "—");
+
+  if (v.areas.length) {
+    heading("What's ready — by floor / area");
+    for (const a of v.areas) line(a.name, labelOf(AREA_STATUS, a.status), [a.expected && `Expected: ${a.expected}`, a.note].filter(Boolean).join(" · "));
+  }
+  for (const g of CHECKLIST) {
+    heading(g.title);
+    for (const i of g.items) { const c = v.checklist[i.key]; line(i.label, c?.answer ? labelOf(ANSWERS, c.answer) : "—", c?.note); }
+  }
+  heading("Anything that might stop us");
+  if (!v.blockers.length) line("None recorded", "");
+  for (const b of v.blockers) line(b.text.slice(0, 60), `${labelOf(BLOCKER_SEVERITY, b.severity)} · ${labelOf(BLOCKER_OWNERS, b.owner)}`, b.cleared_at ? `Cleared ${ukDate(b.cleared_at)}` : b.text.length > 60 ? b.text : undefined);
+  if (v.actions.length) {
+    heading("Actions");
+    for (const a of v.actions) line(a.what.slice(0, 60), [a.who, a.by].filter(Boolean).join(" · by ") || "—", a.what.length > 60 ? a.what : undefined);
+  }
+  if (v.notes) { heading("Notes"); ensure(40); y = para(p, v.notes, M, y, fullW, 9.5, f.reg) - 6; }
+
+  // Photos, two per row.
+  if (photos.length) {
+    heading("Photos");
+    const cellW = (fullW - 20) / 2, cellH = 200;
+    for (let i = 0; i < photos.length; i++) {
+      const col = i % 2;
+      if (col === 0) ensure(cellH + 24);
+      const img = await pdf.embedJpg(photos[i]);
+      const s = Math.min(cellW / img.width, cellH / img.height);
+      const x = M + col * (cellW + 20);
+      p.drawImage(img, { x, y: y - img.height * s, width: img.width * s, height: img.height * s });
+      const cap = v.photos[i]?.caption;
+      if (cap) txt(p, cap.slice(0, 80), x, y - cellH - 12, 8.5, f.reg, grey);
+      if (col === 1 || i === photos.length - 1) y -= cellH + 24;
+    }
+  }
+  footer(p, f, footerText);
+  return Buffer.from(await pdf.save());
+}
+

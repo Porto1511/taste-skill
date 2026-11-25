@@ -8,7 +8,7 @@ export interface FileStore {
 const UUID = "[0-9a-f-]{36}";
 const SAFE_PATH = new RegExp(
   `^(jobs/${UUID}/(revisions/${UUID}\\.pdf|photos/${UUID}\\.jpg|signatures/${UUID}\\.png)` +
-  `|deliveries/${UUID}/${UUID}\\.png|companies/${UUID}/certificates/${UUID}\\.pdf)$`,
+  `|deliveries/${UUID}/${UUID}\\.png|companies/${UUID}/certificates/${UUID}\\.pdf|site-visits/${UUID}/${UUID}\\.jpg)$`,
 );
 
 /** Storage paths are always generated server-side; reject anything else. */
@@ -24,4 +24,5 @@ export const storagePaths = {
   signature: (jobId: string, handoverId: string) => `jobs/${jobId}/signatures/${handoverId}.png`,
   deliverySignature: (deliveryId: string, signatureId: string) => `deliveries/${deliveryId}/${signatureId}.png`,
   certificate: (companyId: string, certificateId: string) => `companies/${companyId}/certificates/${certificateId}.pdf`,
+  visitPhoto: (visitId: string, photoId: string) => `site-visits/${visitId}/${photoId}.jpg`,
 };

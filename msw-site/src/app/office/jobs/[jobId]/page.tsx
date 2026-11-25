@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/server/auth/viewer";
+import Link from "next/link";
 import { getOfficeJob } from "@/server/queries/office";
+import { listSiteVisits } from "@/server/queries/site-visits";
+import { formatDate } from "@/lib/format";
 import { Card, SectionTitle, Stat } from "@/components/ui/card";
 import { Alert } from "@/components/ui/form";
 import { JobForm } from "@/components/office/job-form";
@@ -10,7 +13,7 @@ export default async function JobOverview({ params, searchParams }: { params: Pr
   const viewer = await requireStaff();
   const { jobId } = await params;
   const { created } = await searchParams;
-  const data = await getOfficeJob(viewer, jobId);
+  const [data, visits] = await Promise.all([getOfficeJob(viewer, jobId), listSiteVisits(viewer, jobId)]);
   if (!data) notFound();
   const s = data.summary;
   return (
@@ -31,6 +34,19 @@ export default async function JobOverview({ params, searchParams }: { params: Pr
           <Stat label="Current documents" value={s.current_docs} href={`/office/jobs/${jobId}/documents`} />
           <Stat label="Drafts pending" value={s.drafts} hint="Hidden from site" href={`/office/jobs/${jobId}/documents`} />
         </div>
+        <section>
+          <SectionTitle action={<Link href={`/office/site-visits/new?job=${jobId}`} className="text-sm font-semibold text-brand hover:underline">New visit →</Link>}>Site visits</SectionTitle>
+          <Card className="divide-y divide-line overflow-hidden">
+            {visits.length === 0 && <p className="px-4 py-3 text-[14px] text-muted">No site visits yet.</p>}
+            {visits.slice(0, 5).map((v) => (
+              <Link key={v.id} href={`/office/site-visits/${v.id}`} className="flex items-center gap-2 px-4 py-2.5 text-[14px] hover:bg-paper">
+                <span className="min-w-0 flex-1 truncate">{formatDate(v.visit_date)} · {v.visited_by_name}</span>
+                {v.open_blockers > 0 && <span className="rounded-full bg-danger-soft px-2 text-[12px] font-bold text-danger">{v.open_blockers} blocker{v.open_blockers === 1 ? "" : "s"}</span>}
+                <span className={v.ready === "yes" ? "font-semibold text-ok" : v.ready === "conditional" ? "font-semibold text-warn" : "font-semibold text-danger"}>{v.ready === "yes" ? "Ready" : v.ready === "conditional" ? "If…" : "Not yet"}</span>
+              </Link>
+            ))}
+          </Card>
+        </section>
         <section>
           <SectionTitle>Floors, phases &amp; areas</SectionTitle>
           <Card className="p-4">{viewer.isAdmin ? <AreasManager jobId={jobId} areas={data.areas} /> : <fieldset disabled><AreasManager jobId={jobId} areas={data.areas} /></fieldset>}</Card>

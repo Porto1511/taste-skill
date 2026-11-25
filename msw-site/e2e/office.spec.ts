@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import sharp from "sharp";
 import { BM, signIn, signOut } from "./helpers";
 import { demoId } from "../src/server/seed/demo-data";
 
@@ -185,6 +186,35 @@ test.describe("office workflows", () => {
       await page.getByRole("button", { name: /Menu/ }).click();
       await page.getByRole("button", { name: "Sign out" }).click();
       await expect(page).toHaveURL(/\/login/);
+    });
+
+    test("site visit on a phone: checklist, blocker, photo, outcome; then the report", async ({ page }) => {
+      await signIn(page, "damian.pendleton@msw.example");
+      await page.getByRole("button", { name: /Menu/ }).click();
+      await page.getByRole("link", { name: "Site visits" }).click();
+      await page.getByRole("link", { name: /New site visit/ }).click();
+      await page.getByLabel("Job number").fill("MSW-2611");
+      await expect(page.getByLabel("Site address")).toHaveValue(/Great Russell Street/);
+      await expect(page.getByLabel("Area 1", { exact: true })).toHaveValue("Level 1"); // floors come from the job
+      await page.getByRole("group", { name: "Handrails / edge protection on" }).getByRole("button", { name: "Partial" }).click();
+      await page.getByLabel("Handrails / edge protection on note").fill("None on east side of Level 4");
+      await page.getByRole("button", { name: "Add blocker" }).click();
+      await page.getByLabel("Blocker 1", { exact: true }).fill("No handrails on Level 4 east side");
+      await page.getByLabel("Choose photos").setInputFiles({ name: "site.jpg", mimeType: "image/jpeg", buffer: await sharp({ create: { width: 400, height: 300, channels: 3, background: "#889" } }).jpeg().toBuffer() });
+      await page.getByRole("group", { name: "Ready to start?" }).getByRole("button", { name: "Yes, if…" }).click();
+      await page.getByLabel("Ready if…").fill("Handrails on Level 4");
+      await page.getByRole("button", { name: "Save site visit" }).click();
+      await expect(page.getByText("No handrails on Level 4 east side")).toBeVisible();
+      await expect(page.getByText("Ready if:")).toBeVisible();
+      await page.getByRole("button", { name: /as cleared/ }).click();
+      await expect(page.getByRole("button", { name: /as not cleared/ })).toBeVisible();
+      const report = await page.request.get(page.url().replace(/\/office\/site-visits\//, "/api/site-visits/") + "/report");
+      expect(report.headers()["content-type"]).toBe("application/pdf");
+    });
+
+    test("site visits are office only", async ({ page }) => {
+      await signIn(page, "gareth.evans@msw.example");
+      expect((await page.request.get("/office/site-visits")).status()).toBe(404);
     });
 
     test("a job's sections are a drop-down and the Sign-offs page fits the screen", async ({ page }) => {
