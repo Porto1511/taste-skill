@@ -150,3 +150,25 @@ export async function serveCard(viewerId: string, id: string, download: boolean)
     },
   });
 }
+
+/** A subcontractor invoice: the MSW office and that company's boss only (RLS). */
+export async function serveInvoice(viewerId: string, id: string, download: boolean): Promise<Response> {
+  if (!UUID.test(id)) return notFound();
+  const row = await withUser(viewerId, async (tx) =>
+    (await tx.query<{ storage_path: string; file_name: string }>("select storage_path, file_name from subcontractor_invoices where id = $1", [id])).rows[0],
+  );
+  if (!row) return notFound();
+  const data = await getFileStore().get(row.storage_path);
+  if (!data) {
+    log.error("file.storage_missing", { invoiceId: id, path: row.storage_path });
+    return notFound();
+  }
+  return new Response(new Uint8Array(data), {
+    headers: {
+      ...baseHeaders,
+      "Content-Type": "application/pdf",
+      "Content-Length": String(data.length),
+      "Content-Disposition": disposition(download ? "attachment" : "inline", safeFileName(row.file_name, "invoice.pdf")),
+    },
+  });
+}

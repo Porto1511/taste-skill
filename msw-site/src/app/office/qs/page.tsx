@@ -12,6 +12,8 @@ import { DAYS, tradeLabel } from "@/lib/handover";
 import { formatDate, formatShortDate, labels } from "@/lib/format";
 import { hrs, parseQsParams, qsPresets } from "@/lib/qs";
 import { cn } from "@/lib/cn";
+import { listInvoices } from "@/server/queries/invoices";
+import { InvoiceStatus, money } from "@/components/office/invoice-status";
 
 export const metadata: Metadata = { title: "QS check" };
 
@@ -26,6 +28,8 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
   const companies = groupDaywork(data.daywork);
   const job = f.jobId ? opts.jobs.find((j) => j.id === f.jobId) : undefined;
   const cards = job ? [] : jobCards(opts.jobs, data);
+  // Invoices for this job (all dates): what each company is charging, to check against the above.
+  const invoices = job ? await listInvoices(viewer, { jobId: job.id, companyId: f.companyId }) : [];
   const totalHours = companies.reduce((s, c) => s + c.hours, 0);
   const sheets = companies.reduce((s, c) => s + c.sheets.length, 0);
   const openIssues = data.issues.filter((i) => i.status === "open" || i.status === "in_progress").length;
@@ -149,6 +153,23 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
         ) : <Empty>No daywork on this job in these dates.</Empty>}
       </section>
 
+
+      <section>
+        <SectionTitle>Invoices for this job · {invoices.length}</SectionTitle>
+        {invoices.length ? (
+          <Card className="divide-y divide-line">
+            {invoices.map((i) => (
+              <Link key={i.id} href={`/office/invoices/${i.id}`} className="flex flex-wrap items-center gap-x-3 px-4 py-2.5 text-[14px] hover:bg-paper">
+                <span className="w-28 text-muted">{formatShortDate(i.invoice_date)}</span>
+                <span className="font-medium">{i.company_name} · invoice {i.invoice_number}</span>
+                <InvoiceStatus status={i.status} />
+                <span className="ml-auto tabular font-bold">{money(i.amount)}</span>
+              </Link>
+            ))}
+            <p className="flex justify-between px-4 py-2.5 text-[14px] font-semibold"><span>Total invoiced</span><span className="tabular">{money(invoices.reduce((a, i) => a + Number(i.amount), 0))}</span></p>
+          </Card>
+        ) : <Empty>No invoices sent for this job yet.</Empty>}
+      </section>
 
       <section>
         <SectionTitle>Variations · {data.variations.length}</SectionTitle>

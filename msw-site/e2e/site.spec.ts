@@ -298,6 +298,23 @@ test.describe("operative mobile experience", () => {
     const pdf = await page.request.get(page.url().replace(/\/jobs\/[^/]+\/variation\//, "/api/variations/").replace(/\?.*$/, "") + "/sheet");
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
   });
+
+  test("a boss sends an invoice; their own lads can't see it", async ({ page }) => {
+    await signIn(page, "dave.clarke@derbydecking.example");
+    await page.goto("/company/invoices");
+    await page.getByLabel("Job", { exact: true }).selectOption({ index: 1 });
+    await page.getByLabel("Invoice number").fill("DD-2001");
+    await page.getByLabel(/Amount/).fill("3,150.00");
+    await page.getByLabel("Choose the invoice PDF").setInputFiles({ name: "inv.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF") });
+    await page.getByRole("button", { name: "Send to MSW" }).click();
+    await expect(page.getByText("Invoice DD-2001")).toBeVisible();
+    await expect(page.getByText("£3,150.00")).toBeVisible();
+    const href = await page.getByRole("link", { name: /Invoice DD-2001/ }).getAttribute("href");
+    await signOut(page);
+    await signIn(page, "john.smith@derbydecking.example");
+    expect((await page.request.get("/company/invoices")).status()).toBe(404);
+    expect((await page.request.get(href!)).status()).toBe(404);
+  });
 });
 
 async function draw(page: import("@playwright/test").Page, index: number) {

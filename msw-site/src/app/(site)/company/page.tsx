@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CaretRight, IdentificationCard, UserPlus, Certificate, Warning } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, IdentificationCard, UserPlus, Certificate, Warning, Receipt } from "@phosphor-icons/react/dist/ssr";
 import { requireBoss } from "@/server/auth/viewer";
 import { getCompanyOverview } from "@/server/queries/company";
 import { PageHeader } from "@/components/layout/page-header";
@@ -94,6 +94,10 @@ export default async function CompanyPage() {
         </ul>
       </section>
 
+      <Link href="/company/invoices" className="flex min-h-14 items-center justify-between rounded-[var(--radius-card)] bg-card px-4 font-semibold shadow-[var(--shadow-card)] ring-1 ring-line">
+        <span className="flex items-center gap-3"><Receipt className="size-6 text-brand" /><span>Invoices<span className="block text-[13px] font-normal text-muted">Send MSW your invoice — only you and the office see it</span></span></span>
+        <CaretRight className="size-5 text-muted" />
+      </Link>
       <Link href="/certificates" className="flex min-h-14 items-center justify-between rounded-[var(--radius-card)] bg-card px-4 font-semibold shadow-[var(--shadow-card)] ring-1 ring-line">
         <span className="flex items-center gap-3"><Certificate className="size-6 text-brand" /><span>Company certificates<span className="block text-[13px] font-normal text-muted">Net certs, insurance, anything for the whole company</span></span></span>
         <CaretRight className="size-5 text-muted" />
