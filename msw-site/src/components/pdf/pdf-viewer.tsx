@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TransformComponent, TransformWrapper, type ReactZoomPanPinchContentRef } from "react-zoom-pan-pinch";
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
-import { MagnifyingGlassMinus, MagnifyingGlassPlus, ArrowsIn, DownloadSimple, ArrowClockwise } from "@phosphor-icons/react";
+import { MagnifyingGlassMinus, MagnifyingGlassPlus, ArrowsIn, DownloadSimple, ArrowClockwise, PaperPlaneTilt } from "@phosphor-icons/react";
+import { sendPdf } from "@/components/handover/share-copy";
 
 /*
   High-quality PDF viewing for phones and desktops.
@@ -177,6 +178,8 @@ export function PdfViewer({ src, downloadHref, label }: { src: string; downloadH
             <a href={downloadHref} className="grid size-12 place-items-center rounded-xl hover:bg-white/10" aria-label="Download PDF">
               <DownloadSimple className="size-6" />
             </a>
+            {/* Phone share sheet: Mail, WhatsApp, Print, Save to Files. Falls back to a download. */}
+            <ToolButton label="Send or print" onClick={() => { sendPdf(src, `${label.replace(/[^\w.-]+/g, " ").trim()}.pdf`, label).catch(() => {}); }}><PaperPlaneTilt className="size-6" /></ToolButton>
             {pages.length > 1 && <span className="px-2 text-[13px] text-white/60">{pages.length} pages</span>}
           </div>
         </div>
