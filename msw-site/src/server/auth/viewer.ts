@@ -21,7 +21,7 @@ export interface Viewer {
   keepsTimesheet: boolean;
   /** Office staff, or an MSW lad given site visits. */
   canSiteVisit: boolean;
-  /** The boss of a subcontractor: runs their own people, cards and who sees which job. */
+  /** The manager of a subcontractor: runs their own people, cards and who sees which job. */
   isBoss: boolean;
   unreadNotifications: number;
 }
@@ -76,7 +76,7 @@ export async function requireStaff(): Promise<Viewer> {
   return v;
 }
 
-/** Subcontractor boss pages.  Anyone else gets a 404. */
+/** Subcontractor manager pages.  Anyone else gets a 404. */
 export async function requireBoss(): Promise<Viewer> {
   const v = await requireViewer();
   if (!v.isBoss) notFound();

@@ -22,7 +22,7 @@ export default async function CompanyPersonPage({ params, searchParams }: { para
   const isLad = p.role === "operative";
   return (
     <div className="grid gap-6">
-      <PageHeader back={{ href: "/company", label: viewer.companyName }} eyebrow={p.job_title ?? (isLad ? "Operative" : "Boss")} title={p.full_name}
+      <PageHeader back={{ href: "/company", label: viewer.companyName }} eyebrow={p.job_title ?? (isLad ? "Operative" : "Manager")} title={p.full_name}
         description={<>{p.email}{p.phone ? ` · ${p.phone}` : ""}</>} />
       {added && <Alert tone="ok" title={`${p.full_name} has been added`}>Give them the email and password you set. Now add their cards and tick their jobs below.</Alert>}
       {!p.active && <Alert tone="warn" title="Switched off">They can&apos;t sign in or see any job.</Alert>}

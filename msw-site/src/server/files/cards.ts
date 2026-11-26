@@ -20,7 +20,7 @@ const isPdf = (b: Buffer) => b.subarray(0, 1024).toString("latin1").includes("%P
 
 /**
  * File a card or ticket (a photo of it, or a PDF) on someone's profile.
- * Their boss or the MSW office can; RLS refuses everyone else.
+ * Their manager or the MSW office can; RLS refuses everyone else.
  */
 export async function uploadCard(viewer: Viewer, input: z.infer<typeof cardInput>, file: { name: string; bytes: Buffer }) {
   let data: Buffer;

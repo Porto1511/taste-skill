@@ -3,7 +3,7 @@ import { invoiceInput, uploadInvoice } from "@/server/files/invoices";
 import { fieldErrors } from "@/server/validation";
 import { fileFrom, jsonError, sameOrigin } from "@/server/http";
 
-/** A subcontractor boss sends an invoice for one of their jobs. */
+/** A subcontractor manager sends an invoice for one of their jobs. */
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Forbidden" }, { status: 403 });
   const viewer = await getViewer();

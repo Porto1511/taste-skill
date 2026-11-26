@@ -12,7 +12,7 @@ import { londonToday } from "@/lib/week";
 
 export const metadata: Metadata = { title: "My company" };
 
-/** The boss's dashboard: jobs MSW have given the company, their people, and cards that need renewing. */
+/** The manager's dashboard: jobs MSW have given the company, their people, and cards that need renewing. */
 export default async function CompanyPage() {
   const viewer = await requireBoss();
   const { jobs, people } = await getCompanyOverview(viewer);
@@ -79,7 +79,7 @@ export default async function CompanyPage() {
                 <Link href={`/company/people/${p.id}`} className="flex min-h-16 items-center gap-3 rounded-[var(--radius-card)] bg-card px-4 py-3 shadow-[var(--shadow-card)] ring-1 ring-line">
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-ink text-[13px] font-bold text-white">{p.full_name.split(" ").map((x) => x[0]).slice(0, 2).join("")}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold leading-tight">{p.full_name}{p.role === "manager" && <span className="ml-2 text-[13px] font-normal text-muted">Boss</span>}{!p.active && <span className="ml-2 text-[13px] font-semibold text-danger">Switched off</span>}</span>
+                    <span className="block font-semibold leading-tight">{p.full_name}{p.role === "manager" && <span className="ml-2 text-[13px] font-normal text-muted">Manager</span>}{!p.active && <span className="ml-2 text-[13px] font-semibold text-danger">Switched off</span>}</span>
                     <span className="flex items-center gap-1 text-[13px] text-muted">
                       <IdentificationCard className="size-4" /> {p.cards.length} card{p.cards.length === 1 ? "" : "s"}
                       {due > 0 && <span className="font-semibold text-warn"> · {due} to renew</span>}

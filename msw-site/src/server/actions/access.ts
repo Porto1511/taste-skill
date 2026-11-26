@@ -51,7 +51,7 @@ export async function revokeAccessAction(_p: ActionState, f: FormData): Promise<
   });
 }
 
-/** Give a job to a subcontractor company: its boss sees it and chooses which of their people can. */
+/** Give a job to a subcontractor company: its manager sees it and chooses which of their people can. */
 export async function giveJobToCompanyAction(_p: ActionState, f: FormData): Promise<ActionState> {
   const viewer = await requireAdmin();
   const jobId = z.string().uuid().parse(str(f, "jobId"));
@@ -63,7 +63,7 @@ export async function giveJobToCompanyAction(_p: ActionState, f: FormData): Prom
        select $1, c.id, auth.uid() from companies c where c.id = $2 and not c.is_msw
        on conflict do nothing`, [jobId, companyId.data]));
     refresh();
-    return { ok: true, message: "Job given to the company. Their boss has been told.", nonce: Date.now() };
+    return { ok: true, message: "Job given to the company. Their manager has been told.", nonce: Date.now() };
   });
 }
 

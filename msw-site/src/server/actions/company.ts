@@ -26,8 +26,8 @@ const operativeInput = z.object({
 });
 
 /**
- * A boss adds one of their own lads.  The boss sets the password and passes it
- * on; nothing is emailed.  The database only lets a boss add people to their
+ * A manager adds one of their own lads.  The manager sets the password and passes it
+ * on; nothing is emailed.  The database only lets a manager add people to their
  * own company, as operatives.
  */
 export async function addOperativeAction(_p: ActionState, f: FormData): Promise<ActionState> {

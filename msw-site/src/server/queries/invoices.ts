@@ -15,7 +15,7 @@ const cols = `select i.id, i.company_id, c.name as company_name, i.job_id, j.job
   from subcontractor_invoices i join companies c on c.id = i.company_id join jobs j on j.id = i.job_id
   left join profiles cb on cb.id = i.checked_by`;
 
-/** RLS: the office sees all; a boss sees their own company's; everyone else sees none. */
+/** RLS: the office sees all; a manager sees their own company's; everyone else sees none. */
 export async function listInvoices(viewer: Viewer, f: { jobId?: string; companyId?: string; status?: string } = {}) {
   return withUser(viewer.id, async (tx) =>
     (await tx.query<InvoiceRow>(

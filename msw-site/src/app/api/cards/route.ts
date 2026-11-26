@@ -2,7 +2,7 @@ import { getViewer } from "@/server/auth/viewer";
 import { cardInput, uploadCard } from "@/server/files/cards";
 import { fileFrom, jsonError, sameOrigin } from "@/server/http";
 
-/** File a card or ticket on someone's profile (their boss or the MSW office). */
+/** File a card or ticket on someone's profile (their manager or the MSW office). */
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: "Forbidden" }, { status: 403 });
   const viewer = await getViewer();

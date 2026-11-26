@@ -128,7 +128,7 @@ export async function serveCertificate(viewerId: string, id: string, download: b
   });
 }
 
-/** A card or ticket: the person, their boss and the MSW office (RLS). */
+/** A card or ticket: the person, their manager and the MSW office (RLS). */
 export async function serveCard(viewerId: string, id: string, download: boolean): Promise<Response> {
   if (!UUID.test(id)) return notFound();
   const row = await withUser(viewerId, async (tx) =>
@@ -151,7 +151,7 @@ export async function serveCard(viewerId: string, id: string, download: boolean)
   });
 }
 
-/** A subcontractor invoice: the MSW office and that company's boss only (RLS). */
+/** A subcontractor invoice: the MSW office and that company's manager only (RLS). */
 export async function serveInvoice(viewerId: string, id: string, download: boolean): Promise<Response> {
   if (!UUID.test(id)) return notFound();
   const row = await withUser(viewerId, async (tx) =>

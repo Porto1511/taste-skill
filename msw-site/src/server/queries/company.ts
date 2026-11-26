@@ -14,7 +14,7 @@ export interface CompanyJobRow { job_id: string; job_number: string; name: strin
 
 const cardCols = "id, user_id, card_type, card_number, expires_on::text, file_name, mime_type, created_at, uploaded_by_name";
 
-/** Cards for some people (RLS: themselves, their boss, the office). */
+/** Cards for some people (RLS: themselves, their manager, the office). */
 export async function listCards(viewer: Viewer, userIds: string[]): Promise<CardRow[]> {
   if (!userIds.length) return [];
   return withUser(viewer.id, async (tx) =>
@@ -22,7 +22,7 @@ export async function listCards(viewer: Viewer, userIds: string[]): Promise<Card
   );
 }
 
-/** Everything a boss needs on one screen: their jobs, their people, and each person's cards and jobs. */
+/** Everything a manager needs on one screen: their jobs, their people, and each person's cards and jobs. */
 export async function getCompanyOverview(viewer: Viewer) {
   return withUser(viewer.id, async (tx) => {
     const jobs = (await tx.query<CompanyJobRow>("select job_id, job_number, name, site_address, status::text, given_at from public.my_company_jobs()")).rows;
@@ -42,7 +42,7 @@ export async function getCompanyOverview(viewer: Viewer) {
   });
 }
 
-/** What the boss's company has done on one of its jobs: reports, daywork, variations and sign-offs. */
+/** What the manager's company has done on one of its jobs: reports, daywork, variations and sign-offs. */
 export async function getCompanyJobActivity(viewer: Viewer, jobId: string) {
   return withUser(viewer.id, async (tx) => {
     const reports = (await tx.query<{ id: string; kind: string; title: string; author_name: string; status: string | null; created_at: string }>(

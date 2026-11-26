@@ -6,7 +6,7 @@ import { FilePdf, UploadSimple } from "@phosphor-icons/react";
 import { Alert, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { buttonClass } from "@/components/ui/button";
 
-/** The boss sends an invoice for one of their jobs: PDF, number, date, amount. */
+/** The manager sends an invoice for one of their jobs: PDF, number, date, amount. */
 export function InvoiceUpload({ jobs, today }: { jobs: { job_id: string; job_number: string; name: string }[]; today: string }) {
   const router = useRouter();
   const [jobId, setJobId] = useState(jobs.length === 1 ? jobs[0].job_id : "");

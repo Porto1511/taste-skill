@@ -18,8 +18,8 @@ export const invoiceInput = z.object({
 });
 
 /**
- * A subcontractor's boss sends an invoice (PDF) for one of their jobs.  Only
- * the MSW office and that boss can ever see it — enforced by RLS.
+ * A subcontractor's manager sends an invoice (PDF) for one of their jobs.  Only
+ * the MSW office and that manager can ever see it — enforced by RLS.
  */
 export async function uploadInvoice(viewer: Viewer, input: z.infer<typeof invoiceInput>, file: { name: string; bytes: Buffer }) {
   assertPdf(file.bytes, file.name || "The invoice");

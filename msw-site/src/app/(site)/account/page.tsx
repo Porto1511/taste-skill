@@ -22,7 +22,7 @@ export default async function AccountPage() {
           <div><dt className="text-[12px] font-semibold text-muted">Company</dt><dd className="font-medium">{viewer.companyName}</dd></div>
           <div><dt className="text-[12px] font-semibold text-muted">Role</dt><dd className="font-medium">{labels.role[viewer.role]}</dd></div>
         </dl>
-        <p className="mt-4 text-[13px] text-muted">{viewer.isMswEmployee || viewer.isBoss ? "Your details and job access are managed by the MSW office." : "Your details and the jobs you can see are managed by your boss."}</p>
+        <p className="mt-4 text-[13px] text-muted">{viewer.isMswEmployee || viewer.isBoss ? "Your details and job access are managed by the MSW office." : "Your details and the jobs you can see are managed by your manager."}</p>
       </Card>
       {viewer.canSiteVisit && !viewer.isStaff && (
         <Link href="/site-visits" className="flex min-h-14 items-center justify-between rounded-[var(--radius-card)] bg-card px-4 font-semibold shadow-[var(--shadow-card)] ring-1 ring-line">

@@ -11,7 +11,7 @@ import { londonToday } from "@/lib/week";
 
 export const metadata: Metadata = { title: "Invoices" };
 
-/** The boss's invoices to MSW. Only they and the MSW office can see this page's contents. */
+/** The manager's invoices to MSW. Only they and the MSW office can see this page's contents. */
 export default async function CompanyInvoicesPage() {
   const viewer = await requireBoss();
   const [{ jobs }, invoices] = await Promise.all([getCompanyOverview(viewer), listInvoices(viewer)]);

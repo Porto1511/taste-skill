@@ -14,7 +14,7 @@ export default async function MyCardsPage() {
   return (
     <div>
       <PageHeader back={{ href: "/account", label: "Me" }} title="My cards"
-        description={viewer.isBoss ? "Add your own cards from My company → your name." : "Show them on site, or send or print a copy. Your boss adds and updates them."} />
+        description={viewer.isBoss ? "Add your own cards from My company → your name." : "Show them on site, or send or print a copy. Your manager adds and updates them."} />
       <CardList cards={cards} today={londonToday()} canEdit={false} owner={viewer.fullName} />
     </div>
   );

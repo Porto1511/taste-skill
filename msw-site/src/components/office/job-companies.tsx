@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/form";
 import { FormMessage, SubmitButton } from "@/components/ui/form-client";
 import { Card, SectionTitle } from "@/components/ui/card";
 
-/** Which subcontractors have this job.  Their boss picks which of their people see it. */
+/** Which subcontractors have this job.  Their manager picks which of their people see it. */
 export function JobCompanies({ jobId, holding, others, canEdit }: { jobId: string; holding: JobCompanyRow[]; others: { id: string; name: string }[]; canEdit: boolean }) {
   const [give, giveAction] = useActionState(giveJobToCompanyAction, idle);
   return (
@@ -30,7 +30,7 @@ export function JobCompanies({ jobId, holding, others, canEdit }: { jobId: strin
           </form>
         )}
       </Card>
-      <p className="mt-2 px-1 text-[13px] text-muted">Their boss sees the whole job and ticks which of their lads can see it. Take it off and none of them can.</p>
+      <p className="mt-2 px-1 text-[13px] text-muted">Their manager sees the whole job and ticks which of their lads can see it. Take it off and none of them can.</p>
     </section>
   );
 }
@@ -42,7 +42,7 @@ function Holding({ row, canEdit }: { row: JobCompanyRow; canEdit: boolean }) {
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{row.name}</p>
         <p className="text-[13px] text-muted">
-          Boss: {row.boss_names ?? "none set up"} · {row.people_on} of their people ticked · given {formatDate(row.granted_at)}{row.granted_by_name ? ` by ${row.granted_by_name}` : ""}
+          Manager: {row.boss_names ?? "none set up"} · {row.people_on} of their people ticked · given {formatDate(row.granted_at)}{row.granted_by_name ? ` by ${row.granted_by_name}` : ""}
         </p>
       </div>
       {canEdit && (

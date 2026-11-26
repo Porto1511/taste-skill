@@ -15,7 +15,7 @@ export default async function OfficeInvoicesPage() {
   return (
     <div>
       <PageHeader title="Subcontractor invoices"
-        description="Sent in by each company's boss. Only the office and that company's boss can see them — never the lads, never another company." />
+        description="Sent in by each company's manager. Only the office and that company's manager can see them — never the lads, never another company." />
       {items.length ? (
         <Card className="divide-y divide-line overflow-hidden">
           {items.map((i) => (
@@ -27,7 +27,7 @@ export default async function OfficeInvoicesPage() {
             </Link>
           ))}
         </Card>
-      ) : <EmptyState title="No invoices yet">When a subcontractor&apos;s boss sends one in it shows here.</EmptyState>}
+      ) : <EmptyState title="No invoices yet">When a subcontractor&apos;s manager sends one in it shows here.</EmptyState>}
     </div>
   );
 }

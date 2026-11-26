@@ -34,7 +34,7 @@ export function ExpiryBadge({ expiresOn, today }: { expiresOn: string | null; to
   );
 }
 
-/** A person's cards: view, send or print each one; the boss/office can remove them. */
+/** A person's cards: view, send or print each one; the manager/office can remove them. */
 export function CardList({ cards, today, canEdit, owner }: { cards: CardRow[]; today: string; canEdit: boolean; owner: string }) {
   if (!cards.length) return <p className="px-1 text-[14px] text-muted">No cards added yet.</p>;
   return (

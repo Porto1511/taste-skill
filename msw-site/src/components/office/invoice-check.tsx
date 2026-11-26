@@ -11,7 +11,7 @@ export function InvoiceCheck({ id, note }: { id: string; note: string | null }) 
   return (
     <form action={action} className="grid gap-3">
       <input type="hidden" name="invoiceId" value={id} />
-      <Field label="Note to their boss" htmlFor="note" optional hint="Needed for a query, e.g. which daywork sheet doesn't match.">
+      <Field label="Note to their manager" htmlFor="note" optional hint="Needed for a query, e.g. which daywork sheet doesn't match.">
         <Textarea id="note" name="note" rows={3} defaultValue={note ?? ""} maxLength={2000} />
       </Field>
       <div className="flex flex-wrap gap-2">
