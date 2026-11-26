@@ -3,11 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   Phone, NavigationArrow, WarningOctagon, Signature, Certificate, ArrowSquareOut, ShieldWarning, MapPin, UserCircle,
-  Buildings, CalendarBlank, TrendUp, Camera, CaretLeft, CaretRight, Timer, Truck,
+  Buildings, CalendarBlank, TrendUp, Camera, CaretLeft, CaretRight, Timer, Truck, Swap,
 } from "@phosphor-icons/react/dist/ssr";
 import { requireViewer } from "@/server/auth/viewer";
 import { getSiteJob } from "@/server/queries/site";
 import { listDayworks, listDeliveries, listHandovers } from "@/server/queries/handovers";
+import { listVariations } from "@/server/queries/variations";
 import { EmptyState } from "@/components/ui/card";
 import { DocumentList } from "@/components/site/document-list";
 import { PhotoGrid } from "@/components/site/photo-grid";
@@ -62,7 +63,7 @@ export default async function SiteJobPage({ params }: Props) {
   if (!/^[0-9a-f-]{36}$/i.test(jobId)) notFound();
   const data = await getSiteJob(viewer, jobId);
   if (!data) notFound(); // not allocated, or not live: indistinguishable from "does not exist"
-  const [handovers, dayworks, deliveries] = await Promise.all([listHandovers(viewer, jobId), listDayworks(viewer, jobId), listDeliveries(viewer, jobId)]);
+  const [handovers, dayworks, deliveries, variations] = await Promise.all([listHandovers(viewer, jobId), listDayworks(viewer, jobId), listDeliveries(viewer, jobId), listVariations(viewer, jobId)]);
 
   const { job, assignment, areas, office, documents, reports, photos } = data;
   const now = requestNow();
@@ -171,16 +172,15 @@ export default async function SiteJobPage({ params }: Props) {
             ),
           },
           {
-            id: "reports", label: "Reports", count: mine.length + handovers.length + dayworks.length + deliveries.length || undefined,
+            id: "reports", label: "Reports", count: mine.length + handovers.length + dayworks.length + deliveries.length + variations.length || undefined,
             content: (
               <>
                 <div className="mb-4 grid grid-cols-2 gap-2">
                   <Link href={`/jobs/${job.id}/report?kind=progress`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><TrendUp className="size-5" weight="bold" /> Progress update</Link>
                   <Link href={`/jobs/${job.id}/report?kind=photo`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Camera className="size-5" /> Upload photos</Link>
                   <Link href={`/jobs/${job.id}/daywork`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Timer className="size-5" /> Daywork sheet</Link>
-                  {viewer.isMswEmployee
-                    ? <Link href={`/deliveries/new?job=${job.id}`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Truck className="size-5" /> Delivery note</Link>
-                    : <span aria-hidden />}
+                  <Link href={`/jobs/${job.id}/variation`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Swap className="size-5" /> Variation</Link>
+                  {viewer.isMswEmployee && <Link href={`/deliveries/new?job=${job.id}`} className="flex h-12 items-center justify-center gap-2 rounded-xl border border-line-strong bg-card text-[14px] font-semibold"><Truck className="size-5" /> Delivery note</Link>}
                 </div>
                 <Section title={isManager ? "Your company's reports" : "Your reports"}>
                   {mine.length
@@ -219,6 +219,22 @@ export default async function SiteJobPage({ params }: Props) {
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-semibold leading-snug">{d.first_item}{d.item_count > 1 ? ` + ${d.item_count - 1} more` : ""}</span>
                             <span className="block text-[12.5px] text-muted">{formatDate(d.signed_at)} · received by {d.receiver_name}</span>
+                          </span>
+                          <CaretRight className="size-4 text-subtle" weight="bold" />
+                        </Link>
+                      ))}
+                    </div>
+                  </Section>
+                )}
+                {variations.length > 0 && (
+                  <Section title="Variations">
+                    <div className={listCls}>
+                      {variations.map((v) => (
+                        <Link key={v.id} href={`/jobs/${job.id}/variation/${v.id}`} className="flex items-center gap-3 px-4 py-3">
+                          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-info-soft text-info"><Swap className="size-5" weight="bold" /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold leading-snug">{v.description}</span>
+                            <span className="block text-[12.5px] text-muted">{formatDate(v.signed_at)} · asked for by {v.requested_by}{isManager ? ` · ${v.captured_by_name}` : ""}</span>
                           </span>
                           <CaretRight className="size-4 text-subtle" weight="bold" />
                         </Link>

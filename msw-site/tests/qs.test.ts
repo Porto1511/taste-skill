@@ -12,7 +12,7 @@ beforeAll(async () => { ({ driver: db } = await createSeededDb()); setDriverForT
 
 const v = (key: string, isStaff = false): Viewer => ({
   id: ids.user(key), fullName: key, email: "", role: isStaff ? "office" : "operative", jobTitle: null, companyId: "", companyName: "",
-  isMswEmployee: isStaff, isStaff, isAdmin: false, keepsTimesheet: false, canSiteVisit: false, unreadNotifications: 0,
+  isMswEmployee: isStaff, isStaff, isAdmin: false, keepsTimesheet: false, canSiteVisit: false, isBoss: false, unreadNotifications: 0,
 });
 const ALL = { from: "2000-01-01", to: "2100-01-01" };
 

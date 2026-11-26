@@ -67,3 +67,5 @@ export function townFrom(address: string) {
   const parts = address.split(",").map((p) => p.trim()).filter(Boolean);
   return parts.at(-1) ?? address;
 }
+
+export const VARIATION_DECLARATION = "I confirm I have asked for the work described above as a variation.";

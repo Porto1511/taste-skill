@@ -14,7 +14,7 @@ beforeAll(async () => { ({ driver: db, store } = await createSeededDb()); setDri
 
 const v = (key: string, isStaff = false): Viewer => ({
   id: ids.user(key), fullName: key, email: "", role: isStaff ? "admin" : "operative", jobTitle: null, companyId: "", companyName: "",
-  isMswEmployee: isStaff, isStaff, isAdmin: isStaff, keepsTimesheet: false, canSiteVisit: false, unreadNotifications: 0,
+  isMswEmployee: isStaff, isStaff, isAdmin: isStaff, keepsTimesheet: false, canSiteVisit: false, isBoss: false, unreadNotifications: 0,
 });
 const pdf = Buffer.from("%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
 const company = async (name: string) => (await system(db)<{ id: string }>("select id from companies where name = $1", [name]))[0].id;
@@ -25,8 +25,10 @@ describe("company certificates", () => {
     const msw = await company("MSW UK Ltd");
     const derby = await company("Derby Decking");
     const { id: mswCert } = await uploadCertificate(v("claire", true), msw, "MSW net certificates 2026", { name: "msw-nets.pdf", bytes: pdf });
-    const { id: sosCert } = await uploadCertificate(v("liam"), sos, "SOS net certs", { name: "sos.pdf", bytes: pdf });
-    await expect(uploadCertificate(v("liam"), derby, "Not mine", { name: "x.pdf", bytes: pdf })).rejects.toMatchObject({ code: "42501" });
+    const { id: sosCert } = await uploadCertificate(v("sarah"), sos, "SOS net certs", { name: "sos.pdf", bytes: pdf }); // SOS's boss
+    await expect(uploadCertificate(v("sarah"), derby, "Not mine", { name: "x.pdf", bytes: pdf })).rejects.toMatchObject({ code: "42501" });
+    // An operative sees their company's certs but only the boss (or the office) files them.
+    await expect(uploadCertificate(v("liam"), sos, "Lad's upload", { name: "y.pdf", bytes: pdf })).rejects.toMatchObject({ code: "42501" });
 
     const titles = async (k: string) => (await asUser(db, k).query<{ title: string }>("select title from company_certificates order by title")).map((r) => r.title);
     expect(await titles("claire")).toEqual(["MSW net certificates 2026", "SOS net certs"]);
@@ -41,12 +43,13 @@ describe("company certificates", () => {
 
   it("only PDFs, and deleting removes the file", async () => {
     const sos = await company("SOS");
-    await expect(uploadCertificate(v("liam"), sos, "Bad file", { name: "a.pdf", bytes: Buffer.from("MZ executable") })).rejects.toThrow(/not a PDF/);
+    await expect(uploadCertificate(v("sarah"), sos, "Bad file", { name: "a.pdf", bytes: Buffer.from("MZ executable") })).rejects.toThrow(/not a PDF/);
     const before = store.files.size;
-    const { id } = await uploadCertificate(v("liam"), sos, "Temp", { name: "t.pdf", bytes: pdf });
+    const { id } = await uploadCertificate(v("sarah"), sos, "Temp", { name: "t.pdf", bytes: pdf });
     expect(store.files.size).toBe(before + 1);
     await expect(deleteCertificate(v("john"), id)).rejects.toThrow(/not found/i);
-    await deleteCertificate(v("liam"), id);
+    await expect(deleteCertificate(v("liam"), id)).rejects.toThrow(/not found/i);
+    await deleteCertificate(v("sarah"), id);
     expect(store.files.size).toBe(before);
   });
 });

@@ -50,3 +50,30 @@ export async function revokeAccessAction(_p: ActionState, f: FormData): Promise<
     return { ok: true, message: `Access removed for ${n} ${n === 1 ? "person" : "people"}.`, nonce: Date.now() };
   });
 }
+
+/** Give a job to a subcontractor company: its boss sees it and chooses which of their people can. */
+export async function giveJobToCompanyAction(_p: ActionState, f: FormData): Promise<ActionState> {
+  const viewer = await requireAdmin();
+  const jobId = z.string().uuid().parse(str(f, "jobId"));
+  const companyId = z.string().uuid().safeParse(str(f, "companyId"));
+  if (!companyId.success) return { error: "Choose a company.", nonce: Date.now() };
+  return attempt("access.company_give", async () => {
+    await withUser(viewer.id, (tx) => tx.query(
+      `insert into job_companies (job_id, company_id, granted_by)
+       select $1, c.id, auth.uid() from companies c where c.id = $2 and not c.is_msw
+       on conflict do nothing`, [jobId, companyId.data]));
+    refresh();
+    return { ok: true, message: "Job given to the company. Their boss has been told.", nonce: Date.now() };
+  });
+}
+
+/** Take a job off a company: everyone from that company loses it straight away. */
+export async function takeJobFromCompanyAction(_p: ActionState, f: FormData): Promise<ActionState> {
+  const viewer = await requireAdmin();
+  const id = z.string().uuid().parse(str(f, "jobCompanyId"));
+  return attempt("access.company_take", async () => {
+    await withUser(viewer.id, (tx) => tx.query("update job_companies set revoked_at = now(), revoked_by = auth.uid() where id = $1 and revoked_at is null", [id]));
+    refresh();
+    return { ok: true, message: "Taken off. Nobody from that company can see the job now.", nonce: Date.now() };
+  });
+}

@@ -77,7 +77,7 @@ export const labels = {
   reportStatus: { open: "Open", in_progress: "In progress", resolved: "Resolved", closed: "Closed" } as Record<string, string>,
   revisionStatus: { draft: "Draft", approved: "Approved for use", superseded: "Superseded", withdrawn: "Withdrawn" } as Record<string, string>,
   jobStatus: { planned: "Planned", live: "Live", on_hold: "On hold", complete: "Complete" } as Record<string, string>,
-  role: { admin: "MSW administrator", office: "MSW office", operative: "Operative", manager: "Subcontractor manager" } as Record<string, string>,
+  role: { admin: "MSW administrator", office: "MSW office", operative: "Operative", manager: "Company boss" } as Record<string, string>,
   priority: { normal: "Normal", high: "High", urgent: "Urgent" } as Record<string, string>,
   areaKind: { floor: "Floor", phase: "Phase", zone: "Zone", area: "Area" } as Record<string, string>,
 };

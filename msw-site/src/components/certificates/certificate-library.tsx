@@ -13,15 +13,15 @@ import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
 /** One card per company: upload certs (e.g. net certs) and print or send them when a client asks. */
-export function CertificateLibrary({ companies }: { companies: CertificateCompany[] }) {
+export function CertificateLibrary({ companies, canEdit = true }: { companies: CertificateCompany[]; canEdit?: boolean }) {
   return (
     <div className="grid gap-5">
-      {companies.map((c) => <CompanyCard key={c.id} company={c} />)}
+      {companies.map((c) => <CompanyCard key={c.id} company={c} canEdit={canEdit} />)}
     </div>
   );
 }
 
-function CompanyCard({ company }: { company: CertificateCompany }) {
+function CompanyCard({ company, canEdit }: { company: CertificateCompany; canEdit: boolean }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -52,10 +52,10 @@ function CompanyCard({ company }: { company: CertificateCompany }) {
       </div>
       {company.certificates.length > 0 ? (
         <ul className="mt-3 divide-y divide-line">
-          {company.certificates.map((x) => <CertRow key={x.id} cert={x} company={company.name} />)}
+          {company.certificates.map((x) => <CertRow key={x.id} cert={x} company={company.name} canEdit={canEdit} />)}
         </ul>
       ) : <p className="px-5 pt-2 text-[14px] text-muted">No certificates yet.</p>}
-      <div className="mt-3 grid gap-2 border-t border-line bg-paper px-5 py-4 sm:grid-cols-[1fr_auto_auto] sm:items-center">
+      {canEdit ? <div className="mt-3 grid gap-2 border-t border-line bg-paper px-5 py-4 sm:grid-cols-[1fr_auto_auto] sm:items-center">
         <Input aria-label={`Name for the new ${company.name} certificate file`} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Name, e.g. Net certificates 2026" maxLength={160} />
         <label className={cn(buttonClass("secondary", "md"), "cursor-pointer")}>
           <FilePdf className="size-5" /> <span className="max-w-[14rem] truncate">{file ? file.name : "Choose PDF"}</span>
@@ -63,12 +63,12 @@ function CompanyCard({ company }: { company: CertificateCompany }) {
         </label>
         <button type="button" onClick={upload} disabled={busy} className={buttonClass("dark", "md")}><UploadSimple className="size-5" weight="bold" /> {busy ? "Uploading…" : "Upload"}</button>
         {error && <div className="sm:col-span-3"><Alert>{error}</Alert></div>}
-      </div>
+      </div> : <div className="h-4" />}
     </section>
   );
 }
 
-function CertRow({ cert, company }: { cert: CertificateCompany["certificates"][number]; company: string }) {
+function CertRow({ cert, company, canEdit }: { cert: CertificateCompany["certificates"][number]; company: string; canEdit: boolean }) {
   const [state, del, deleting] = useActionState(deleteCertificateAction, idle);
   const [sending, setSending] = useState(false);
   const [email, setEmail] = useState("");
@@ -86,10 +86,10 @@ function CertRow({ cert, company }: { cert: CertificateCompany["certificates"][n
         <div className="flex flex-wrap gap-1.5">
           <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "sm")}><Printer className="size-4" /> Print</a>
           <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={buttonClass("primary", "sm")}><PaperPlaneTilt className="size-4" weight="fill" /> Send</button>
-          <form action={del} onSubmit={(e) => { if (!confirm(`Delete "${cert.title}"? This can't be undone.`)) e.preventDefault(); }}>
+          {canEdit && <form action={del} onSubmit={(e) => { if (!confirm(`Delete "${cert.title}"? This can't be undone.`)) e.preventDefault(); }}>
             <input type="hidden" name="certificateId" value={cert.id} />
             <button disabled={deleting} aria-label={`Delete ${cert.title}`} className={buttonClass("ghost", "sm", "min-w-11 text-danger")}><Trash className="size-4" /></button>
-          </form>
+          </form>}
         </div>
       </div>
       {open && (

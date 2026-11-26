@@ -25,7 +25,7 @@ beforeAll(async () => {
 
 const viewer = (key: string): Viewer => ({
   id: ids.user(key), fullName: key, email: "", role: "operative", jobTitle: null, companyId: "", companyName: "",
-  isMswEmployee: false, isStaff: false, isAdmin: false, keepsTimesheet: false, canSiteVisit: false, unreadNotifications: 0,
+  isMswEmployee: false, isStaff: false, isAdmin: false, keepsTimesheet: false, canSiteVisit: false, isBoss: false, unreadNotifications: 0,
 });
 const jobs = async (key: string) =>
   (await asUser(db, key).query<{ job_number: string }>("select job_number from jobs order by 1")).map((r) => r.job_number);
@@ -283,7 +283,8 @@ describe("daywork sheets and delivery notes", () => {
     const names = (await asUser(db, "dave").query<{ captured_by_name: string }>("select captured_by_name from dayworks")).map((r) => r.captured_by_name);
     expect(names.sort()).toEqual(["John Smith", "Mark Jones"]);
     expect(await seen("dave", "deliveries")).toBe(0);
-    expect(await seen("sarah", "dayworks")).toBe(0); // SOS manager without the report grant on this job
+    // SOS's boss sees SOS's sheet (Liam's), never Derby Decking's.
+    expect((await asUser(db, "sarah").query<{ captured_by_name: string }>("select captured_by_name from dayworks")).map((r) => r.captured_by_name)).toEqual(["Liam Turner"]);
     expect(await seen("liam", "dayworks")).toBe(1); // their own standing-time sheet
     expect(await seen("ryan", "dayworks")).toBe(0); // same gang, not the person who raised it
     expect(await seen("gareth", "deliveries")).toBe(2); // the demo one and the one raised above

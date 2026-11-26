@@ -11,6 +11,9 @@ import { ActivityFeed } from "@/components/office/activity-feed";
 import { EditPersonForm, PersonAccountControls } from "@/components/office/people-forms";
 import { dateRange, formatDate, labels, relativeTime, telHref } from "@/lib/format";
 import { requestNow } from "@/lib/now";
+import { listCards } from "@/server/queries/company";
+import { AddCard, CardList } from "@/components/company/cards";
+import { londonToday } from "@/lib/week";
 
 export default async function PersonPage({ params, searchParams }: { params: Promise<{ userId: string }>; searchParams: Promise<{ invited?: string }> }) {
   const viewer = await requireStaff();
@@ -20,6 +23,7 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
   const data = await getPerson(viewer, userId);
   if (!data) notFound();
   const { person: p, assignments, activity, companies } = data;
+  const cards = await listCards(viewer, [p.id]);
   const active = assignments.filter((a) => !a.revoked_at);
   const past = assignments.filter((a) => a.revoked_at);
   const staff = p.role === "admin" || p.role === "office";
@@ -61,6 +65,15 @@ export default async function PersonPage({ params, searchParams }: { params: Pro
               </details>
             )}
           </section>
+          {!staff && (
+            <section>
+              <SectionTitle>Cards and tickets · {cards.length}</SectionTitle>
+              <div className="grid gap-3">
+                <CardList cards={cards} today={londonToday()} canEdit owner={p.full_name} />
+                <details><summary className="cursor-pointer text-sm font-semibold text-muted">Add a card</summary><div className="mt-2"><AddCard userId={p.id} /></div></details>
+              </div>
+            </section>
+          )}
           <section>
             <SectionTitle>Recent activity</SectionTitle>
             <Card className="overflow-hidden"><ActivityFeed items={activity} now={requestNow()} dense /></Card>

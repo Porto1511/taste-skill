@@ -233,4 +233,17 @@ test.describe("office workflows", () => {
       expect(overflow).toBeLessThanOrEqual(1);
     });
   });
+
+  test("the administrator gives a job to a subcontractor and can take it off again", async ({ page }) => {
+    await signIn(page, "damian.pendleton@msw.example");
+    await page.goto(`/office/jobs/${demoId("job:riverside")}/access`);
+    await expect(page.getByRole("heading", { name: "Subcontractors on this job" })).toBeVisible();
+    await page.getByLabel("Company to give the job to").selectOption({ label: "SOS" });
+    await page.getByRole("button", { name: "Give job" }).click();
+    await expect(page.getByText("Job given to the company")).toBeVisible();
+    const row = page.getByRole("group", { name: "SOS", exact: true });
+    page.once("dialog", (d) => d.accept());
+    await row.getByRole("button", { name: "Take off job" }).click();
+    await expect(row).toHaveCount(0); // SOS no longer holds the job
+  });
 });

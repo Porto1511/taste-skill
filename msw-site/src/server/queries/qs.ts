@@ -16,6 +16,7 @@ export interface DayworkLine {
   person: string; trade: string; day: string; hours: number;
 }
 export interface QsHandover { id: string; job_id: string; job_name: string; job_number: string; title: string; scopes: string[]; company: string; signer_name: string; signed_at: string }
+export interface QsVariation { id: string; job_id: string; job_number: string; description: string; requested_by: string; company: string; client_name: string; signed_at: string }
 export interface QsIssue {
   id: string; job_id: string; job_name: string; job_number: string; title: string; category: string; priority: string; status: string;
   author_name: string; company: string; created_at: string;
@@ -62,7 +63,16 @@ export async function qsSummary(viewer: Viewer, f: QsFilter) {
       args,
     )).rows;
 
-    return { daywork, handovers, issues };
+    const variations = (await tx.query<QsVariation>(
+      `select v.id, v.job_id, j.job_number, v.description, v.requested_by, v.captured_by_company as company, v.client_name, v.signed_at
+         from variations v join jobs j on j.id = v.job_id
+        where ${londonDay("v.signed_at")} between $1::date and $2::date
+          and ($3::uuid is null or v.job_id = $3) and ($4::uuid is null or v.captured_by_company_id = $4)
+        order by v.signed_at`,
+      args,
+    )).rows;
+
+    return { daywork, handovers, issues, variations };
   });
 }
 
@@ -90,13 +100,13 @@ export function groupDaywork(lines: DayworkLine[]) {
 
 export interface QsJobCard {
   id: string; job_number: string; name: string; status: string; main_contractor: string | null;
-  handovers: number; sheets: number; hours: number; issues: number; open_issues: number; gangs: string[];
+  handovers: number; sheets: number; hours: number; issues: number; open_issues: number; variations: number; gangs: string[];
 }
 
 /** One card per job: live jobs always, others only when something was recorded in the dates. */
 export function jobCards(
   jobs: { id: string; job_number: string; name: string; status: string; main_contractor: string | null }[],
-  d: { daywork: DayworkLine[]; handovers: QsHandover[]; issues: QsIssue[] },
+  d: { daywork: DayworkLine[]; handovers: QsHandover[]; issues: QsIssue[]; variations?: QsVariation[] },
 ): QsJobCard[] {
   const cards = jobs.map((j) => {
     const lines = d.daywork.filter((l) => l.job_id === j.id);
@@ -108,9 +118,10 @@ export function jobCards(
       hours: lines.reduce((a, l) => a + l.hours, 0),
       issues: issues.length,
       open_issues: issues.filter((i) => i.status === "open" || i.status === "in_progress").length,
+      variations: (d.variations ?? []).filter((v) => v.job_id === j.id).length,
       gangs: [...new Set([...lines.map((l) => l.company), ...d.handovers.filter((h) => h.job_id === j.id).map((h) => h.company)])],
     };
   });
-  const busy = (c: QsJobCard) => c.handovers + c.sheets + c.issues > 0;
+  const busy = (c: QsJobCard) => c.handovers + c.sheets + c.issues + c.variations > 0;
   return cards.filter((c) => c.status === "live" || busy(c)).sort((a, b) => Number(busy(b)) - Number(busy(a)) || b.job_number.localeCompare(a.job_number));
 }

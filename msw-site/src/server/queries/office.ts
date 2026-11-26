@@ -406,3 +406,23 @@ export async function countActiveReports(viewer: Viewer) {
     )).rows[0],
   );
 }
+
+export interface JobCompanyRow { id: string; company_id: string; name: string; granted_at: string; granted_by_name: string | null; boss_names: string | null; people_on: number }
+
+/** Subcontractor companies holding a job, and the ones that could be given it. */
+export async function getJobCompanies(viewer: Viewer, jobId: string) {
+  return withUser(viewer.id, async (tx) => {
+    const holding = (await tx.query<JobCompanyRow>(
+      `select jc.id, jc.company_id, c.name, jc.granted_at, g.full_name as granted_by_name,
+              (select string_agg(p.full_name, ', ') from profiles p where p.company_id = c.id and p.active and p.role = 'manager') as boss_names,
+              (select count(*)::int from job_assignments a join profiles p on p.id = a.user_id
+                where a.job_id = jc.job_id and a.revoked_at is null and p.company_id = c.id and p.role = 'operative') as people_on
+         from job_companies jc join companies c on c.id = jc.company_id left join profiles g on g.id = jc.granted_by
+        where jc.job_id = $1 and jc.revoked_at is null order by c.name`, [jobId])).rows;
+    const others = (await tx.query<{ id: string; name: string }>(
+      `select c.id, c.name from companies c where c.active and not c.is_msw
+          and not exists (select 1 from job_companies jc where jc.job_id = $1 and jc.company_id = c.id and jc.revoked_at is null)
+        order by c.name`, [jobId])).rows;
+    return { holding, others };
+  });
+}

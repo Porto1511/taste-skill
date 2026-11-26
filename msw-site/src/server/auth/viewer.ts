@@ -21,6 +21,8 @@ export interface Viewer {
   keepsTimesheet: boolean;
   /** Office staff, or an MSW lad given site visits. */
   canSiteVisit: boolean;
+  /** The boss of a subcontractor: runs their own people, cards and who sees which job. */
+  isBoss: boolean;
   unreadNotifications: number;
 }
 
@@ -55,6 +57,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       isAdmin: r.role === "admin",
       keepsTimesheet: r.is_msw && r.role === "operative",
       canSiteVisit: r.role === "admin" || r.role === "office" || (r.is_msw && r.site_visits),
+      isBoss: r.role === "manager" && !r.is_msw,
       unreadNotifications: r.unread,
     };
   });
@@ -70,6 +73,13 @@ export async function requireViewer(): Promise<Viewer> {
 export async function requireStaff(): Promise<Viewer> {
   const v = await requireViewer();
   if (!v.isStaff) notFound();
+  return v;
+}
+
+/** Subcontractor boss pages.  Anyone else gets a 404. */
+export async function requireBoss(): Promise<Viewer> {
+  const v = await requireViewer();
+  if (!v.isBoss) notFound();
   return v;
 }
 

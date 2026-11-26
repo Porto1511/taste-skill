@@ -151,6 +151,22 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
 
 
       <section>
+        <SectionTitle>Variations · {data.variations.length}</SectionTitle>
+        {data.variations.length ? (
+          <Card className="divide-y divide-line">
+            {data.variations.map((v) => (
+              <Link key={v.id} href={`/office/variations/${v.id}`} className="flex flex-wrap items-center gap-x-3 px-4 py-2.5 text-[14px] hover:bg-paper">
+                <span className="w-28 text-muted">{formatShortDate(v.signed_at.slice(0, 10))}</span>
+                <span className="font-mono text-[13px]">{v.job_number}</span>
+                <span className="font-medium">{v.description}</span>
+                <span className="text-muted">{v.company} · asked for by {v.requested_by} · signed by {v.client_name}</span>
+              </Link>
+            ))}
+          </Card>
+        ) : <Empty>No variations in these dates.</Empty>}
+      </section>
+
+      <section>
         <SectionTitle>Site issues · {data.issues.length}</SectionTitle>
         {data.issues.length ? (
           <Card className="divide-y divide-line">
@@ -169,7 +185,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
         </>
       ) : (
       <section>
-        <SectionTitle>Jobs · click one to see its sign-offs, daywork and issues</SectionTitle>
+        <SectionTitle>Jobs · click one to see its sign-offs, daywork, variations and issues</SectionTitle>
         {cards.length ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {cards.map((c) => (
@@ -180,9 +196,10 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
                   <p className="text-[16px] font-semibold leading-snug">{c.name}</p>
                   {c.gangs.length > 0 && <p className="mt-0.5 truncate text-[12.5px] text-muted">{c.gangs.join(" · ")}</p>}
                 </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="grid grid-cols-5 gap-2 text-center">
                   <Mini label="Sign-offs" value={String(c.handovers)} />
                   <Mini label="Daywork" value={String(c.sheets)} />
+                  <Mini label="Variations" value={String(c.variations)} />
                   <Mini label="Hours" value={hrs(c.hours)} />
                   <Mini label="Issues" value={c.open_issues ? `${c.issues} (${c.open_issues} open)` : String(c.issues)} tone={c.open_issues ? "warn" : undefined} />
                 </div>

@@ -16,7 +16,7 @@ beforeAll(async () => { ({ driver: db, store } = await createSeededDb()); setDri
 
 const v = (key: string, role: Viewer["role"]): Viewer => ({
   id: ids.user(key), fullName: key, email: "", role, jobTitle: null, companyId: "", companyName: "",
-  isMswEmployee: role !== "operative", isStaff: role === "admin" || role === "office", isAdmin: role === "admin", keepsTimesheet: false, canSiteVisit: role === "admin" || role === "office", unreadNotifications: 0,
+  isMswEmployee: role !== "operative", isStaff: role === "admin" || role === "office", isAdmin: role === "admin", keepsTimesheet: false, canSiteVisit: role === "admin" || role === "office", isBoss: false, unreadNotifications: 0,
 });
 const visit = (jobNumber: string) => siteVisitInput.parse({
   jobNumber, jobName: "", siteAddress: "Plot 4, Station Road, Derby", visitDate: "2026-11-24", visitType: "pre_start",

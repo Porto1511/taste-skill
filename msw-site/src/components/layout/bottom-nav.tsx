@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HardHat, ClockClockwise, Bell, UserCircle, Truck } from "@phosphor-icons/react";
+import { HardHat, ClockClockwise, Bell, UserCircle, Truck, UsersThree } from "@phosphor-icons/react";
 import { cn } from "@/lib/cn";
 
-export function BottomNav({ unread, timesheet, deliveries }: { unread: number; timesheet: boolean; deliveries: boolean }) {
+export function BottomNav({ unread, timesheet, deliveries, company = false }: { unread: number; timesheet: boolean; deliveries: boolean; company?: boolean }) {
   const path = usePathname();
   const items = [
     { href: "/jobs", label: "Jobs", icon: HardHat, active: path === "/jobs" || path.startsWith("/jobs/") },
     ...(timesheet ? [{ href: "/timesheet", label: "Timesheet", icon: ClockClockwise, active: path.startsWith("/timesheet") }] : []),
     ...(deliveries ? [{ href: "/deliveries", label: "Deliveries", icon: Truck, active: path.startsWith("/deliveries") }] : []),
+    ...(company ? [{ href: "/company", label: "Company", icon: UsersThree, active: path.startsWith("/company") }] : []),
     { href: "/notifications", label: "Alerts", icon: Bell, active: path.startsWith("/notifications"), count: unread },
     { href: "/account", label: "Me", icon: UserCircle, active: path.startsWith("/account") },
   ];

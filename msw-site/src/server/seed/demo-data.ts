@@ -379,8 +379,8 @@ export const demoGrants: DemoGrant[] = [
   { job: "bm", users: ["tom"], areas: ["l1"], note: "Following on Level 1", fromDays: -10, toDays: 10, daysAgo: 12 },
   { job: "bm", users: ["gareth"], allAreas: true, note: "MSW supervisor", daysAgo: 38 },
   { job: "bm", users: ["ian"], allAreas: true, note: "MSW — netting, decking & studs", daysAgo: 2 },
-  // Derby Decking's director: job-wide information plus Derby Decking's own reports on THIS job only.
-  { job: "bm", users: ["dave"], areas: [], note: "Derby Decking director — report visibility", daysAgo: 25, managerReports: true },
+  // Derby Decking's boss sees the whole of every job given to Derby Decking (given automatically).
+  { job: "bm", users: ["dave"], allAreas: true, note: "Company boss", daysAgo: 25, managerReports: true },
 
   // Riverside: Derby Decking's other gang (Paul & Steve) — Dave has NOT been granted this job.
   { job: "riverside", users: ["paul", "steve"], allAreas: true, note: "Derby Decking gang 2", fromDays: -45, toDays: 30, daysAgo: 46 },

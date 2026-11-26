@@ -2,6 +2,7 @@ import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
 import type { DayworkDetail, DeliveryDetail, HandoverDetail } from "../queries/handovers";
 import type { SiteVisitDetail } from "../queries/site-visits";
+import type { VariationDetail } from "../queries/variations";
 import { ANSWERS, AREA_STATUS, BLOCKER_OWNERS, BLOCKER_SEVERITY, CHECKLIST, READY_OUTCOMES, VISIT_TYPES, labelOf } from "@/lib/site-visit";
 import { COMPANY, MSW_LOGO_PATHS, MSW_LOGO_VIEWBOX } from "@/lib/company";
 import { DAYS, HANDOVER_TRADES, NOTES_FIELD, townFrom } from "@/lib/handover";
@@ -104,7 +105,7 @@ function daysRow(p: PDFPage, f: Fonts, y: number, ticked: string[]) {
 }
 
 async function signatureBlock(pdf: PDFDocument, p: PDFPage, f: Fonts, y: number, o: {
-  dateLabel: string; date: string; msw: Buffer | null; mswName: string; client: Buffer; clientName: string; clientRole: string;
+  dateLabel: string; date: string; msw: Buffer | null; mswName: string; client: Buffer; clientName: string; clientRole: string; mswLabel?: string;
 }) {
   const dots = (x: number, yy: number, w: number) => p.drawLine({ start: { x, y: yy }, end: { x: x + w, y: yy }, thickness: 0.6, color: grey, dashArray: [1, 2] });
   const place = async (bytes: Buffer, x: number, yy: number) => {
@@ -119,7 +120,7 @@ async function signatureBlock(pdf: PDFDocument, p: PDFPage, f: Fonts, y: number,
   dots(560, y - 2, 200);
   await place(o.client, 566, y - 4);
   y -= 40;
-  txt(p, "Signed MSW", M, y, 10.5, f.reg);
+  txt(p, o.mswLabel ?? "Signed MSW", M, y, 10.5, f.reg);
   dots(M + 90, y - 2, 190);
   if (o.msw) await place(o.msw, M + 96, y - 4);
   txt(p, "Print Name", 460, y, 10.5, f.reg);
@@ -417,3 +418,54 @@ export async function buildSiteVisitReport(v: SiteVisitDetail, photos: Buffer[])
   return Buffer.from(await pdf.save());
 }
 
+
+/** A variation: what the client asked for, who's doing it, signed by the operative then the client. No prices. */
+export async function buildVariationSheet(v: VariationDetail, signatures: { client: Buffer; operative: Buffer }, photos: Buffer[]): Promise<Buffer> {
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(`${v.job_number} variation — ${ukDate(v.signed_at)}`);
+  pdf.setAuthor(COMPANY.name);
+  const f: Fonts = { reg: await pdf.embedFont(StandardFonts.Helvetica), bold: await pdf.embedFont(StandardFonts.HelveticaBold) };
+  const p = pdf.addPage([W, H]);
+  letterhead(p, f);
+  let y = refTable(p, f, "VARIATION", [
+    ["Our Ref No:", v.job_number], ["Customer", v.main_contractor?.replace(/ \(fictional\)$/, "") ?? v.client_company],
+    ["Contract Title", v.job_name], ["Where:", v.area_name ?? townFrom(v.site_address)],
+  ]) - 22;
+  const fullW = W - 2 * M;
+  box(p, M, y - 22, fullW, 22);
+  txt(p, "Asked for by:", M + 6, y - 15, 10, f.reg);
+  txt(p, clean(v.requested_by), M + 90, y - 15, 10, f.bold);
+  txt(p, `Carried out by: ${clean(v.captured_by_company)}`, M + 420, y - 15, 10, f.reg);
+  y -= 34;
+  box(p, M, y - 120, fullW, 120);
+  txt(p, "What the client has asked for:", M + 6, y - 13, 9.5, f.reg);
+  para(p, v.description, M + 6, y - 28, fullW - 12, 10, f.bold, false, 3);
+  y -= 132;
+  box(p, M, y - 22, fullW, 22);
+  txt(p, "Operatives:", M + 6, y - 15, 10, f.reg);
+  txt(p, clean(v.operatives.join(", ")).slice(0, 120), M + 80, y - 15, 10, f.bold);
+  y -= 34;
+  if (photos.length) { txt(p, `${photos.length} photo${photos.length === 1 ? "" : "s"} attached on the following page${photos.length > 4 ? "s" : ""}.`, M, y, 9, f.reg, grey); }
+  y -= 26;
+  await signatureBlock(pdf, p, f, y, {
+    dateLabel: "Date", date: ukDate(v.signed_at), msw: signatures.operative, mswName: v.operative_signer_name, mswLabel: "Signed Operative",
+    client: signatures.client, clientName: v.client_name, clientRole: [v.client_position, v.client_company].filter(Boolean).join(", "),
+  });
+  footer(p, f, `Signed electronically on site via MSW Site, ${ukDateTime(v.signed_at)} (UK). Ref ${v.id.slice(0, 8)}. A record of the instruction only.`);
+
+  // Photos, four to a page.
+  for (let i = 0; i < photos.length; i += 4) {
+    const pp = pdf.addPage([W, H]);
+    txt(pp, `${v.job_number} variation — photos`, M, H - M, 12, f.bold);
+    const cellW = (W - 2 * M - 20) / 2, cellH = (H - 2 * M - 50) / 2;
+    for (let k = 0; k < 4 && i + k < photos.length; k++) {
+      const img = await pdf.embedJpg(photos[i + k]);
+      const s2 = Math.min(cellW / img.width, (cellH - 16) / img.height);
+      const cx = M + (k % 2) * (cellW + 20), cy = H - M - 30 - (Math.floor(k / 2) + 1) * cellH;
+      pp.drawImage(img, { x: cx, y: cy + 16, width: img.width * s2, height: img.height * s2 });
+      const cap = v.photos[i + k]?.caption;
+      txt(pp, clean(`Photo ${i + k + 1}${cap ? ` — ${cap}` : ""}`).slice(0, 90), cx, cy + 4, 8.5, f.reg, grey);
+    }
+  }
+  return Buffer.from(await pdf.save());
+}

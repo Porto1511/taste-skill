@@ -79,7 +79,8 @@ export async function servePhoto(viewerId: string, photoId: string, thumb: boole
 /** Handover photos and signatures (client / MSW), and daywork signatures: visible to whoever can see the record (RLS). */
 export async function serveHandoverFile(
   viewerId: string, id: string,
-  kind: "photo" | "signature" | "msw-signature" | "daywork-client" | "daywork-msw" | "delivery-receiver" | "delivery-driver", thumb = false,
+  kind: "photo" | "signature" | "msw-signature" | "daywork-client" | "daywork-msw" | "delivery-receiver" | "delivery-driver"
+    | "variation-client" | "variation-operative" | "variation-photo", thumb = false,
 ): Promise<Response> {
   if (!UUID.test(id)) return notFound();
   const sql: Record<typeof kind, string> = {
@@ -90,14 +91,18 @@ export async function serveHandoverFile(
     "daywork-msw": "select msw_signature_path as p from dayworks where id = $1",
     "delivery-receiver": "select receiver_signature_path as p from deliveries where id = $1",
     "delivery-driver": "select driver_signature_path as p from deliveries where id = $1",
+    "variation-client": "select client_signature_path as p from variations where id = $1",
+    "variation-operative": "select operative_signature_path as p from variations where id = $1",
+    "variation-photo": "select storage_path as p from variation_photos where id = $1",
   };
   const path = await withUser(viewerId, async (tx) => (await tx.query<{ p: string | null }>(sql[kind], [id])).rows[0]?.p);
   if (!path) return notFound();
   const data = await getFileStore().get(path);
   if (!data) return notFound();
-  const body = kind === "photo" && thumb ? await makeThumbnail(data) : data;
+  const isPhoto = kind === "photo" || kind === "variation-photo";
+  const body = isPhoto && thumb ? await makeThumbnail(data) : data;
   return new Response(new Uint8Array(body), {
-    headers: { ...baseHeaders, "Content-Type": kind === "photo" ? "image/jpeg" : "image/png", "Content-Length": String(body.length) },
+    headers: { ...baseHeaders, "Content-Type": isPhoto ? "image/jpeg" : "image/png", "Content-Length": String(body.length) },
   });
 }
 
@@ -119,6 +124,29 @@ export async function serveCertificate(viewerId: string, id: string, download: b
       "Content-Type": "application/pdf",
       "Content-Length": String(data.length),
       "Content-Disposition": disposition(download ? "attachment" : "inline", safeFileName(row.file_name, "certificates.pdf")),
+    },
+  });
+}
+
+/** A card or ticket: the person, their boss and the MSW office (RLS). */
+export async function serveCard(viewerId: string, id: string, download: boolean): Promise<Response> {
+  if (!UUID.test(id)) return notFound();
+  const row = await withUser(viewerId, async (tx) =>
+    (await tx.query<{ storage_path: string; file_name: string; mime_type: string }>(
+      "select storage_path, file_name, mime_type from operative_cards where id = $1", [id])).rows[0],
+  );
+  if (!row) return notFound();
+  const data = await getFileStore().get(row.storage_path);
+  if (!data) {
+    log.error("file.storage_missing", { cardId: id, path: row.storage_path });
+    return notFound();
+  }
+  return new Response(new Uint8Array(data), {
+    headers: {
+      ...baseHeaders,
+      "Content-Type": row.mime_type,
+      "Content-Length": String(data.length),
+      "Content-Disposition": disposition(download ? "attachment" : "inline", safeFileName(row.file_name, "card")),
     },
   });
 }

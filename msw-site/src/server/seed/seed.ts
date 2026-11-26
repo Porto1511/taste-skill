@@ -206,6 +206,13 @@ export async function seedDemo(
     }
   }
 
+  // A company keeps a job only while some of its people are on it (St Anne's is finished).
+  await sys((tx) => tx.query(
+    `update public.job_companies jc set revoked_at = now(), revoked_by = auth.uid()
+     where jc.revoked_at is null and not exists (
+       select 1 from public.job_assignments a join public.profiles p on p.id = a.user_id
+       where a.job_id = jc.job_id and p.company_id = jc.company_id and a.revoked_at is null and p.role <> 'manager')`), "claire", 30 * DAY);
+
   // Reports, photos and responses --------------------------------------------
   log("reports");
   let photoVariant = 0;

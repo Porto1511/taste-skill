@@ -235,6 +235,69 @@ test.describe("operative mobile experience", () => {
     await expect(page.getByRole("link", { name: "Timesheet" })).toHaveCount(0);
     expect((await page.goto("/timesheet"))?.status()).toBe(404);
   });
+
+  test("a boss adds a lad, files his CSCS card and ticks him onto a job; the lad then sees only that", async ({ page }) => {
+    await signIn(page, "dave.clarke@derbydecking.example");
+    await page.getByRole("link", { name: "Company" }).click();
+    await expect(page.getByRole("heading", { name: "Derby Decking" })).toBeVisible();
+    await page.getByRole("link", { name: /Add a person/ }).click();
+    await page.getByLabel("Name").fill("Sam Fisher");
+    await page.getByLabel("Email").fill("sam.fisher@derbydecking.example");
+    await page.getByLabel("Password", { exact: true }).fill("Netting-2026!");
+    await page.getByRole("button", { name: "Add to my company" }).click();
+    await expect(page.getByText("Sam Fisher has been added")).toBeVisible();
+
+    await page.getByLabel("What is it?").fill("CSCS card");
+    await page.getByLabel("Expiry date").fill("2027-01-31");
+    const card = await sharp({ create: { width: 900, height: 560, channels: 3, background: "#2b6" } }).jpeg().toBuffer();
+    await page.getByLabel("Photo of the card", { exact: true }).setInputFiles({ name: "cscs.jpg", mimeType: "image/jpeg", buffer: card });
+    await page.getByRole("button", { name: "Save card" }).click();
+    await expect(page.getByText(/Expires 31 Jan 2027/)).toBeVisible();
+
+    const tick = page.getByRole("switch", { name: /MSW-2611/ });
+    await expect(tick).toHaveAttribute("aria-checked", "false");
+    await tick.click();
+    await expect(tick).toHaveAttribute("aria-checked", "true");
+    await signOut(page);
+
+    await page.goto("/login");
+    await page.getByLabel("Email").fill("sam.fisher@derbydecking.example");
+    await page.getByLabel("Password").fill("Netting-2026!");
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page.locator('a[href^="/jobs/"]')).toHaveCount(1);
+    await expect(page.locator('a[href^="/jobs/"]').first()).toContainText("British Museum");
+    await expect(page.getByRole("link", { name: "Company" })).toHaveCount(0); // lads don't get the boss pages
+    expect((await page.request.get("/company")).status()).toBe(404);
+    await page.goto("/account/cards");
+    await expect(page.getByText("CSCS card")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Send or print/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Remove/ })).toHaveCount(0);
+  });
+
+  test("variation: what was asked, a photo, the operative signs, then the client", async ({ page }) => {
+    await signIn(page, "john.smith@derbydecking.example");
+    await page.goto(`/jobs/${BM}#reports`);
+    await page.getByRole("link", { name: "Variation" }).click();
+    await page.getByLabel("Where?").selectOption({ label: "Level 1" });
+    await page.getByLabel("What has the client asked for?").fill("Extra nets to the new lift shaft void at D4");
+    await expect(page.getByLabel("Operative 1")).toHaveValue("John Smith");
+    await page.getByLabel("Operative 2").fill("Mark Jones");
+    const ph = await sharp({ create: { width: 800, height: 600, channels: 3, background: "#889" } }).jpeg().toBuffer();
+    await page.getByLabel("Choose photos").setInputFiles({ name: "void.jpg", mimeType: "image/jpeg", buffer: ph });
+    await page.getByLabel("Caption for photo 1").fill("Void at D4");
+    await page.getByRole("button", { name: /Next: operative signs/ }).click();
+    await draw(page, 0);
+    await page.getByRole("button", { name: /Next: client signs/ }).click();
+    await expect(page.getByText("Hand the phone to the client")).toBeVisible();
+    await draw(page, 0);
+    await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: "Sign & submit" }).click();
+    await expect(page.getByText(/Signed — the copy is saved/)).toBeVisible();
+    await expect(page.getByText("Extra nets to the new lift shaft void at D4")).toBeVisible();
+    await expect(page.getByAltText("Void at D4")).toBeVisible();
+    const pdf = await page.request.get(page.url().replace(/\/jobs\/[^/]+\/variation\//, "/api/variations/").replace(/\?.*$/, "") + "/sheet");
+    expect(pdf.headers()["content-type"]).toBe("application/pdf");
+  });
 });
 
 async function draw(page: import("@playwright/test").Page, index: number) {

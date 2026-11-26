@@ -36,11 +36,10 @@ describe("job visibility — individual allocation only", () => {
     }
   });
 
-  it("company membership alone grants nothing (unallocated operative sees no jobs)", async () => {
-    // Kieran's access was revoked; Danny is deactivated; Sarah (manager) was never granted.
+  it("company membership alone grants an operative nothing (unallocated operative sees no jobs)", async () => {
+    // Kieran was taken off; Danny is switched off.
     expect(await jobNumbers("kieran")).toEqual([]);
     expect(await jobNumbers("danny")).toEqual([]);
-    expect(await jobNumbers("sarah")).toEqual([]);
   });
 
   it("another subcontractor cannot see Derby Decking's other jobs", async () => {
@@ -50,9 +49,11 @@ describe("job visibility — individual allocation only", () => {
     expect(riverside).toHaveLength(0);
   });
 
-  it("a subcontractor owner does not automatically see every job involving their employees", async () => {
-    // Dave (Derby Decking director) is granted BM only — not Riverside where Paul and Steve work.
-    expect(await jobNumbers("dave")).toEqual(["MSW-2611"]);
+  it("a subcontractor boss sees every live job given to their company, and nothing else", async () => {
+    // Derby Decking holds BM (John, Mark) and Riverside (Paul, Steve).
+    expect(await jobNumbers("dave")).toEqual(["MSW-2604", "MSW-2611"]);
+    // SOS holds BM only.
+    expect(await jobNumbers("sarah")).toEqual(["MSW-2611"]);
   });
 
   it("MSW office users see every job", async () => {
@@ -158,7 +159,8 @@ describe("document approval status", () => {
        where n.kind = 'document.updated' and n.title like '%DK-103 now rev C02%' order by p.full_name`,
     );
     // Level 3 users (Gang B + MSW's lads on all areas) — not Gang A, not Kieran (revoked), not the approver.
-    expect(notified.map((n) => n.full_name)).toEqual(["Gareth Evans", "Ian Spencer", "Liam Turner", "Ryan Hughes"]);
+    // Company bosses see the whole job, so they hear about new drawings too.
+    expect(notified.map((n) => n.full_name)).toEqual(["Dave Clarke", "Gareth Evans", "Ian Spencer", "Liam Turner", "Ryan Hughes", "Sarah Booth"]);
   });
 
   it("operatives cannot approve, upload or alter documents", async () => {
@@ -327,17 +329,17 @@ describe("site reports", () => {
     expect(liam).not.toContain("Level 2 deck completion — record photos"); // shared, but Level 2 only
   });
 
-  it("subcontractor managers see their company's reports only where explicitly granted", async () => {
+  it("a subcontractor boss sees their own company's reports on their jobs, never another company's", async () => {
     const dave = await asUser(db, "dave").query<{ author_company_name: string; job_id: string }>(
       "select author_company_name, job_id from reports",
     );
     expect(dave.length).toBeGreaterThan(0);
-    expect(dave.every((r) => r.author_company_name === "Derby Decking" && r.job_id === ids.job("bm"))).toBe(true);
-    // Paul's Riverside report is Derby Decking's, but Dave has no grant on Riverside.
-    const paulReport = await asUser(db, "dave").query("select * from reports where id = $1", [ids.report("rq-short")]);
-    expect(paulReport).toHaveLength(0);
-    // Sarah (SOS) has no grant at all.
-    expect(await asUser(db, "sarah").query("select * from reports")).toHaveLength(0);
+    expect(dave.every((r) => r.author_company_name === "Derby Decking" || r.author_company_name === "MSW UK Ltd")).toBe(true);
+    // Paul's Riverside report is Derby Decking's, and Riverside is a Derby Decking job.
+    expect(await asUser(db, "dave").query("select * from reports where id = $1", [ids.report("rq-short")])).toHaveLength(1);
+    // Sarah (SOS) never sees Derby Decking's reports.
+    const sarah = await asUser(db, "sarah").query<{ author_company_name: string }>("select author_company_name from reports");
+    expect(sarah.some((r) => r.author_company_name === "Derby Decking")).toBe(false);
   });
 
   it("only MSW office users change status; authors can reply; report content is immutable", async () => {
