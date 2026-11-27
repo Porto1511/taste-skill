@@ -47,3 +47,5 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /.data-e2e/
+/.data-video/
+/_*.mjs
