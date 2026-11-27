@@ -42,7 +42,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
   return (
     <div className="grid gap-6">
       <PageHeader title="QS check"
-        description="What was signed off on site for the dates below — handovers, daywork and site issues — to check against subcontractor invoices. Hours and counts only."
+        description="What was signed off on site for the dates below — handovers, daywork, variations and site issues — to check against subcontractor invoices."
         actions={<ButtonLink href={`/api/qs/export?${qs({})}`} external><DownloadSimple className="size-5" /> Export CSV</ButtonLink>} />
 
       <Card className="grid gap-3 p-4">
@@ -217,7 +217,7 @@ export default async function QsPage({ searchParams }: { searchParams: Promise<P
                   <p className="text-[16px] font-semibold leading-snug">{c.name}</p>
                   {c.gangs.length > 0 && <p className="mt-0.5 truncate text-[12.5px] text-muted">{c.gangs.join(" · ")}</p>}
                 </div>
-                <div className="grid grid-cols-5 gap-2 text-center">
+                <div className="grid grid-cols-3 gap-2 text-center">
                   <Mini label="Sign-offs" value={String(c.handovers)} />
                   <Mini label="Daywork" value={String(c.sheets)} />
                   <Mini label="Variations" value={String(c.variations)} />

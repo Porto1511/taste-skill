@@ -16,7 +16,7 @@ export function ReportControls({ reportId, shared, priority, areaName }: { repor
         <input type="hidden" name="shared" value={shared ? "0" : "1"} />
         <p className="text-sm font-semibold">Visibility</p>
         <p className="text-[13px] text-muted">
-          {shared ? `Shared with everyone allocated to ${areaName ?? "this job"}.` : "Only the author, MSW office and explicitly-granted managers of the author's company can see this."}
+          {shared ? `Shared with everyone allocated to ${areaName ?? "this job"}.` : "Only the person who reported it, the MSW office and their company's manager can see this."}
         </p>
         <button className={buttonClass("secondary", "sm", "justify-self-start")}>{shared ? "Stop sharing" : `Share with ${areaName ?? "job"} team`}</button>
         <FormMessage state={shareState} />

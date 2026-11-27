@@ -18,7 +18,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
   const [companies, people] = await Promise.all([listCompanies(viewer), listPeople(viewer, { q: q.trim().slice(0, 80) })]);
   return (
     <div>
-      <PageHeader title="People & companies" description="MSW employees, subcontracting companies and their operatives. Job access is given per person on each job."
+      <PageHeader title="People & companies" description="MSW employees, subcontracting companies and their operatives. You give a job to a company; its manager chooses which of their lads see it. MSW lads are added to jobs here."
         actions={viewer.isAdmin && <>
           <ButtonLink href="/office/people/companies/new"><Buildings className="size-5" /> Add company</ButtonLink>
           <ButtonLink href="/office/people/new" variant="primary"><Plus className="size-5" weight="bold" /> Add person</ButtonLink>
